@@ -11,6 +11,18 @@
 }
 
 /* 
+┌─────────────────────────────────────┐
+│              VARIABLES              │
+└─────────────────────────────────────┘
+*/
+
+:root {
+    --inverse-bg: white;
+    --inverse-text: black;
+    --box-shadow-c-40o: rgba(0, 0, 0, 0.4);
+}
+
+/* 
 ┌────────────────────────────────────┐
 │                BODY                │
 └────────────────────────────────────┘
@@ -52,6 +64,7 @@ body {
     transition: transform 1s ease, 
                 box-shadow 0.3s ease, left 1s ease, top 1s ease, 
                 opacity 1s ease;
+    transform: translate(-50%, -50%);
 }
 
 .constellation:hover {
@@ -62,4 +75,36 @@ body {
 /* in-active constellations || other constellations */
 .faded {
     opacity: 0.4;
+}
+
+/* 
+┌─────────────────────────────────────┐
+│              BACK BUTTON            │
+└─────────────────────────────────────┘
+*/
+
+#back-button {
+    position: absolute;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: opacity 0.5s ease, background 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+#back-button.active {
+    opacity: 1;
+    pointer-events: auto;
 }

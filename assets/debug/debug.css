@@ -1,0 +1,76 @@
+/* Debug Styles */
+
+.crosshair-horizontal {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: red;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.crosshair-vertical {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: red;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.debug {
+    display: none;
+}
+
+.debug-menu-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+}
+
+.debug-menu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 1000;
+    max-width: 300px;
+    font-family: system-ui, sans-serif;
+}
+
+.debug-menu h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.debug-menu button {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.debug-menu button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}

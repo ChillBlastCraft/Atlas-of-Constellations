@@ -39,7 +39,7 @@ function onConstellationClick(constellation, dot) {
     dot.style.left = cx + "%"
     dot.style.top = cy + "%"
     // increase size of current constellation
-    dot.style.transform = 'scale(2)'
+    dot.style.transform = 'translate(-50%, -50%) scale(2)'
 
     // for all non-clicked constellations, move away
     const allDots = document.querySelectorAll('.constellation')
@@ -65,23 +65,31 @@ function onConstellationClick(constellation, dot) {
         }
         // decrease size of other constellations based on distance (exponential decay)
         const scale = Math.max(0.1, Math.exp(-vlen / 60));
-        otherDot.style.transform = `scale(${scale})`
+        otherDot.style.transform = `translate(-50%, -50%) scale(${scale})`
 
         // decrease opacity on other constellations
         otherDot.classList.add('faded')
         console.log(`Constellation ${otherConst.name}: distance ${vlen.toFixed(2)}, scale ${scale.toFixed(2)}`)
     })
 
-    // resets after 3 seconds
-    setTimeout(() => {
-        allDots.forEach(d => {
-            // move all constellations back to original position
-            d.style.left = d.constellation.position.x + "%"
-            d.style.top = d.constellation.position.y + "%"
+    // show back button
+    const backButton = document.getElementById('back-button')
+    backButton.classList.add('active')
+}
 
-            // reset size
-            d.style.transform = ''
-            d.classList.remove('faded')
-        })
-    }, 3000)
+function resetUniverse() {
+    const allDots = document.querySelectorAll('.constellation')
+    allDots.forEach(d => {
+        // move all constellations back to original position
+        d.style.left = d.constellation.position.x + "%"
+        d.style.top = d.constellation.position.y + "%"
+
+        // reset size
+        d.style.transform = 'translate(-50%, -50%)'
+        d.classList.remove('faded')
+    })
+
+    // hide back button
+    const backButton = document.getElementById('back-button')
+    backButton.classList.remove('active')
 }
