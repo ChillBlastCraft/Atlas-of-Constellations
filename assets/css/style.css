@@ -1,0 +1,52 @@
+/* 
+┌─────────────────────────────────────────────┐
+│                RESET                        │
+└─────────────────────────────────────────────┘
+*/
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 
+┌─────────────────────────────────────────────┐
+│                BODY                         │
+└─────────────────────────────────────────────┘
+*/
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #111427 0%, #0c0f1a 60%, #070910 100%);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* 
+┌─────────────────────────────────────────────┐
+│                UNIVERSE                     │
+└─────────────────────────────────────────────┘
+*/
+
+.universe {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* 
+┌─────────────────────────────────────────────┐
+│                CONSTELLATION DOT            │
+└─────────────────────────────────────────────┘
+*/
+
+.constellation {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
