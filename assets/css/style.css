@@ -38,9 +38,9 @@ body {
 }
 
 /* 
-┌─────────────────────────────────────────────┐
-│                CONSTELLATION DOT            │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│             CONSTELLATION DOT            │
+└──────────────────────────────────────────┘
 */
 
 .constellation {
@@ -49,10 +49,17 @@ body {
     height: 50px;
     border-radius: 50%;
     background: white;
-    transition: transform 1s ease, box-shadow 0.3s ease, left 1s ease, top 1s ease;
+    transition: transform 1s ease, 
+                box-shadow 0.3s ease, left 1s ease, top 1s ease, 
+                opacity 1s ease;
 }
 
 .constellation:hover {
     transform: scale(1.25);
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* in-active constellations */
+.faded {
+    opacity: 0.4;
 }

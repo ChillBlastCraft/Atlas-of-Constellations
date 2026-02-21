@@ -22,6 +22,7 @@ function onConstellationHover(dot) {
 }
 
 function onConstellationClick(constellation, dot) {
+    console.clear()
     console.log("Clicked on constellation:", constellation.name)
 
     // 50%, 50% (center of universe)
@@ -62,8 +63,13 @@ function onConstellationClick(constellation, dot) {
             otherDot.style.left = Math.max(0, Math.min(100, newX)) + "%"
             otherDot.style.top = Math.max(0, Math.min(100, newY)) + "%"
         }
-        // decrease size of other constellations
-        otherDot.style.transform = 'scale(0.5)'
+        // decrease size of other constellations based on distance (exponential decay)
+        const scale = Math.max(0.1, Math.exp(-vlen / 60));
+        otherDot.style.transform = `scale(${scale})`
+
+        // decrease opacity on other constellations
+        otherDot.classList.add('faded')
+        console.log(`Constellation ${otherConst.name}: distance ${vlen.toFixed(2)}, scale ${scale.toFixed(2)}`)
     })
 
     // resets after 3 seconds
@@ -72,7 +78,10 @@ function onConstellationClick(constellation, dot) {
             // move all constellations back to original position
             d.style.left = d.constellation.position.x + "%"
             d.style.top = d.constellation.position.y + "%"
-            d.style.transform = '' // reset size
+
+            // reset size
+            d.style.transform = ''
+            d.classList.remove('faded')
         })
     }, 3000)
 }
