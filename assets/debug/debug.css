@@ -1,4 +1,8 @@
-/* Debug Styles */
+/* 
+┌─────────────────────────┐
+│        CROSSHAIR        │
+└─────────────────────────┘
+*/
 
 .crosshair-horizontal {
     position: absolute;
@@ -22,9 +26,21 @@
     pointer-events: none;
 }
 
+/* 
+┌─────────────────────────┐
+│          DEBUG          │
+└─────────────────────────┘
+*/
+
 .debug {
     display: none;
 }
+
+/* 
+┌─────────────────────────────┐
+│       DEBUG MENU CONTAINER  │
+└─────────────────────────────┘
+*/
 
 .debug-menu-container {
     display: none;
@@ -38,6 +54,12 @@
     justify-content: center;
     align-items: center;
 }
+
+/* 
+┌─────────────────────────┐
+│        DEBUG MENU       │
+└─────────────────────────┘
+*/
 
 .debug-menu {
     position: fixed;
