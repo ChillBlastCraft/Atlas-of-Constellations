@@ -50,3 +50,8 @@ body {
     background: white;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.constellation:hover {
+    transform: scale(1.25);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
