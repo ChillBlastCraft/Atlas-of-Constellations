@@ -72,7 +72,7 @@ function onConstellationClick(constellation, dot) {
             otherDot.style.top = Math.max(0, Math.min(100, newY)) + "%"
         }
         // decrease size of other constellations based on distance (exponential decay)
-        const scale = Math.max(0.1, Math.exp(-vlen / 60));
+        const scale = Math.max(0.1, Math.exp(-vlen / 60))
         otherDot.style.transform = `translate(-50%, -50%) scale(${scale})`
 
         // decrease opacity on other constellations
