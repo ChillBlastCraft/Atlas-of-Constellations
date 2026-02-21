@@ -8,5 +8,10 @@ const constellations = [
         id: "beta",
         name: "Beta",
         position: { x: 65, y: 15 }
+    },
+    {
+        id: "gamma",
+        name: "Gamma",
+        position: { x: 5, y: 90 }
     }
 ]
