@@ -71,6 +71,30 @@ body {
     opacity: 0.4;
 }
 
+/*
+┌─────────────────────────────────────┐
+│         CONSTELLATION NODE          │
+└─────────────────────────────────────┘
+*/
+
+.constellation-node {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #333;
+    display: block;
+    transform: translate(-50%, -50%) scale(0.7);
+    transition: box-shadow 0.3s, background 0.3s;
+    z-index: 2;
+}
+
+.constellation-node:hover {
+    background: #e0e0e0;
+    box-shadow: 0 0 8px #333;
+}
+
 /* 
 ┌──────────────────────────┐
 │        BACK BUTTON       │

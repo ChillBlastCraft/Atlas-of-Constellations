@@ -34,6 +34,9 @@ function onConstellationClick(constellation, dot) {
         d.classList.remove('faded')
     })
 
+    // clear all constellation nodes so none are visible
+    document.querySelectorAll('.constellation-node').forEach(c => c.remove())
+
     // 50%, 50% (center of universe)
     const cx = 50, cy = 50
     // x = current constellation position
@@ -49,6 +52,30 @@ function onConstellationClick(constellation, dot) {
     dot.style.top = cy + "%"
     // increase size of current constellation
     dot.style.transform = 'translate(-50%, -50%) scale(2)'
+
+    // show nodes for this constellation
+    if (Array.isArray(constellation.nodes) && constellation.nodes.length > 0) {
+        const universe = document.getElementById("universe")
+
+        // place nodes relative to the centered constellation (cx, cy)
+        constellation.nodes.forEach((node, idx) => {
+            const nodeDiv = document.createElement("div")
+            nodeDiv.className = "constellation-node"
+
+            // calculate offset from main constellation position
+            const offsetX = node.x - constellation.position.x
+            const offsetY = node.y - constellation.position.y
+
+            // place node around the centered constellation (cx, cy)
+            nodeDiv.style.left = (cx + offsetX) + "%"
+            nodeDiv.style.top = (cy + offsetY) + "%"
+            nodeDiv.title = `Node ${idx + 1} of ${constellation.name}`
+            nodeDiv.addEventListener("click", () => {
+                window.location.href = node.url
+            })
+            universe.appendChild(nodeDiv)
+        })
+    }
 
     // for all non-clicked constellations, move away
     allDots.forEach(otherDot => {
@@ -96,6 +123,8 @@ function resetUniverse() {
         d.style.transform = 'translate(-50%, -50%)'
         d.classList.remove('faded')
     })
+    // clear all constellation nodes so none are visible
+    document.querySelectorAll('.constellation-node').forEach(c => c.remove())
 
     // hide back button
     const backButton = document.getElementById('back-button')
