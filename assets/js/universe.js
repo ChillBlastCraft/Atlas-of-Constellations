@@ -25,6 +25,15 @@ function onConstellationClick(constellation, dot) {
     console.clear()
     console.log("Clicked on constellation:", constellation.name)
 
+    // reset all constellations to original state before zooming
+    const allDots = document.querySelectorAll('.constellation')
+    allDots.forEach(d => {
+        d.style.left = d.constellation.position.x + "%"
+        d.style.top = d.constellation.position.y + "%"
+        d.style.transform = 'translate(-50%, -50%)'
+        d.classList.remove('faded')
+    })
+
     // 50%, 50% (center of universe)
     const cx = 50, cy = 50
     // x = current constellation position
@@ -42,7 +51,6 @@ function onConstellationClick(constellation, dot) {
     dot.style.transform = 'translate(-50%, -50%) scale(2)'
 
     // for all non-clicked constellations, move away
-    const allDots = document.querySelectorAll('.constellation')
     allDots.forEach(otherDot => {
         if (otherDot === dot) { return }        
         const otherConst = otherDot.constellation
