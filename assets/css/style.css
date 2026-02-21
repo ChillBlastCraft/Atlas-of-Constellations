@@ -70,6 +70,7 @@ body {
 .constellation:hover {
     transform: translate(-50%, -50%) scale(1.25);
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    cursor: pointer;
 }
 
 /* in-active constellations || other constellations */
