@@ -1,46 +1,41 @@
 const constellations = [
     {
-        id: "alpha",
-        name: "Alpha",
-        position: { x: 15, y: 35 },
+        id: "wynncraft",
+        name: "Wynncraft",
+        position: { x: 24.2, y: 29.8 },
         nodes: [
-            { x: 13, y: 33, url: "#" },
-            { x: 17, y: 36, url: "#" },
-            { x: 16, y: 32, url: "#" }
+            { x: 20, y: 27, url: "#" },
+            { x: 23, y: 24, url: "#" },
+            { x: 27, y: 28, url: "constellations/wynncraft/wynnbuilder/WynnBuilderPlus.html", label: "Wynnbuilder+", title: "Wynnbuilder+" },
+            { x: 25, y: 33, url: "#" },
+            { x: 19, y: 34, url: "#" },
+            { x: 30, y: 32, url: "#" }
         ],
-        links: [[0, 2], [2, 1]]
+        links: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]]
     },
     {
-        id: "beta",
-        name: "Beta",
-        position: { x: 65, y: 15 },
+        id: "path-of-exile",
+        name: "Path of Exile",
+        position: { x: 68, y: 28 },
         nodes: [
-            { x: 67, y: 13, url: "#" },
-            { x: 63, y: 17, url: "#" },
-            { x: 66, y: 18, url: "#" }
+            { x: 66.2, y: 31.0, url: "#" },
+            { x: 69.2, y: 32.5, url: "#" },
+            { x: 72.8, y: 31.4, url: "#" },
+            { x: 74.1, y: 27.8, url: "#" },
+            { x: 70.8, y: 26.1, url: "#" }
         ],
-        links: [[0, 1], [1, 2]]
+        links: [[0, 1], [1, 2], [2, 3], [1, 4]]
     },
     {
-        id: "gamma",
-        name: "Gamma",
-        position: { x: 90, y: 90 },
+        id: "prismatic-lattice",
+        name: "Prismatic Lattice",
+        position: { x: 48, y: 74 },
         nodes: [
-            { x: 92, y: 88, url: "#" },
-            { x: 88, y: 92, url: "#" },
-            { x: 91, y: 93, url: "#" }
+            { x: 45.5, y: 70.8, url: "#" },
+            { x: 49.1, y: 68.4, url: "#" },
+            { x: 53.2, y: 72.1, url: "#" },
+            { x: 51.0, y: 76.4, url: "#" }
         ],
-        links: [[0, 2], [2, 1]]
-    },
-    {
-        id: "delta",
-        name: "Delta",
-        position: { x: 35, y: 75 },
-        nodes: [
-            { x: 33, y: 77, url: "#" },
-            { x: 37, y: 73, url: "#" },
-            { x: 36, y: 78, url: "#" }
-        ],
-        links: [[0, 2], [2, 1]]
-    }, 
+        links: [[0, 1], [1, 2], [2, 3]]
+    }
 ]

@@ -240,19 +240,35 @@
             nodeDiv.dataset.constellationId = constellation.id
             nodeDiv.constellation = constellation
             nodeDiv.nodeData = node
-            nodeDiv.title = `Node ${idx + 1} of ${constellation.name}`
+            if (typeof node.label === 'string' && node.label.trim().length > 0) {
+                nodeDiv.dataset.nodeLabel = node.label
+            }
+
+            nodeDiv.title = node.title || node.label || `Node ${idx + 1} of ${constellation.name}`
             nodeDiv.addEventListener('mouseenter', () => {
+                applyCursorState(nodeDiv, constellation, node.url)
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverEnter === 'function') {
                     window.ConstellationSystem.onRelatedHoverEnter(constellation.id)
                 }
             })
             nodeDiv.addEventListener('mouseleave', () => {
+                nodeDiv.style.cursor = ''
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverLeave === 'function') {
                     window.ConstellationSystem.onRelatedHoverLeave(constellation.id)
                 }
             })
             nodeDiv.addEventListener("click", () => {
-                window.location.href = node.url
+                const dot = getDotByConstellationId(constellation.id)
+                const canZoom = window.ConstellationSystem && typeof window.ConstellationSystem.onClick === 'function'
+
+                if (dot && canZoom && !isConstellationFocused(dot)) {
+                    window.ConstellationSystem.onClick(constellation, dot)
+                    return
+                }
+
+                if (typeof node.url === 'string' && node.url.trim().length > 0 && node.url !== '#') {
+                    window.location.href = node.url
+                }
             })
 
             // initial node state: close to constellation and dimmed
@@ -280,13 +296,21 @@
             lineDiv.dataset.toIndex = String(toIndex)
             lineDiv.style.opacity = LOW_NODE_OPACITY
             lineDiv.addEventListener('mouseenter', () => {
+                applyCursorState(lineDiv, constellation)
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverEnter === 'function') {
                     window.ConstellationSystem.onRelatedHoverEnter(constellation.id)
                 }
             })
             lineDiv.addEventListener('mouseleave', () => {
+                lineDiv.style.cursor = ''
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverLeave === 'function') {
                     window.ConstellationSystem.onRelatedHoverLeave(constellation.id)
+                }
+            })
+            lineDiv.addEventListener('click', () => {
+                const dot = getDotByConstellationId(constellation.id)
+                if (dot && window.ConstellationSystem && typeof window.ConstellationSystem.onClick === 'function') {
+                    window.ConstellationSystem.onClick(constellation, dot)
                 }
             })
 
@@ -304,6 +328,33 @@
     // get constellation dot element by id
     function getDotByConstellationId(constellationId) {
         return document.querySelector(`.constellation[data-id="${constellationId}"]`)
+    }
+
+    function isConstellationFocused(dot) {
+        if (!dot) {
+            return false
+        }
+
+        const left = parseFloat(dot.style.left)
+        const top = parseFloat(dot.style.top)
+        if (!Number.isFinite(left) || !Number.isFinite(top)) {
+            return false
+        }
+
+        return Math.abs(left - 50) < 0.15 && Math.abs(top - 50) < 0.15 && !dot.classList.contains('faded')
+    }
+
+    function applyCursorState(element, constellation, nodeUrl) {
+        const dot = getDotByConstellationId(constellation.id)
+        const focused = isConstellationFocused(dot)
+        const hasRealUrl = typeof nodeUrl === 'string' && nodeUrl.trim().length > 0 && nodeUrl !== '#'
+
+        if (!focused || hasRealUrl) {
+            element.style.cursor = 'pointer'
+            return
+        }
+
+        element.style.cursor = 'default'
     }
 
     // reset all nodes to default close + dim appearance

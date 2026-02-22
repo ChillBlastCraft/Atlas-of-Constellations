@@ -114,6 +114,43 @@
         endHover(constellationId)
     }
 
+    function getFocusedSpacingMultiplier(constellation, centerX, centerY) {
+        const viewportPaddingPercent = 8
+        const minX = viewportPaddingPercent
+        const maxX = 100 - viewportPaddingPercent
+        const minY = viewportPaddingPercent
+        const maxY = 100 - viewportPaddingPercent
+
+        if (!Array.isArray(constellation.nodes) || constellation.nodes.length === 0) {
+            return NODE_SPACING_MULTIPLIER
+        }
+
+        let maxAllowedSpacing = Number.POSITIVE_INFINITY
+
+        constellation.nodes.forEach(node => {
+            const offsetX = node.x - constellation.position.x
+            const offsetY = node.y - constellation.position.y
+
+            if (offsetX > 0) {
+                maxAllowedSpacing = Math.min(maxAllowedSpacing, (maxX - centerX) / offsetX)
+            } else if (offsetX < 0) {
+                maxAllowedSpacing = Math.min(maxAllowedSpacing, (minX - centerX) / offsetX)
+            }
+
+            if (offsetY > 0) {
+                maxAllowedSpacing = Math.min(maxAllowedSpacing, (maxY - centerY) / offsetY)
+            } else if (offsetY < 0) {
+                maxAllowedSpacing = Math.min(maxAllowedSpacing, (minY - centerY) / offsetY)
+            }
+        })
+
+        if (!Number.isFinite(maxAllowedSpacing) || maxAllowedSpacing <= 0) {
+            return NODE_SPACING_MULTIPLIER
+        }
+
+        return Math.min(NODE_SPACING_MULTIPLIER, maxAllowedSpacing)
+    }
+
     function onClick(constellation, dot) {
         console.clear()
         console.log("Clicked on constellation:", constellation.name)
@@ -151,12 +188,14 @@
         dot.style.top = cy + "%"
         dot.style.transform = 'translate(-50%, -50%) scale(2)'
 
+        const focusedSpacingMultiplier = getFocusedSpacingMultiplier(constellation, cx, cy)
+
         // update nodes for clicked constellation
         updateNodesForConstellation(
             constellation,
             cx,
             cy,
-            NODE_SPACING_MULTIPLIER,
+            focusedSpacingMultiplier,
             FULL_NODE_OPACITY,
             NODE_ACTIVE_SCALE
         )
