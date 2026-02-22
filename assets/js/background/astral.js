@@ -15,12 +15,16 @@
     let cameraTweenStartY = 0
     let cameraTweenStartTime = 0
     let cameraTweenActive = false
+    let astralDepth = 1
 
-    const STAR_COUNT = 500
+    const BASE_STAR_COUNT = 500
     const NEBULA_SEED_COUNT = 10
     const STAR_MIN_SIZE = 0.25
     const STAR_MAX_SIZE = 1.75
-    const CANVAS_OVERSCAN = 1.25
+    const BASE_CANVAS_OVERSCAN = 1.25
+    const ASTRAL_DEPTH_MIN = 1
+    const ASTRAL_DEPTH_MAX = 1.9
+    const ASTRAL_DEPTH_STEP = 0.08
     const CAMERA_OFFSET_FACTOR = 0.16
     const MAX_CAMERA_OFFSET = 110
     const CAMERA_MOVE_DURATION_MS = 1000
@@ -35,6 +39,41 @@
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value))
+    }
+
+    function createStar() {
+        return {
+            x: Math.random(),
+            y: Math.random(),
+            size: randomInRange(STAR_MIN_SIZE, STAR_MAX_SIZE),
+            twinkleSpeed: randomInRange(0.4, 1.4),
+            twinkleOffset: randomInRange(0, Math.PI * 2),
+            drift: randomInRange(-0.03, 0.03)
+        }
+    }
+
+    function getTargetStarCount() {
+        return Math.round(BASE_STAR_COUNT * astralDepth)
+    }
+
+    function getCanvasOverscan() {
+        return BASE_CANVAS_OVERSCAN * astralDepth
+    }
+
+    function syncStarCount() {
+        const targetCount = getTargetStarCount()
+
+        if (stars.length < targetCount) {
+            const addCount = targetCount - stars.length
+            for (let index = 0; index < addCount; index += 1) {
+                stars.push(createStar())
+            }
+            return
+        }
+
+        if (stars.length > targetCount) {
+            stars.length = targetCount
+        }
     }
 
     function cubicBezierEase(time) {
@@ -88,14 +127,7 @@
     }
 
     function createStars() {
-        stars = Array.from({ length: STAR_COUNT }, () => ({
-            x: Math.random(),
-            y: Math.random(),
-            size: randomInRange(STAR_MIN_SIZE, STAR_MAX_SIZE),
-            twinkleSpeed: randomInRange(0.4, 1.4),
-            twinkleOffset: randomInRange(0, Math.PI * 2),
-            drift: randomInRange(-0.03, 0.03)
-        }))
+        stars = Array.from({ length: getTargetStarCount() }, () => createStar())
     }
 
     function createNebulaSeeds() {
@@ -118,8 +150,9 @@
         const dpr = window.devicePixelRatio || 1
         const viewportWidth = window.innerWidth
         const viewportHeight = window.innerHeight
-        width = Math.floor(viewportWidth * CANVAS_OVERSCAN)
-        height = Math.floor(viewportHeight * CANVAS_OVERSCAN)
+        const overscan = getCanvasOverscan()
+        width = Math.floor(viewportWidth * overscan)
+        height = Math.floor(viewportHeight * overscan)
 
         const offsetX = Math.floor((width - viewportWidth) * 0.5)
         const offsetY = Math.floor((height - viewportHeight) * 0.5)
@@ -132,6 +165,44 @@
         canvas.style.top = (-offsetY) + 'px'
 
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+
+    function adjustAstralDepth(delta) {
+        const nextDepth = clamp(astralDepth + delta, ASTRAL_DEPTH_MIN, ASTRAL_DEPTH_MAX)
+        if (nextDepth === astralDepth) {
+            return
+        }
+
+        astralDepth = nextDepth
+        syncStarCount()
+        resizeCanvas()
+    }
+
+    function onWheelControl(event) {
+        if (!event.ctrlKey) {
+            return
+        }
+
+        const direction = event.deltaY < 0 ? 1 : -1
+        adjustAstralDepth(direction * ASTRAL_DEPTH_STEP)
+    }
+
+    function onKeyboardControl(event) {
+        if (!event.ctrlKey) {
+            return
+        }
+
+        const plusPressed = event.key === '+' || event.key === '=' || event.code === 'NumpadAdd'
+        const minusPressed = event.key === '-' || event.key === '_' || event.code === 'NumpadSubtract'
+
+        if (plusPressed) {
+            adjustAstralDepth(ASTRAL_DEPTH_STEP)
+            return
+        }
+
+        if (minusPressed) {
+            adjustAstralDepth(-ASTRAL_DEPTH_STEP)
+        }
     }
 
     function drawSpaceBase() {
@@ -252,6 +323,8 @@
         startAnimation()
 
         window.addEventListener('resize', resizeCanvas)
+        window.addEventListener('wheel', onWheelControl, { passive: true })
+        window.addEventListener('keydown', onKeyboardControl)
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 stopAnimation()
