@@ -3,7 +3,6 @@
 │          RESET          │
 └─────────────────────────┘
 */
-
 * {
     margin: 0;
     padding: 0;
@@ -15,7 +14,6 @@
 │          BODY          │
 └────────────────────────┘
 */
-
 body {
     width: 100vw;
     height: 100vh;
@@ -29,7 +27,6 @@ body {
 │          UNIVERSE          │
 └────────────────────────────┘
 */
-
 .universe {
     position: relative;
     width: 100%;
@@ -42,11 +39,10 @@ body {
 │          CONSTELLATION DOT          │
 └─────────────────────────────────────┘
 */
-
 .constellation {
     position: absolute;
-    width: 50px;
-    height: 50px;
+    width: 25px;
+    height: 25px;
     border-radius: 50%;
     background: white;
     transition: transform 1s ease, 
@@ -68,7 +64,7 @@ body {
 
 /* in-active constellations || other constellations */
 .faded {
-    opacity: 0.4;
+    opacity: 0.25;
 }
 
 /*
@@ -76,7 +72,6 @@ body {
 │         CONSTELLATION NODE          │
 └─────────────────────────────────────┘
 */
-
 .constellation-node {
     position: absolute;
     width: 18px;
@@ -85,8 +80,9 @@ body {
     background: #fff;
     border: 2px solid #333;
     display: block;
+    opacity: 0.1;
     transform: translate(-50%, -50%) scale(0.7);
-    transition: box-shadow 0.3s, background 0.3s;
+    transition: box-shadow 0.3s, background 0.3s, left 1s ease, top 1s ease, opacity 0.6s ease, transform 0.6s ease;
     z-index: 2;
 }
 
@@ -100,7 +96,6 @@ body {
 │        BACK BUTTON       │
 └──────────────────────────┘
 */
-
 #back-button {
     position: absolute;
     bottom: 5rem;
