@@ -1,0 +1,591 @@
+/* 
+┌─────────────────────────┐
+│          BODY           │
+└─────────────────────────┘
+*/
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at center, #121833 0%, #0b1022 60%, #060910 100%);
+    color: #eef3ff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+    text-align: center;
+    padding: 2rem;
+    width: min(1120px, 94vw);
+}
+
+h1 {
+    margin: 0 0 0.75rem;
+    letter-spacing: 0.08em;
+}
+
+p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+/* 
+┌─────────────────────────┐
+│        APP SHELL        │
+└─────────────────────────┘
+*/
+.app-shell {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.category-menu {
+    border: 1px solid rgba(238, 243, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.8rem;
+    display: grid;
+    gap: 0.5rem;
+    text-align: left;
+}
+
+.category-menu h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+}
+
+.category-entry {
+    width: 100%;
+    text-align: left;
+}
+
+.category-entry.active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* 
+┌─────────────────────────┐
+│          PANEL          │
+└─────────────────────────┘
+*/
+.panel {
+    padding: 1rem;
+    border: 1px solid rgba(238, 243, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    text-align: left;
+}
+
+.category-view {
+    display: none;
+}
+
+.category-view.active {
+    display: block;
+}
+
+.category-description {
+    margin: 0 0 0.8rem;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    align-items: center;
+}
+
+input {
+    width: min(360px, 100%);
+    padding: 0.55rem 0.65rem;
+    border: 1px solid rgba(238, 243, 255, 0.35);
+.atlas-type-group h3 {
+    display: flex;
+    align-items: center;
+    min-height: 18px;
+}
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #eef3ff;
+    font: inherit;
+}
+
+.atlas-check-control {
+    display: inline-flex;
+    align-items: center;
+}
+.atlas-check-control span {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
+button {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid rgba(238, 243, 255, 0.4);
+    border-radius: 8px;
+    background: transparent;
+    color: #eef3ff;
+    cursor: pointer;
+    font: inherit;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+.atlas-select-input::placeholder {
+    color: #f0dfbe;
+    opacity: 1;
+}
+
+#status {
+    margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* 
+┌─────────────────────────┐
+│         BROWSER         │
+└─────────────────────────┘
+*/
+.browser {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) 1fr;
+    gap: 1rem;
+}
+
+.menu,
+.details {
+    border: 1px solid rgba(238, 243, 255, 0.14);
+    border-radius: 10px;
+    padding: 0.8rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.menu h2,
+.details h2 {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+}
+
+.menu h3,
+.details h3 {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+}
+
+#item-list {
+    max-height: 56vh;
+    overflow: auto;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.item-entry {
+    width: 100%;
+    text-align: left;
+    padding: 0.45rem 0.6rem;
+}
+
+.item-entry.active {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#item-details {
+    max-height: 56vh;
+    overflow: auto;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.kv {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 0.7rem;
+    font-size: 0.92rem;
+}
+
+.id-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.id-table th,
+.id-table td {
+    border-bottom: 1px solid rgba(238, 243, 255, 0.15);
+    text-align: left;
+    padding: 0.35rem 0.25rem;
+}
+
+/* 
+┌─────────────────────────┐
+│        WYNNATLAS        │
+└─────────────────────────┘
+*/
+.atlas-controls {
+    margin: 1rem 0 0.75rem;
+}
+
+#atlas-search {
+    width: min(460px, 100%);
+}
+
+.atlas-top-search {
+    margin: 0.9rem 0;
+}
+
+.atlas-top-search #atlas-search {
+    width: 100%;
+    border-radius: 2px;
+    border-color: rgba(181, 144, 77, 0.45);
+    background: linear-gradient(180deg, rgba(27, 33, 41, 0.96), rgba(14, 18, 25, 0.96));
+    box-shadow: inset 0 0 0 1px rgba(255, 222, 168, 0.04);
+}
+
+.atlas-layout {
+    display: grid;
+    grid-template-columns: minmax(300px, 1fr) minmax(280px, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.atlas-left,
+.atlas-right {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.atlas-group {
+    border: 1px solid rgba(176, 141, 80, 0.38);
+    border-radius: 2px;
+    padding: 0.65rem;
+    background: linear-gradient(180deg, rgba(19, 24, 33, 0.96), rgba(12, 16, 22, 0.96));
+    box-shadow: inset 0 0 0 1px rgba(255, 220, 166, 0.04);
+}
+
+.atlas-group h3 {
+    margin: 0 0 0.45rem;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #d8bc87;
+}
+
+.atlas-inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+}
+
+.atlas-check-control {
+    color: #f0d8a8;
+    font-size: 0.88rem;
+    letter-spacing: 0.05em;
+}
+
+.atlas-check-control input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    border: 1px solid #b89153;
+    background: linear-gradient(180deg, rgba(14, 18, 25, 1), rgba(8, 11, 16, 1));
+    box-shadow: inset 0 0 0 1px rgba(255, 220, 166, 0.08);
+    position: relative;
+}
+
+.atlas-check-control input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 8px;
+    border-right: 2px solid #f3dfb3;
+    border-bottom: 2px solid #f3dfb3;
+    transform: translate(-50%, -58%) rotate(45deg);
+}
+
+.atlas-type-filter-fields {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid rgba(176, 141, 80, 0.48);
+}
+
+.atlas-type-filter-fields.disabled {
+    display: none;
+}
+
+.atlas-type-group {
+    padding: 0.5rem 0.65rem 0.65rem;
+}
+
+.atlas-filter-row {
+    display: grid;
+    grid-template-columns: 56% 44%;
+    min-height: 32px;
+    border-bottom: 1px solid rgba(176, 141, 80, 0.42);
+}
+
+.atlas-filter-row:last-child {
+    border-bottom: 0;
+}
+
+.atlas-filter-label {
+    display: flex;
+    align-items: center;
+    padding: 0.42rem 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #f0dfbe;
+    background: linear-gradient(180deg, rgba(7, 10, 15, 0.98), rgba(5, 8, 12, 0.98));
+    border-right: 1px solid rgba(176, 141, 80, 0.42);
+}
+
+.atlas-select-wrap {
+    position: relative;
+    background: linear-gradient(180deg, rgba(37, 45, 57, 0.98), rgba(26, 32, 41, 0.98));
+}
+
+.atlas-select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid rgba(230, 215, 184, 0.9);
+    transform: translateY(-30%);
+    pointer-events: none;
+}
+
+.atlas-select-input {
+    width: 100%;
+    height: 100%;
+    padding: 0.35rem 2rem 0.35rem 0.65rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #f0dfbe;
+    font: inherit;
+}
+
+.atlas-select-input:focus {
+    outline: 1px solid rgba(195, 158, 93, 0.8);
+    outline-offset: -1px;
+}
+
+.atlas-options {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 1px);
+    max-height: 280px;
+    overflow: auto;
+    background: linear-gradient(180deg, rgba(17, 23, 33, 0.99), rgba(10, 14, 20, 0.99));
+    border: 1px solid rgba(176, 141, 80, 0.5);
+    z-index: 20;
+}
+
+.atlas-option {
+    padding: 0.45rem 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #ead7af;
+    cursor: pointer;
+}
+
+.atlas-option + .atlas-option {
+    border-top: 1px solid rgba(176, 141, 80, 0.2);
+}
+
+.atlas-option:hover,
+.atlas-option.active {
+    background: rgba(109, 132, 159, 0.45);
+    color: #ffffff;
+}
+
+.atlas-group label {
+    display: block;
+    margin: 0.18rem 0;
+    font-size: 0.87rem;
+}
+
+.atlas-group input[type="checkbox"] {
+    margin-right: 0.4rem;
+    accent-color: #b78d49;
+}
+
+.atlas-req-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.atlas-req-grid label {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.atlas-group input[type="search"],
+.atlas-group input[type="number"],
+.atlas-group select {
+    width: 100%;
+    border-radius: 2px;
+    border-color: rgba(176, 141, 80, 0.44);
+    background: linear-gradient(180deg, rgba(35, 42, 52, 0.95), rgba(21, 26, 34, 0.95));
+    box-shadow: inset 0 0 0 1px rgba(255, 229, 186, 0.04);
+}
+
+.atlas-group select {
+    cursor: pointer;
+}
+
+.atlas-stat-builder {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.5rem;
+}
+
+.atlas-stat-groups {
+    margin-top: 0.65rem;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.atlas-stat-entry {
+    border: 1px solid rgba(176, 141, 80, 0.36);
+    border-radius: 2px;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.88rem;
+    background: rgba(18, 23, 31, 0.9);
+}
+
+.atlas-bottom {
+    margin: 1rem 0 0.75rem;
+}
+
+.atlas-bottom button {
+    min-width: 150px;
+    border-radius: 2px;
+    border-color: rgba(176, 141, 80, 0.58);
+    background: linear-gradient(180deg, rgba(51, 58, 68, 0.95), rgba(28, 34, 43, 0.95));
+    color: #f0e0bb;
+}
+
+.atlas-bottom button:hover {
+    background: linear-gradient(180deg, rgba(64, 73, 86, 0.96), rgba(35, 42, 52, 0.96));
+}
+
+.rarity-normal {
+    color: #ffffff;
+}
+
+.rarity-unique {
+    color: #ffe27a;
+}
+
+.rarity-rare {
+    color: #67f0ff;
+}
+
+.rarity-legendary {
+    color: #8b1f1f;
+}
+
+.rarity-fabled {
+    color: #ff9d35;
+}
+
+.rarity-mythic {
+    color: #ff7ce8;
+}
+
+#atlas-status {
+    margin: 0 0 0.9rem;
+    font-size: 0.88rem;
+    color: #d3c09a;
+}
+
+.atlas-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.atlas-type-card {
+    border: 1px solid rgba(176, 141, 80, 0.34);
+    border-radius: 2px;
+    padding: 0.75rem;
+    background: linear-gradient(180deg, rgba(20, 26, 34, 0.95), rgba(13, 18, 24, 0.95));
+}
+
+.atlas-type-card h3 {
+    margin: 0 0 0.45rem;
+    font-size: 0.9rem;
+    color: #dec291;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.atlas-type-card p {
+    margin: 0.2rem 0;
+}
+
+/* 
+┌─────────────────────────┐
+│          OUTPUT         │
+└─────────────────────────┘
+*/
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 48vh;
+    overflow: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+    .app-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .category-menu {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: center;
+    }
+
+    .category-menu h2 {
+        grid-column: 1 / -1;
+    }
+
+    .browser {
+        grid-template-columns: 1fr;
+    }
+
+    .atlas-type-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .atlas-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .atlas-stat-builder {
+        grid-template-columns: 1fr;
+    }
+}

@@ -4,37 +4,153 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WynnBuilder+</title>
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            background: radial-gradient(circle at center, #121833 0%, #0b1022 60%, #060910 100%);
-            color: #eef3ff;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-
-        main {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        h1 {
-            margin: 0 0 0.75rem;
-            letter-spacing: 0.08em;
-        }
-
-        p {
-            margin: 0;
-            opacity: 0.9;
-        }
-    </style>
+    <link rel="stylesheet" href="WynnBuilderPlus.css">
 </head>
 <body>
     <main>
         <h1>WynnBuilder+</h1>
-        <p>Improved WynnBuilder project page placeholder.</p>
+        <p>WAPI vanilla JS item browser.</p>
+
+        <section class="app-shell" aria-label="WynnBuilder+ sections">
+            <aside class="category-menu" aria-label="Category menu">
+                <h2>Menu</h2>
+                <button class="category-entry active" type="button" data-view="wynnbuilder">WynnBuilder</button>
+                <button class="category-entry" type="button" data-view="wynncrafting">WynnCrafting</button>
+                <button class="category-entry" type="button" data-view="wynnatlas">WynnAtlas</button>
+            </aside>
+
+            <section class="panel category-view active" data-view="wynnbuilder" aria-label="Wynnbuilder">
+                <h2>WynnBuilder</h2>
+                <p class="category-description">Make builds.</p>
+                <p id="status" aria-live="polite">Ready.</p>
+                <div class="controls">
+                    <button id="load-items" type="button">Load all items</button>
+                    <button id="run-diagnostics" type="button">Run diagnostics</button>
+                    <input id="item-search" type="search" placeholder="Search by name, type, subtype..." aria-label="Search items">
+                    <span id="item-count">0 items</span>
+                </div>
+                <div class="browser">
+                    <aside class="menu" aria-label="Item list">
+                        <h3>Items</h3>
+                        <div id="item-list"></div>
+                    </aside>
+                    <section class="details" aria-label="Item details">
+                        <h3>Details</h3>
+                        <div id="item-details">Load items to view details.</div>
+                    </section>
+                </div>
+                <pre id="output" aria-live="polite"></pre>
+            </section>
+
+            <section class="panel category-view" data-view="wynncrafting" aria-label="Wynncrafting">
+                <h2>WynnCrafting</h2>
+                <p class="category-description">Craft items.</p>
+            </section>
+
+            <section class="panel category-view" data-view="wynnatlas" aria-label="Wynnatlas">
+                <h2>WynnAtlas</h2>
+                <p class="category-description">Search engine.</p>
+                <div class="atlas-top-search">
+                    <input id="atlas-search" type="search" placeholder="Search item" aria-label="Search item">
+                </div>
+
+                <div class="atlas-layout" aria-label="WynnAtlas filters">
+                    <aside class="atlas-left" aria-label="Primary filters">
+                        <section class="atlas-group atlas-type-group">
+                            <h3>
+                                <label class="atlas-inline-check atlas-check-control">
+                                    <input id="atlas-enable-type-filters" type="checkbox" checked>
+                                    <span>Type Filters</span>
+                                </label>
+                            </h3>
+                            <div id="atlas-type-filter-fields" class="atlas-type-filter-fields">
+                                <div class="atlas-filter-row">
+                                    <span class="atlas-filter-label">Item Category</span>
+                                    <div class="atlas-select-wrap">
+                                        <input id="atlas-category-select" class="atlas-select-input" type="text" placeholder="ANY" aria-label="Item category filter" autocomplete="off" spellcheck="false">
+                                        <div id="atlas-category-options" class="atlas-options" hidden></div>
+                                    </div>
+                                </div>
+                                <div class="atlas-filter-row">
+                                    <span class="atlas-filter-label">Item Rarity</span>
+                                    <div class="atlas-select-wrap">
+                                        <input id="atlas-rarity-select" class="atlas-select-input" type="text" placeholder="ANY" aria-label="Item rarity filter" autocomplete="off" spellcheck="false">
+                                        <div id="atlas-rarity-options" class="atlas-options" hidden></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="atlas-group">
+                            <h3>Weapon Filters</h3>
+                            <label><input type="checkbox" name="atlas-weapon" value="bow"> Bow</label>
+                            <label><input type="checkbox" name="atlas-weapon" value="spear"> Spear</label>
+                            <label><input type="checkbox" name="atlas-weapon" value="dagger"> Dagger</label>
+                            <label><input type="checkbox" name="atlas-weapon" value="wand"> Wand</label>
+                            <label><input type="checkbox" name="atlas-weapon" value="relik"> Relik</label>
+                        </section>
+
+                        <section class="atlas-group">
+                            <h3>Armour Filters</h3>
+                            <label><input type="checkbox" name="atlas-armour" value="helmet"> Helmet</label>
+                            <label><input type="checkbox" name="atlas-armour" value="chestplate"> Chestplate</label>
+                            <label><input type="checkbox" name="atlas-armour" value="leggings"> Leggings</label>
+                            <label><input type="checkbox" name="atlas-armour" value="boots"> Boots</label>
+                        </section>
+
+                        <section class="atlas-group">
+                            <h3>Ingredient Filters</h3>
+                            <label><input type="checkbox" name="atlas-ingredient" value="ingredient"> Ingredient Type</label>
+                        </section>
+
+                        <section class="atlas-group">
+                            <h3>Level and Attribute Requirements</h3>
+                            <div class="atlas-req-grid">
+                                <label>Min Level <input id="atlas-min-level" type="number" min="0" placeholder="0"></label>
+                                <label>Max Level <input id="atlas-max-level" type="number" min="0" placeholder="106"></label>
+                                <label>Str <input id="atlas-req-str" type="number" min="0" placeholder="0"></label>
+                                <label>Dex <input id="atlas-req-dex" type="number" min="0" placeholder="0"></label>
+                                <label>Int <input id="atlas-req-int" type="number" min="0" placeholder="0"></label>
+                                <label>Def <input id="atlas-req-def" type="number" min="0" placeholder="0"></label>
+                                <label>Agi <input id="atlas-req-agi" type="number" min="0" placeholder="0"></label>
+                            </div>
+                        </section>
+                    </aside>
+
+                    <section class="atlas-right" aria-label="Stat filters">
+                        <section class="atlas-group">
+                            <h3>Stat Filter</h3>
+                            <input id="atlas-stat-search" type="search" placeholder="Search stat (spell damage%, melee damage, mana regen, poison)">
+                        </section>
+
+                        <section class="atlas-group">
+                            <h3>Add Stat Group</h3>
+                            <div class="atlas-stat-builder">
+                                <select id="atlas-stat-mode" aria-label="Stat group mode">
+                                    <option value="and">And</option>
+                                    <option value="not">Not</option>
+                                    <option value="count">Count</option>
+                                    <option value="weighted-sum">Weighted Sum</option>
+                                </select>
+                                <input id="atlas-stat-value" type="number" step="1" placeholder="Value / weight">
+                                <button id="atlas-add-group" type="button">Add stat group</button>
+                            </div>
+                            <div id="atlas-stat-groups" class="atlas-stat-groups"></div>
+                        </section>
+                    </section>
+                </div>
+
+                <div class="atlas-bottom">
+                    <button id="atlas-run-search" type="button">Search</button>
+                </div>
+
+                <p id="atlas-status" aria-live="polite">Open WynnAtlas to load and categorize items.</p>
+                <div id="atlas-type-grid" class="atlas-type-grid" aria-live="polite"></div>
+            </section>
+        </section>
     </main>
+
+    <script src="./api/wapi-client.js"></script>
+    <script src="./wapi-app.js"></script>
 </body>
 </html>
