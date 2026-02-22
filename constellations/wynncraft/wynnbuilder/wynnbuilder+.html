@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>WynnBuilder+ WAPI</title>
+	<link rel="stylesheet" href="../wapi/wapi.css">
+	<script type="module" defer src="../wapi/wapi-page.js"></script>
+</head>
+<body>
+	<main>
+		<h1>Wynncraft API (WAPI) Tester</h1>
+		<section class="card">
+			<form id="player-form">
+				<label for="player-name">
+					Player Name
+					<input id="player-name" name="player-name" type="text" placeholder="Enter player name" required>
+				</label>
+
+				<label for="endpoint-path">
+					Endpoint Path (optional)
+					<input id="endpoint-path" name="endpoint-path" type="text" placeholder="/player/{player}/stats">
+				</label>
+
+				<button type="submit">Fetch from WAPI</button>
+			</form>
+			<p id="status" data-type="idle"></p>
+		</section>
+
+		<section class="card" style="margin-top: 1rem;">
+			<pre id="result">{
+  "info": "Response output appears here"
+}</pre>
+		</section>
+	</main>
+	<button id="api-health-check" type="button" aria-label="Check API status">API Check</button>
+</body>
+</html>
