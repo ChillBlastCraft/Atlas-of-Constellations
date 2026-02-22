@@ -8,12 +8,14 @@
 </head>
 <body>
     <main>
+        <div class="menu-toolbar">
+            <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="category-menu" aria-expanded="false" aria-label="Toggle main menu">☰ Menu</button>
+        </div>
         <h1>WynnBuilder+</h1>
         <p>WAPI vanilla JS item browser.</p>
 
         <section class="app-shell" aria-label="WynnBuilder+ sections">
-            <aside class="category-menu" aria-label="Category menu">
-                <h2>Menu</h2>
+            <aside id="category-menu" class="category-menu" aria-label="Category menu">
                 <button class="category-entry active" type="button" data-view="wynnbuilder">WynnBuilder</button>
                 <button class="category-entry" type="button" data-view="wynncrafting">WynnCrafting</button>
                 <button class="category-entry" type="button" data-view="wynnatlas">WynnAtlas</button>
@@ -49,7 +51,6 @@
 
             <section class="panel category-view" data-view="wynnatlas" aria-label="Wynnatlas">
                 <h2>WynnAtlas</h2>
-                <p class="category-description">Search engine.</p>
                 <div class="atlas-top-search">
                     <input id="atlas-search" type="search" placeholder="Search item" aria-label="Search item">
                 </div>
@@ -81,61 +82,23 @@
                             </div>
                         </section>
 
-                        <section class="atlas-group">
-                            <h3>Weapon Filters</h3>
-                            <label><input type="checkbox" name="atlas-weapon" value="bow"> Bow</label>
-                            <label><input type="checkbox" name="atlas-weapon" value="spear"> Spear</label>
-                            <label><input type="checkbox" name="atlas-weapon" value="dagger"> Dagger</label>
-                            <label><input type="checkbox" name="atlas-weapon" value="wand"> Wand</label>
-                            <label><input type="checkbox" name="atlas-weapon" value="relik"> Relik</label>
-                        </section>
-
-                        <section class="atlas-group">
-                            <h3>Armour Filters</h3>
-                            <label><input type="checkbox" name="atlas-armour" value="helmet"> Helmet</label>
-                            <label><input type="checkbox" name="atlas-armour" value="chestplate"> Chestplate</label>
-                            <label><input type="checkbox" name="atlas-armour" value="leggings"> Leggings</label>
-                            <label><input type="checkbox" name="atlas-armour" value="boots"> Boots</label>
-                        </section>
-
-                        <section class="atlas-group">
-                            <h3>Ingredient Filters</h3>
-                            <label><input type="checkbox" name="atlas-ingredient" value="ingredient"> Ingredient Type</label>
-                        </section>
-
-                        <section class="atlas-group">
-                            <h3>Level and Attribute Requirements</h3>
-                            <div class="atlas-req-grid">
-                                <label>Min Level <input id="atlas-min-level" type="number" min="0" placeholder="0"></label>
-                                <label>Max Level <input id="atlas-max-level" type="number" min="0" placeholder="106"></label>
-                                <label>Str <input id="atlas-req-str" type="number" min="0" placeholder="0"></label>
-                                <label>Dex <input id="atlas-req-dex" type="number" min="0" placeholder="0"></label>
-                                <label>Int <input id="atlas-req-int" type="number" min="0" placeholder="0"></label>
-                                <label>Def <input id="atlas-req-def" type="number" min="0" placeholder="0"></label>
-                                <label>Agi <input id="atlas-req-agi" type="number" min="0" placeholder="0"></label>
-                            </div>
-                        </section>
                     </aside>
 
                     <section class="atlas-right" aria-label="Stat filters">
                         <section class="atlas-group">
-                            <h3>Stat Filter</h3>
-                            <input id="atlas-stat-search" type="search" placeholder="Search stat (spell damage%, melee damage, mana regen, poison)">
-                        </section>
-
-                        <section class="atlas-group">
-                            <h3>Add Stat Group</h3>
-                            <div class="atlas-stat-builder">
-                                <select id="atlas-stat-mode" aria-label="Stat group mode">
-                                    <option value="and">And</option>
-                                    <option value="not">Not</option>
-                                    <option value="count">Count</option>
-                                    <option value="weighted-sum">Weighted Sum</option>
-                                </select>
-                                <input id="atlas-stat-value" type="number" step="1" placeholder="Value / weight">
-                                <button id="atlas-add-group" type="button">Add stat group</button>
+                            <h3>
+                                <label class="atlas-inline-check atlas-check-control">
+                                    <input id="atlas-enable-stat-filters" type="checkbox" checked>
+                                    <span>Stat Filter</span>
+                                </label>
+                            </h3>
+                            <div id="atlas-stat-filter-fields" class="atlas-stat-filter-fields">
+                                <div class="atlas-stat-filter-picker">
+                                    <input id="atlas-stat-search" type="search" placeholder="+ Add Stat Filter" aria-label="Add stat filter" autocomplete="off" spellcheck="false">
+                                    <div id="atlas-stat-options" class="atlas-options" hidden></div>
+                                </div>
+                                <div id="atlas-stat-filters" class="atlas-stat-filters"></div>
                             </div>
-                            <div id="atlas-stat-groups" class="atlas-stat-groups"></div>
                         </section>
                     </section>
                 </div>
@@ -148,6 +111,8 @@
                 <div id="atlas-type-grid" class="atlas-type-grid" aria-live="polite"></div>
             </section>
         </section>
+
+        <div id="menu-backdrop" class="menu-backdrop" hidden></div>
     </main>
 
     <script src="./api/wapi-client.js"></script>
