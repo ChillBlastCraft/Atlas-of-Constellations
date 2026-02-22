@@ -15,13 +15,44 @@
         getDotByConstellationId
     } = NodeSystem
 
+    function setConstellationHighlight(constellationId, enabled) {
+        const method = enabled ? 'add' : 'remove'
+        const nodes = document.querySelectorAll(`.constellation-node[data-constellation-id="${constellationId}"]`)
+        const lines = document.querySelectorAll(`.constellation-line[data-constellation-id="${constellationId}"]`)
+
+        nodes.forEach(node => {
+            node.classList[method]('hover-bright')
+        })
+
+        lines.forEach(line => {
+            line.classList[method]('hover-bright')
+        })
+    }
+
+    function clearAllHighlights() {
+        document.querySelectorAll('.constellation.hovered').forEach(dot => {
+            dot.classList.remove('hovered')
+        })
+
+        document.querySelectorAll('.constellation-node.hover-bright, .constellation-line.hover-bright').forEach(element => {
+            element.classList.remove('hover-bright')
+        })
+    }
+
     function onHover(dot) {
         dot.classList.add("hovered")
+        setConstellationHighlight(dot.dataset.id, true)
+    }
+
+    function onLeave(dot) {
+        dot.classList.remove('hovered')
+        setConstellationHighlight(dot.dataset.id, false)
     }
 
     function onClick(constellation, dot) {
         console.clear()
         console.log("Clicked on constellation:", constellation.name)
+        clearAllHighlights()
 
         const allDots = document.querySelectorAll('.constellation')
         allDots.forEach(d => {
@@ -115,6 +146,8 @@
 
     // reset universe to original state (after back button click)
     function resetUniverse() {
+        clearAllHighlights()
+
         const allDots = document.querySelectorAll('.constellation')
         allDots.forEach(d => {
             d.style.left = d.constellation.position.x + "%"
@@ -156,6 +189,7 @@
     // functions into global scope for universe.js to call
     window.ConstellationSystem = {
         onHover,
+        onLeave,
         onClick,
         resetUniverse
     }

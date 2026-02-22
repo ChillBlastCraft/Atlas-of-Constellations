@@ -7,7 +7,8 @@ const constellations = [
             { x: 13, y: 33, url: "#" },
             { x: 17, y: 36, url: "#" },
             { x: 16, y: 32, url: "#" }
-        ]
+        ],
+        links: [[0, 2], [2, 1]]
     },
     {
         id: "beta",
@@ -17,7 +18,8 @@ const constellations = [
             { x: 67, y: 13, url: "#" },
             { x: 63, y: 17, url: "#" },
             { x: 66, y: 18, url: "#" }
-        ]
+        ],
+        links: [[0, 1], [1, 2]]
     },
     {
         id: "gamma",
@@ -27,7 +29,8 @@ const constellations = [
             { x: 92, y: 88, url: "#" },
             { x: 88, y: 92, url: "#" },
             { x: 91, y: 93, url: "#" }
-        ]
+        ],
+        links: [[0, 2], [2, 1]]
     },
     {
         id: "delta",
@@ -37,16 +40,7 @@ const constellations = [
             { x: 33, y: 77, url: "#" },
             { x: 37, y: 73, url: "#" },
             { x: 36, y: 78, url: "#" }
-        ]
+        ],
+        links: [[0, 2], [2, 1]]
     }, 
-    { 
-        id: "epsilon",
-        name: "Epsilon",
-        position: { x: 60, y: 55 },
-        nodes: [
-            { x: 62, y: 53, url: "#" },
-            { x: 58, y: 57, url: "#" },
-            { x: 61, y: 58, url: "#" }
-        ]
-    }
 ]

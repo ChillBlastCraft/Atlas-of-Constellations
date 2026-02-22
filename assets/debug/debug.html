@@ -9,6 +9,19 @@
     <div class="debug-menu">
         <h2>Debug Menu</h2>
         <button id="toggle-crosshairs">Toggle Crosshairs</button>
+        <button id="toggle-constellation-lines-test">Toggle Constellation Lines</button>
+        <button id="toggle-console-box">Toggle Console Box</button>
+        <p id="debug-error-status" class="debug-error-status" aria-live="polite"></p>
+    </div>
+
+    <div id="debug-console-box" class="debug-console-box" aria-label="Debug Console Box">
+        <div id="debug-console-drag-corner" class="debug-console-drag-corner" aria-label="Drag Console"></div>
+        <div class="debug-console-controls">
+            <button id="reset-console-box-position">Default Top Right</button>
+            <button id="clear-debug-log">Clear Console Log</button>
+            <button id="copy-debug-log">Copy Console</button>
+        </div>
+        <div id="debug-log" class="debug-log" aria-label="Debug Log"></div>
     </div>
 </body>
 </html>

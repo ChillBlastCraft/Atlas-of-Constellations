@@ -10,6 +10,7 @@ function renderUniverse() {
         dot.constellation = constellation
 
         dot.addEventListener("mouseover", () => onConstellationHover(dot))
+        dot.addEventListener("mouseleave", () => onConstellationLeave(dot))
         dot.addEventListener("click", () => onConstellationClick(constellation, dot))
 
         universe.appendChild(dot)
@@ -20,6 +21,10 @@ function renderUniverse() {
 // on hover
 function onConstellationHover(dot) {
     ConstellationSystem.onHover(dot)
+}
+
+function onConstellationLeave(dot) {
+    ConstellationSystem.onLeave(dot)
 }
 
 // on click
