@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Atlas of Constellations icon">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#1b2140"/>
+      <stop offset="100%" stop-color="#090c18"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <g stroke="#b8d6ff" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.9">
+    <path d="M14 45 L25 20 L39 30 L50 14"/>
+    <path d="M25 20 L46 46" opacity="0.6"/>
+  </g>
+  <g fill="#f7fbff">
+    <circle cx="14" cy="45" r="2.2"/>
+    <circle cx="25" cy="20" r="2.7"/>
+    <circle cx="39" cy="30" r="2.3"/>
+    <circle cx="50" cy="14" r="2.6"/>
+    <circle cx="46" cy="46" r="2.1"/>
+  </g>
+</svg>

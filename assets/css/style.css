@@ -117,6 +117,11 @@ main {
     z-index: 2;
 }
 
+.constellation-node[data-node-label] {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
 .constellation-node.hover-bright {
     background: #ffffff;
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.95), 0 0 24px rgba(206, 225, 255, 0.65);
@@ -146,14 +151,18 @@ main {
     position: absolute;
     left: 125%;
     top: 50%;
-    transform: translateY(-50%);
+    transform: translate3d(0, -50%, 0);
     color: rgba(239, 247, 255, 0.95);
     font-size: 0.78rem;
+    font-family: "Cinzel", "Palatino Linotype", "Book Antiqua", serif;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     text-shadow: 0 0 6px rgba(199, 221, 255, 0.5);
     white-space: nowrap;
     pointer-events: none;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
 }
 
 .constellation-line {
