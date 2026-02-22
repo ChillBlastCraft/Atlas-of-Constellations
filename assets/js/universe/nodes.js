@@ -241,6 +241,16 @@
             nodeDiv.constellation = constellation
             nodeDiv.nodeData = node
             nodeDiv.title = `Node ${idx + 1} of ${constellation.name}`
+            nodeDiv.addEventListener('mouseenter', () => {
+                if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverEnter === 'function') {
+                    window.ConstellationSystem.onRelatedHoverEnter(constellation.id)
+                }
+            })
+            nodeDiv.addEventListener('mouseleave', () => {
+                if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverLeave === 'function') {
+                    window.ConstellationSystem.onRelatedHoverLeave(constellation.id)
+                }
+            })
             nodeDiv.addEventListener("click", () => {
                 window.location.href = node.url
             })
@@ -269,6 +279,16 @@
             lineDiv.dataset.fromIndex = String(fromIndex)
             lineDiv.dataset.toIndex = String(toIndex)
             lineDiv.style.opacity = LOW_NODE_OPACITY
+            lineDiv.addEventListener('mouseenter', () => {
+                if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverEnter === 'function') {
+                    window.ConstellationSystem.onRelatedHoverEnter(constellation.id)
+                }
+            })
+            lineDiv.addEventListener('mouseleave', () => {
+                if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverLeave === 'function') {
+                    window.ConstellationSystem.onRelatedHoverLeave(constellation.id)
+                }
+            })
 
             const fromPos = getNodePositionFromStyle(fromNodeDiv)
             const toPos = getNodePositionFromStyle(toNodeDiv)

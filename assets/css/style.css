@@ -64,20 +64,28 @@ main {
 */
 .constellation {
     position: absolute;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    background: white;
-    transition: transform 1s ease, 
-                box-shadow 0.3s ease, left 1s ease, top 1s ease, 
+    width: max-content;
+    height: auto;
+    color: #ffffff;
+    font-size: 1rem;
+    font-family: "Cinzel", "Palatino Linotype", "Book Antiqua", serif;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    user-select: none;
+    transition: transform 0.45s ease, 
+                text-shadow 0.3s ease, left 1s ease, top 1s ease, 
                 opacity 1s ease;
     transform: translate(-50%, -50%);
 }
 
 .constellation:hover,
+.constellation.hovered,
+.constellation.faded.hovered,
 .constellation.faded:hover {
     transform: translate(-50%, -50%) scale(1.25);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
     cursor: pointer;
 }
 
@@ -126,7 +134,7 @@ main {
     background: linear-gradient(90deg, rgba(180, 210, 255, 0.2) 0%, rgba(225, 240, 255, 0.95) 50%, rgba(180, 210, 255, 0.2) 100%);
     box-shadow: 0 0 7px rgba(210, 230, 255, 0.65);
     transform-origin: center;
-    pointer-events: none;
+    pointer-events: auto;
     transition: left 1s ease, top 1s ease, width 1s ease, transform 1s ease, opacity 0.6s ease;
     z-index: 1;
 }

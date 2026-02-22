@@ -15,6 +15,57 @@
         getDotByConstellationId
     } = NodeSystem
 
+    // track hover sources for each constellation, allow multiple sources to hover without prematurely removing hover state
+    const hoverSourceCountByConstellationId = new Map()
+
+    // set hover state for constellation dot and related nodes/lines
+    function setDotHoverState(constellationId, enabled) {
+        const dot = getDotByConstellationId(constellationId)
+        if (!dot) {
+            return
+        }
+
+        if (enabled) {
+            dot.classList.add('hovered')
+        } else {
+            dot.classList.remove('hovered')
+        }
+
+        setConstellationHighlight(constellationId, enabled)
+    }
+
+    // clear all hover states and highlights
+    function beginHover(constellationId) {
+        if (!constellationId) {
+            return
+        }
+
+        const currentCount = hoverSourceCountByConstellationId.get(constellationId) || 0
+        const nextCount = currentCount + 1
+        hoverSourceCountByConstellationId.set(constellationId, nextCount)
+
+        if (nextCount === 1) {
+            setDotHoverState(constellationId, true)
+        }
+    }
+
+    // remove source of hover
+    function endHover(constellationId) {
+        if (!constellationId) {
+            return
+        }
+
+        const currentCount = hoverSourceCountByConstellationId.get(constellationId) || 0
+        if (currentCount <= 1) {
+            hoverSourceCountByConstellationId.delete(constellationId)
+            setDotHoverState(constellationId, false)
+            return
+        }
+
+        hoverSourceCountByConstellationId.set(constellationId, currentCount - 1)
+    }
+
+    // set highlights for constellation nodes and lines
     function setConstellationHighlight(constellationId, enabled) {
         let method
         if (enabled) {
@@ -34,7 +85,10 @@
         })
     }
 
+    // clear all highlights and hover states
     function clearAllHighlights() {
+        hoverSourceCountByConstellationId.clear()
+
         document.querySelectorAll('.constellation.hovered').forEach(dot => {
             dot.classList.remove('hovered')
         })
@@ -45,13 +99,19 @@
     }
 
     function onHover(dot) {
-        dot.classList.add("hovered")
-        setConstellationHighlight(dot.dataset.id, true)
+        beginHover(dot.dataset.id)
     }
 
     function onLeave(dot) {
-        dot.classList.remove('hovered')
-        setConstellationHighlight(dot.dataset.id, false)
+        endHover(dot.dataset.id)
+    }
+
+    function onRelatedHoverEnter(constellationId) {
+        beginHover(constellationId)
+    }
+
+    function onRelatedHoverLeave(constellationId) {
+        endHover(constellationId)
     }
 
     function onClick(constellation, dot) {
@@ -195,6 +255,8 @@
     window.ConstellationSystem = {
         onHover,
         onLeave,
+        onRelatedHoverEnter,
+        onRelatedHoverLeave,
         onClick,
         resetUniverse
     }
