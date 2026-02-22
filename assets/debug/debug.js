@@ -1,4 +1,3 @@
-// check if localhost
 const isLocalhost = window.location.hostname === 'localhost' ||
                     window.location.hostname === '127.0.0.1' ||
                     window.location.protocol === 'file:'
@@ -26,6 +25,7 @@ if (isLocalhost) {
     let consoleDragListenersBound = false
     let consoleBoxAttachedToBody = false
 
+    // utility function to convert various types of values to string for logging
     function stringifyValue(value) {
         if (value instanceof Error) {
             return value.stack || value.message
@@ -42,6 +42,7 @@ if (isLocalhost) {
         }
     }
 
+    // append a new log entry to the debug log and render it
     function appendDebugLog(level, args) {
         const line = args.map(stringifyValue).join(' ')
         debugLogEntries.push({
@@ -56,11 +57,13 @@ if (isLocalhost) {
 
         renderDebugLog()
 
+        // if it's an error, also show the error status message
         if (level === 'error') {
             showErrorStatus('ERROR: check console log for more info')
         }
     }
 
+    // show error message
     function showErrorStatus(message) {
         if (!debugErrorStatusEl) {
             return
@@ -70,6 +73,7 @@ if (isLocalhost) {
         debugErrorStatusEl.classList.add('active')
     }
 
+    // clear error message
     function clearErrorStatus() {
         if (!debugErrorStatusEl) {
             return
@@ -79,6 +83,7 @@ if (isLocalhost) {
         debugErrorStatusEl.classList.remove('active')
     }
 
+    // render logs
     function renderDebugLog() {
         if (!debugLogEl) {
             return
@@ -104,6 +109,7 @@ if (isLocalhost) {
             return
         }
 
+        // ensure the console box stays within the viewport with some padding
         const maxLeft = Math.max(CONSOLE_DEFAULT_OFFSET, window.innerWidth - debugConsoleBoxEl.offsetWidth - CONSOLE_DEFAULT_OFFSET)
         const maxTop = Math.max(CONSOLE_DEFAULT_OFFSET, window.innerHeight - debugConsoleBoxEl.offsetHeight - CONSOLE_DEFAULT_OFFSET)
         const safeLeft = clamp(left, CONSOLE_DEFAULT_OFFSET, maxLeft)
@@ -118,12 +124,14 @@ if (isLocalhost) {
             return
         }
 
+        // position the console box in the bottom right corner with some offset
         const width = debugConsoleBoxEl.offsetWidth || 430
         const defaultLeft = window.innerWidth - width - CONSOLE_DEFAULT_OFFSET
         const defaultTop = CONSOLE_DEFAULT_OFFSET
         setConsoleBoxPosition(defaultLeft, defaultTop)
     }
 
+    // toggles console
     function toggleConsoleBox() {
         if (!debugConsoleBoxEl) {
             return
@@ -135,9 +143,16 @@ if (isLocalhost) {
             setConsoleDefaultPosition()
         }
 
-        console.log('Console box:', consoleBoxVisible ? 'ON' : 'OFF')
+        let status
+        if (consoleBoxVisible) {
+            status = 'ON'
+        } else {
+            status = 'OFF'
+        }
+        console.log('Console box:', status)
     }
 
+    // drag console
     function onConsoleDragStart(event) {
         if (event.button !== 0) {
             return
@@ -154,6 +169,7 @@ if (isLocalhost) {
         consoleDragOffsetY = event.clientY - rect.top
     }
 
+    // dragging movement
     function onConsoleDragMove(event) {
         if (!isConsoleDragging || !debugConsoleBoxEl) {
             return
@@ -164,10 +180,12 @@ if (isLocalhost) {
         setConsoleBoxPosition(nextLeft, nextTop)
     }
 
+    // end dragging
     function onConsoleDragEnd() {
         isConsoleDragging = false
     }
 
+    // clear console logs
     function clearDebugLog() {
         debugLogEntries.length = 0
         renderDebugLog()
@@ -175,6 +193,7 @@ if (isLocalhost) {
         originalConsole.clear()
     }
 
+    // copy logs to clipboard
     async function copyDebugLog() {
         const text = debugLogEntries
             .map(entry => `[${entry.time}] ${entry.level.toUpperCase()}: ${entry.line}`)
@@ -206,11 +225,14 @@ if (isLocalhost) {
         }
     }
 
+    // `...args` is a rest parameter: it captures all console arguments as an array.
+    // we forward them to the real console with spread (`...args`) and also store them for the debug panel.
     console.log = (...args) => {
         originalConsole.log(...args)
         appendDebugLog('log', args)
     }
 
+    // some wrapper pattern for info/warn/error: preserve native output and mirror to in-page log.
     console.info = (...args) => {
         originalConsole.info(...args)
         appendDebugLog('info', args)
@@ -231,10 +253,12 @@ if (isLocalhost) {
         clearDebugLog()
     }
 
+    // capture unhandled errors, reject to log them in console
     window.addEventListener('error', event => {
         console.error(event.error || event.message)
     })
 
+    // capture unhandled rejection
     window.addEventListener('unhandledrejection', event => {
         console.error(event.reason)
     })
@@ -249,12 +273,10 @@ if (isLocalhost) {
     debugCSSLink.href = 'assets/debug/debug.css'
     document.head.appendChild(debugCSSLink)
 
-    // debug crossair (horizontal)
     const crosshairHorizontal = document.createElement('div')
     crosshairHorizontal.className = 'crosshair-horizontal debug'
     document.body.appendChild(crosshairHorizontal)
 
-    // debug crossair (vertical)
     const crosshairVertical = document.createElement('div')
     crosshairVertical.className = 'crosshair-vertical debug'
     document.body.appendChild(crosshairVertical)
@@ -332,6 +354,7 @@ if (isLocalhost) {
         }
     }
 
+    // show debug menu
     function showDebugMenu() {
         if (!menuVisible) {
             if (!debugMenuLoaded) {
@@ -343,11 +366,13 @@ if (isLocalhost) {
         }
     }
 
+    // hide debug menu
     function hideDebugMenu() {
         menuContainer.style.display = 'none'
         menuVisible = false
     }
 
+    // toggle crosshairs
     function toggleCrosshairs() {
         const currentDisplay = document.querySelector('.debug').style.display
         
@@ -371,9 +396,16 @@ if (isLocalhost) {
         console.log('Crosshairs:', status)
     }
 
+    // toggle constellation line test mode
     function toggleConstellationLineTestMode() {
         const enabled = document.body.classList.toggle('debug-constellation-lines-test')
-        console.log('Constellation line test mode:', enabled ? 'ON' : 'OFF')
+        let status
+        if (enabled) {
+            status = 'ON'
+        } else {
+            status = 'OFF'
+        }
+        console.log('Constellation line test mode:', status)
     }
 
     // toggle debug menu with 'D'

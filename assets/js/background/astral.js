@@ -183,7 +183,12 @@
             return
         }
 
-        const direction = event.deltaY < 0 ? 1 : -1
+        let direction
+        if (event.deltaY < 0) {
+            direction = 1
+        } else {
+            direction = -1
+        }
         adjustAstralDepth(direction * ASTRAL_DEPTH_STEP)
     }
 

@@ -36,55 +36,12 @@
         }
     }
 
-    function getAutoLinks(constellation) {
-        if (!Array.isArray(constellation.nodes) || constellation.nodes.length < 2) {
-            return []
-        }
-
-        const nodes = constellation.nodes
-        const visited = new Set([0])
-        const links = []
-
-        while (visited.size < nodes.length) {
-            let bestFrom = null
-            let bestTo = null
-            let bestDistance = Infinity
-
-            visited.forEach(fromIndex => {
-                for (let toIndex = 0; toIndex < nodes.length; toIndex += 1) {
-                    if (visited.has(toIndex)) {
-                        continue
-                    }
-
-                    const dx = nodes[fromIndex].x - nodes[toIndex].x
-                    const dy = nodes[fromIndex].y - nodes[toIndex].y
-                    const distance = Math.sqrt(dx * dx + dy * dy)
-
-                    if (distance < bestDistance) {
-                        bestDistance = distance
-                        bestFrom = fromIndex
-                        bestTo = toIndex
-                    }
-                }
-            })
-
-            if (bestFrom === null || bestTo === null) {
-                break
-            }
-
-            links.push([bestFrom, bestTo])
-            visited.add(bestTo)
-        }
-
-        return links
-    }
-
     function getConstellationLinks(constellation) {
-        if (Object.prototype.hasOwnProperty.call(constellation, 'links')) {
-            return Array.isArray(constellation.links) ? constellation.links : []
+        if (Array.isArray(constellation.links)) {
+            return constellation.links
         }
 
-        return getAutoLinks(constellation)
+        return []
     }
 
     function getLayoutState(constellationId) {
@@ -108,8 +65,19 @@
         const constellation = dot.constellation
         const left = parseFloat(dot.style.left)
         const top = parseFloat(dot.style.top)
-        const centerX = Number.isFinite(left) ? left : constellation.position.x
-        const centerY = Number.isFinite(top) ? top : constellation.position.y
+        let centerX
+        if (Number.isFinite(left)) {
+            centerX = left
+        } else {
+            centerX = constellation.position.x
+        }
+
+        let centerY
+        if (Number.isFinite(top)) {
+            centerY = top
+        } else {
+            centerY = constellation.position.y
+        }
         const layoutState = getLayoutState(constellationId)
 
         updateNodesForConstellation(

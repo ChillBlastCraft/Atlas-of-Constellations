@@ -16,7 +16,12 @@
     } = NodeSystem
 
     function setConstellationHighlight(constellationId, enabled) {
-        const method = enabled ? 'add' : 'remove'
+        let method
+        if (enabled) {
+            method = 'add'
+        } else {
+            method = 'remove'
+        }
         const nodes = document.querySelectorAll(`.constellation-node[data-constellation-id="${constellationId}"]`)
         const lines = document.querySelectorAll(`.constellation-line[data-constellation-id="${constellationId}"]`)
 
