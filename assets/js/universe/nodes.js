@@ -238,6 +238,7 @@
             const nodeDiv = document.createElement("div")
             nodeDiv.className = "constellation-node"
             nodeDiv.dataset.constellationId = constellation.id
+            nodeDiv.dataset.nodeIndex = String(idx)
             nodeDiv.constellation = constellation
             nodeDiv.nodeData = node
             if (typeof node.label === 'string' && node.label.trim().length > 0) {
@@ -247,12 +248,28 @@
             nodeDiv.title = node.title || node.label || `Node ${idx + 1} of ${constellation.name}`
             nodeDiv.addEventListener('mouseenter', () => {
                 applyCursorState(nodeDiv, constellation, node.url)
+                const dot = getDotByConstellationId(constellation.id)
+                const focused = isConstellationFocused(dot)
+
+                if (focused && window.ConstellationSystem && typeof window.ConstellationSystem.onNodeHoverEnter === 'function') {
+                    window.ConstellationSystem.onNodeHoverEnter(constellation.id, idx)
+                    return
+                }
+
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverEnter === 'function') {
                     window.ConstellationSystem.onRelatedHoverEnter(constellation.id)
                 }
             })
             nodeDiv.addEventListener('mouseleave', () => {
                 nodeDiv.style.cursor = ''
+                const dot = getDotByConstellationId(constellation.id)
+                const focused = isConstellationFocused(dot)
+
+                if (focused && window.ConstellationSystem && typeof window.ConstellationSystem.onNodeHoverLeave === 'function') {
+                    window.ConstellationSystem.onNodeHoverLeave(constellation.id, idx)
+                    return
+                }
+
                 if (window.ConstellationSystem && typeof window.ConstellationSystem.onRelatedHoverLeave === 'function') {
                     window.ConstellationSystem.onRelatedHoverLeave(constellation.id)
                 }

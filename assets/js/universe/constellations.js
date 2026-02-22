@@ -17,6 +17,7 @@
 
     // track hover sources for each constellation, allow multiple sources to hover without prematurely removing hover state
     const hoverSourceCountByConstellationId = new Map()
+    const hoveredNodeByConstellationId = new Map()
 
     // set hover state for constellation dot and related nodes/lines
     function setDotHoverState(constellationId, enabled) {
@@ -31,7 +32,47 @@
             dot.classList.remove('hovered')
         }
 
+        if (isConstellationFocused(constellationId)) {
+            setConstellationHighlight(constellationId, false)
+            return
+        }
+
         setConstellationHighlight(constellationId, enabled)
+    }
+
+    function isConstellationFocused(constellationId) {
+        const dot = getDotByConstellationId(constellationId)
+        if (!dot) {
+            return false
+        }
+
+        const left = parseFloat(dot.style.left)
+        const top = parseFloat(dot.style.top)
+        if (!Number.isFinite(left) || !Number.isFinite(top)) {
+            return false
+        }
+
+        return Math.abs(left - 50) < 0.15 && Math.abs(top - 50) < 0.15 && !dot.classList.contains('faded')
+    }
+
+    function setConstellationHighlight(constellationId, enabled) {
+        let method
+        if (enabled) {
+            method = 'add'
+        } else {
+            method = 'remove'
+        }
+
+        const nodes = document.querySelectorAll(`.constellation-node[data-constellation-id="${constellationId}"]`)
+        const lines = document.querySelectorAll(`.constellation-line[data-constellation-id="${constellationId}"]`)
+
+        nodes.forEach(node => {
+            node.classList[method]('hover-bright')
+        })
+
+        lines.forEach(line => {
+            line.classList[method]('hover-bright')
+        })
     }
 
     // clear all hover states and highlights
@@ -65,29 +106,157 @@
         hoverSourceCountByConstellationId.set(constellationId, currentCount - 1)
     }
 
-    // set highlights for constellation nodes and lines
-    function setConstellationHighlight(constellationId, enabled) {
-        let method
-        if (enabled) {
-            method = 'add'
-        } else {
-            method = 'remove'
+    function getConstellationById(constellationId) {
+        if (!Array.isArray(constellations)) {
+            return null
         }
+
+        const targetId = String(constellationId)
+        return constellations.find(constellation => String(constellation.id) === targetId) || null
+    }
+
+    function getConstellationLinks(constellation) {
+        if (!constellation || !Array.isArray(constellation.links)) {
+            return []
+        }
+
+        return constellation.links
+    }
+
+    function buildAdjacencyList(constellation) {
+        const adjacency = new Map()
+        const nodeCount = Array.isArray(constellation.nodes) ? constellation.nodes.length : 0
+
+        for (let index = 0; index < nodeCount; index += 1) {
+            adjacency.set(index, [])
+        }
+
+        getConstellationLinks(constellation).forEach(link => {
+            const fromIndex = Number(link[0])
+            const toIndex = Number(link[1])
+
+            if (!Number.isInteger(fromIndex) || !Number.isInteger(toIndex)) {
+                return
+            }
+
+            if (!adjacency.has(fromIndex) || !adjacency.has(toIndex)) {
+                return
+            }
+
+            adjacency.get(fromIndex).push(toIndex)
+            adjacency.get(toIndex).push(fromIndex)
+        })
+
+        return adjacency
+    }
+
+    function getNodeGraphDistances(constellation, startIndex) {
+        const adjacency = buildAdjacencyList(constellation)
+        const distances = new Map()
+
+        adjacency.forEach((_, index) => {
+            distances.set(index, Number.POSITIVE_INFINITY)
+        })
+
+        if (!adjacency.has(startIndex)) {
+            return distances
+        }
+
+        const queue = [startIndex]
+        distances.set(startIndex, 0)
+
+        while (queue.length > 0) {
+            const currentIndex = queue.shift()
+            const currentDistance = distances.get(currentIndex)
+            const neighbors = adjacency.get(currentIndex)
+
+            neighbors.forEach(neighborIndex => {
+                if (distances.get(neighborIndex) !== Number.POSITIVE_INFINITY) {
+                    return
+                }
+
+                distances.set(neighborIndex, currentDistance + 1)
+                queue.push(neighborIndex)
+            })
+        }
+
+        return distances
+    }
+
+    function getDistanceBrightness(distance) {
+        if (!Number.isFinite(distance)) {
+            return 0
+        }
+
+        return Math.max(0.2, 1 - distance * 0.22)
+    }
+
+    function clearNodeHoverHighlight(constellationId) {
         const nodes = document.querySelectorAll(`.constellation-node[data-constellation-id="${constellationId}"]`)
         const lines = document.querySelectorAll(`.constellation-line[data-constellation-id="${constellationId}"]`)
 
         nodes.forEach(node => {
-            node.classList[method]('hover-bright')
+            node.classList.remove('hover-node-bright')
         })
 
         lines.forEach(line => {
-            line.classList[method]('hover-bright')
+            line.classList.remove('hover-line-bright')
+        })
+
+        hoveredNodeByConstellationId.delete(constellationId)
+    }
+
+    function applyNodeHoverHighlight(constellationId, nodeIndex) {
+        const constellation = getConstellationById(constellationId)
+        if (!constellation) {
+            return
+        }
+
+        clearNodeHoverHighlight(constellationId)
+
+        const targetNode = document.querySelector(`.constellation-node[data-constellation-id="${constellationId}"][data-node-index="${nodeIndex}"]`)
+        if (targetNode) {
+            targetNode.classList.add('hover-node-bright')
+        }
+
+        const lines = document.querySelectorAll(`.constellation-line[data-constellation-id="${constellationId}"]`)
+
+        lines.forEach(line => {
+            const fromIndex = Number(line.dataset.fromIndex)
+            const toIndex = Number(line.dataset.toIndex)
+            const connectedToHoveredNode = fromIndex === nodeIndex || toIndex === nodeIndex
+            if (!connectedToHoveredNode) {
+                return
+            }
+
+            let startAlpha = 1
+            let middleAlpha = 0.95
+            let endAlpha = 0.2
+            if (toIndex === nodeIndex) {
+                startAlpha = 0.2
+                middleAlpha = 0.95
+                endAlpha = 1
+            }
+
+            line.classList.add('hover-line-bright')
+            line.style.setProperty('--focused-line-start-alpha', startAlpha.toFixed(3))
+            line.style.setProperty('--focused-line-middle-alpha', middleAlpha.toFixed(3))
+            line.style.setProperty('--focused-line-end-alpha', endAlpha.toFixed(3))
+        })
+
+        hoveredNodeByConstellationId.set(constellationId, nodeIndex)
+    }
+
+    function clearAllNodeHoverHighlights() {
+        Array.from(hoveredNodeByConstellationId.keys()).forEach(constellationId => {
+            clearNodeHoverHighlight(constellationId)
         })
     }
 
     // clear all highlights and hover states
     function clearAllHighlights() {
         hoverSourceCountByConstellationId.clear()
+        clearAllNodeHoverHighlights()
 
         document.querySelectorAll('.constellation.hovered').forEach(dot => {
             dot.classList.remove('hovered')
@@ -112,6 +281,32 @@
 
     function onRelatedHoverLeave(constellationId) {
         endHover(constellationId)
+    }
+
+    function onNodeHoverEnter(constellationId, nodeIndex) {
+        if (!Number.isInteger(nodeIndex)) {
+            return
+        }
+
+        if (!isConstellationFocused(constellationId)) {
+            return
+        }
+
+        applyNodeHoverHighlight(constellationId, nodeIndex)
+    }
+
+    function onNodeHoverLeave(constellationId, nodeIndex) {
+        if (!isConstellationFocused(constellationId)) {
+            clearNodeHoverHighlight(constellationId)
+            return
+        }
+
+        const currentlyHoveredNodeIndex = hoveredNodeByConstellationId.get(constellationId)
+        if (Number.isInteger(nodeIndex) && currentlyHoveredNodeIndex !== nodeIndex) {
+            return
+        }
+
+        clearNodeHoverHighlight(constellationId)
     }
 
     function getFocusedSpacingMultiplier(constellation, centerX, centerY) {
@@ -296,6 +491,8 @@
         onLeave,
         onRelatedHoverEnter,
         onRelatedHoverLeave,
+        onNodeHoverEnter,
+        onNodeHoverLeave,
         onClick,
         resetUniverse
     }
