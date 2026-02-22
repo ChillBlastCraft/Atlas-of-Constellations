@@ -40,6 +40,11 @@
         const x = constellation.position.x
         const y = constellation.position.y
 
+        // set camera focus to clicked constellation position
+        if (window.AstralBackground && typeof window.AstralBackground.setCameraFocus === 'function') {
+            window.AstralBackground.setCameraFocus(x, y)
+        }
+
         // calculate  distance from original position to center
         const dx = cx - x
         const dy = cy - y
@@ -141,6 +146,11 @@
 
         const backButton = document.getElementById('back-button')
         backButton.classList.remove('active')
+
+        // reset camera focus to center
+        if (window.AstralBackground && typeof window.AstralBackground.resetCameraFocus === 'function') {
+            window.AstralBackground.resetCameraFocus()
+        }
     }
 
     // functions into global scope for universe.js to call
