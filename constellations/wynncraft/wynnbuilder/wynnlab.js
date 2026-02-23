@@ -18,5 +18,51 @@ buttons.forEach(btn => {
 	})
 })
 
-// atlas type/stat filter logic removed for reset
+
+// Stat filter logic
+const statGroupDropdown = document.querySelector('.atlas-stat-group-dropdown');
+const statFiltersList = document.querySelector('.atlas-stat-filters-list');
+
+if (statGroupDropdown && statFiltersList) {
+	statGroupDropdown.addEventListener('change', function() {
+		const value = this.value;
+		if (!value) return;
+
+		// Create stat group div
+		const groupDiv = document.createElement('div');
+		groupDiv.className = 'atlas-stat-group';
+
+		// Title
+		const title = document.createElement('span');
+		title.className = 'atlas-stat-group-title';
+		title.textContent = value;
+		groupDiv.appendChild(title);
+
+		// Dropdown
+		const dropdown = document.createElement('select');
+		dropdown.className = 'atlas-dropdown';
+		['placeholder 1', 'placeholder 2', 'placeholder 3'].forEach(opt => {
+			const option = document.createElement('option');
+			option.value = opt;
+			option.textContent = opt;
+			dropdown.appendChild(option);
+		});
+		groupDiv.appendChild(dropdown);
+
+		// Remove button
+		const removeBtn = document.createElement('button');
+		removeBtn.className = 'atlas-stat-group-remove';
+		removeBtn.textContent = 'Remove';
+		removeBtn.title = 'Remove filter';
+		removeBtn.addEventListener('click', function() {
+			groupDiv.remove();
+		});
+		groupDiv.appendChild(removeBtn);
+
+		statFiltersList.appendChild(groupDiv);
+
+		// Reset dropdown to default
+		this.selectedIndex = 0;
+	});
+}
 

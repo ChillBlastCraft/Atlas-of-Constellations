@@ -26,7 +26,7 @@
                 <div class="atlas-spacer">
                     <div class="atlas-type-filter">
                         <h3>Type Filter</h3>
-                        <span class="atlas-type-filter-line"></span>
+                        <span class="atlas-filter-line"></span>
                         <div class="atlas-type-filters">
                             <div class="atlas-type-filter-item" id="item-category">
                                 <p>Item Category</p>
@@ -50,6 +50,20 @@
                     </div>
                     <div class="atlas-stat-filter">
                         <h3>Stat Filter</h3>
+                        <span class="atlas-filter-line"></span>
+                        <div class="atlas-stat-filter-row">
+                            <div class="atlas-stat-filter-item">
+                                <p>Stat Group</p>
+                                <select class="atlas-dropdown atlas-stat-group-dropdown">
+                                    <option value="">ANY</option>
+                                    <option value="HAS">HAS</option>
+                                    <option value="NOT">NOT</option>
+                                    <option value="COUNT">COUNT</option>
+                                    <option value="WEIGHT">WEIGHT</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="atlas-stat-filters-list"></div>
                     </div>
                 </div>
                 <div class="atlas-search-btn-row">

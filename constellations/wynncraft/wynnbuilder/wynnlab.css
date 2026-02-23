@@ -172,21 +172,22 @@ main {
     box-sizing: border-box;
 }
 
-.atlas-type-filter h3 {
+.atlas-type-filter h3,
+.atlas-stat-filter h3 {
     margin: 0 0 8px 0;
     font-size: 1.3rem;
     color: #eebbc3;
     letter-spacing: 1px;
 }
 
-.atlas-type-filter-line {
+.atlas-filter-line {
     display: block;
     width: 100%;
-    height: 1.5px;
-    background: linear-gradient(90deg, #b8c1ec 0%, #eebbc3 100%);
-    margin: 0 0 16px 0;
-    border-radius: 1px;
-    opacity: 0.7;
+    height: 2px;
+    background: linear-gradient(90deg, #eebbc3 0%, #b8c1ec 100%);
+    margin: 8px 0 16px 0;
+    border-radius: 2px;
+    opacity: 1;
 }
 
 /*
@@ -284,6 +285,79 @@ main {
     border: 1.5px solid #b8c1ec;
     width: 100%;
     box-sizing: border-box;
+}
+
+.atlas-stat-filter-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.atlas-stat-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    max-width: 320px;
+    white-space: nowrap;
+}
+
+.atlas-stat-filter-item p {
+    margin: 0;
+    font-size: 1.08rem;
+    color: #eaeaea;
+    width: 90px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.atlas-stat-filters-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.atlas-stat-group {
+    background: #232946;
+    border: 1.5px solid #b8c1ec;
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin-bottom: 4px;
+    box-shadow: 0 2px 8px #0002;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+}
+
+.atlas-stat-group-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #eebbc3;
+    flex: 1 1 0;
+}
+
+.atlas-stat-group-remove {
+    margin-left: auto;
+    background: #232946;
+    border: 1px solid #b8c1ec;
+    color: #eebbc3;
+    font-size: 1.2rem;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s, border 0.2s;
+    position: static;
+    display: flex;
+    align-items: center;
+}
+.atlas-stat-group-remove:hover {
+    color: #e57373;
+    background: #b8c1ec;
+    border-color: #eebbc3;
 }
 
 /*
