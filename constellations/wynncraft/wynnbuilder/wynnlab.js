@@ -37,10 +37,16 @@
 
 		const dropdown = document.createElement('select')
 		dropdown.className = 'atlas-dropdown'
-		['placeholder 1', 'placeholder 2', 'placeholder 3'].forEach(opt => {
+		const statOptions = [
+			{ value: '', text: 'ANY' },
+			{ value: 'placeholder1', text: 'Placeholder 1' },
+			{ value: 'placeholder2', text: 'Placeholder 2' },
+			{ value: 'placeholder3', text: 'Placeholder 3' }
+		]
+		statOptions.forEach(opt => {
 			const option = document.createElement('option')
-			option.value = opt
-			option.textContent = opt
+			option.value = opt.value
+			option.textContent = opt.text
 			dropdown.appendChild(option)
 		})
 		groupDiv.appendChild(dropdown)
