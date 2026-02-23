@@ -268,6 +268,37 @@ export class WynncraftApi {
         };
     }
 
+    attachHealthCheckButton(button) {
+        if (!button) return;
+
+        button.addEventListener("click", async () => {
+            const originalLabel = button.textContent;
+            button.disabled = true;
+            button.textContent = "Checking...";
+            try {
+                const result = await this.checkConnection();
+                if (result.reachable) {
+                    if (result.corsBlocked) {
+                        console.warn("WAPI check: REACHABLE but blocked by browser CORS");
+                        button.title = "WAPI reachable, but browser CORS blocks direct requests.";
+                    } else if (result.ok) {
+                        console.log("WAPI check: WORKING");
+                        button.title = "WAPI working.";
+                    } else {
+                        console.warn(`WAPI check: REACHABLE but non-OK response (${result.status} ${result.statusText})`);
+                        button.title = `WAPI reachable but returned ${result.status}.`;
+                    }
+                } else {
+                    console.error(`WAPI check: NOT WORKING (${result.error})`);
+                    button.title = `WAPI not working: ${result.error}.`;
+                }
+            } finally {
+                button.disabled = false;
+                button.textContent = originalLabel;
+            }
+        });
+    }
+
     async probeReachability() {
         try {
             await fetch(`${this.baseUrl}/`, {

@@ -1,46 +1,16 @@
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background: #0b1020;
-    color: #e8f0ff;
-}
-
-main {
-    width: min(900px, 95vw);
-    margin: 2rem auto;
-    padding: 1rem;
-}
-
-h1 {
-    margin-top: 0;
-    font-size: 1.6rem;
-}
-
-.card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    padding: 1rem;
-}
-
-form {
+#section-wynnbuilder form {
     display: grid;
     gap: 0.75rem;
 }
 
-label {
+#section-wynnbuilder label {
     display: grid;
     gap: 0.35rem;
     font-size: 0.95rem;
 }
 
-input,
-button {
+#section-wynnbuilder input,
+#section-wynnbuilder button {
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     background: rgba(10, 20, 40, 0.85);
@@ -49,9 +19,8 @@ button {
     font-size: 0.95rem;
 }
 
-button {
-    cursor: pointer;
-    font-weight: 600;
+#section-wynnbuilder button {
+    font-weight: 700;
 }
 
 #api-health-check {
@@ -79,7 +48,7 @@ button {
 #status[data-type="success"] { color: #93e7a8; }
 #status[data-type="error"] { color: #ffabab; }
 
-pre {
+#result {
     margin: 0;
     max-height: 58vh;
     overflow: auto;

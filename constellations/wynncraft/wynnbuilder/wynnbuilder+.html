@@ -3,36 +3,97 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>WynnBuilder+ WAPI</title>
+	<title>WynnBuilder+</title>
+	<link rel="stylesheet" href="wynnbuilder+.css">
+	<script type="module" defer src="wynnbuilder+.js"></script>
 	<link rel="stylesheet" href="../wapi/wapi.css">
-	<script type="module" defer src="../wapi/wapi-page.js"></script>
 </head>
 <body>
-	<main>
-		<h1>Wynncraft API (WAPI) Tester</h1>
-		<section class="card">
-			<form id="player-form">
-				<label for="player-name">
-					Player Name
-					<input id="player-name" name="player-name" type="text" placeholder="Enter player name" required>
-				</label>
+	<div class="site-layout">
+		<aside class="sidebar">
+			<div class="sidebar-inner">
+				<h1 class="sidebar-title">Wynn Tools</h1>
+				<nav class="section-menu" aria-label="Section switcher">
+					<a class="section-link active" data-section-target="wynnbuilder" href="#wynnbuilder">WynnBuilder</a>
+					<a class="section-link" data-section-target="wynncrafting" href="#wynncrafting">WynnCrafting</a>
+					<a class="section-link" data-section-target="wynnatlas" href="#wynnatlas">WynnAtlas</a>
+				</nav>
+				<button id="api-health-check" type="button" aria-label="Check API status">API Check</button>
+			</div>
+		</aside>
 
-				<label for="endpoint-path">
-					Endpoint Path (optional)
-					<input id="endpoint-path" name="endpoint-path" type="text" placeholder="/player/{player}/stats">
-				</label>
+		<main class="content-area">
+			<section id="section-wynnbuilder" class="section-panel" data-section="wynnbuilder">
+				<div class="section-content"><p>This is wynnbuilder</p></div>
+			</section>
 
-				<button type="submit">Fetch from WAPI</button>
-			</form>
-			<p id="status" data-type="idle"></p>
-		</section>
+			<section id="section-wynncrafting" class="section-panel" data-section="wynncrafting" hidden>
+				<div class="section-content"><p>This is wynncrafting</p></div>
+			</section>
+            
+			<section id="section-wynnatlas" class="section-panel" data-section="wynnatlas" hidden>
+				<div class="section-content">
+					<div class="wynn-filters">
+						<div class="filters-left">
+							<div class="filter-section">
+								<div class="filter-header"><label><input type="checkbox" checked> Type Filters</label></div>
+								<div class="filter-body">
+									<div class="field-row">
+										<label class="field-label">Item Category</label>
+										<select class="field-select"><option>Any</option></select>
+									</div>
+									<div class="field-row">
+										<label class="field-label">Item Rarity</label>
+										<select class="field-select"><option>Any</option></select>
+									</div>
+								</div>
+							</div>
 
-		<section class="card" style="margin-top: 1rem;">
-			<pre id="result">{
-  "info": "Response output appears here"
-}</pre>
-		</section>
-	</main>
-	<button id="api-health-check" type="button" aria-label="Check API status">API Check</button>
+							<div class="filter-section">
+								<div class="filter-header"><label><input type="checkbox" checked> Weapon Filters</label></div>
+								<div class="filter-body filter-grid">
+									<div class="grid-row">
+										<div class="grid-label">Damage</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+									<div class="grid-row">
+										<div class="grid-label">Attacks per Second</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+									<div class="grid-row">
+										<div class="grid-label">Critical Chance</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+									<div class="grid-row">
+										<div class="grid-label">Damage per Second</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+									<div class="grid-row">
+										<div class="grid-label">Physical DPS</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+									<div class="grid-row">
+										<div class="grid-label">Elemental DPS</div>
+										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="filters-right">
+							<div class="filter-section stat-section">
+								<div class="filter-header">Stat Filters</div>
+								<div class="filter-body stat-body">
+									<button class="add-stat">+ Add Stat Filter</button>
+									<div class="stat-groups">
+										<button class="add-group">+ Add Stat Group</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+	</div>
 </body>
 </html>
