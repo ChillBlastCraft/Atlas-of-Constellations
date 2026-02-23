@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WynnLab</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            background: radial-gradient(ellipse at top left, #232946 60%, #121629 100%);
+            color: #eaeaea;
+            min-height: 100vh;
+            display: flex;
+        }
+        .sidebar {
+            width: 220px;
+            background: linear-gradient(180deg, #181c2f 80%, #232946 100%);
+            box-shadow: 2px 0 8px #0004;
+            padding: 32px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            letter-spacing: 2px;
+            color: #b8c1ec;
+            text-shadow: 0 2px 8px #0008;
+        }
+        .sidebar button {
+            width: 160px;
+            margin: 0.5rem 0;
+            padding: 0.75rem 0;
+            background: #232946;
+            border: 1px solid #b8c1ec;
+            border-radius: 8px;
+            color: #eaeaea;
+            font-size: 1.1rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+        .sidebar button.active, .sidebar button:hover {
+            background: #b8c1ec;
+            color: #232946;
+            border-color: #eebbc3;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            letter-spacing: 1px;
+            min-height: 100vh;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+</body>
+    <div class="sidebar">
+        <h1>WynnLab</h1>
+        <button id="btn-builder" class="active">WynnBuilder</button>
+        <button id="btn-atlas">WynnAtlas</button>
+        <button id="btn-crafter">WynnCrafter</button>
+    </div>
+    <main id="main-content">This is WynnBuilder</main>
+    <script>
+        const mainContent = document.getElementById('main-content');
+        const buttons = [
+            { id: 'btn-builder', text: 'This is WynnBuilder' },
+            { id: 'btn-atlas', text: 'This is WynnAtlas' },
+            { id: 'btn-crafter', text: 'This is WynnCrafter' }
+        ];
+        buttons.forEach(btn => {
+            document.getElementById(btn.id).addEventListener('click', function() {
+                // Remove active from all
+                buttons.forEach(b => document.getElementById(b.id).classList.remove('active'));
+                // Set active
+                this.classList.add('active');
+                // Change main content
+                mainContent.textContent = btn.text;
+            });
+        });
+    </script>
+</body>
+</html>

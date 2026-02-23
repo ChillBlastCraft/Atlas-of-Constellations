@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WynnLab</title>
+    <link rel="stylesheet" href="../../../assets/css/style.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Cinzel', serif;
+            background: radial-gradient(ellipse at top left, #232946 60%, #121629 100%);
+            color: #eaeaea;
+            min-height: 100vh;
+            display: flex;
+        }
+        .sidebar {
+            width: 220px;
+            background: linear-gradient(180deg, #181c2f 80%, #232946 100%);
+            box-shadow: 2px 0 8px #0004;
+            padding: 32px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+            letter-spacing: 2px;
+            color: #b8c1ec;
+            text-shadow: 0 2px 8px #0008;
+        }
+        .sidebar button {
+            width: 160px;
+            margin: 0.5rem 0;
+            padding: 0.75rem 0;
+            background: #232946;
+            border: 1px solid #b8c1ec;
+            border-radius: 8px;
+            color: #eaeaea;
+            font-size: 1.1rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+        }
+        .sidebar button.active, .sidebar button:hover {
+            background: #b8c1ec;
+            color: #232946;
+            border-color: #eebbc3;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            letter-spacing: 1px;
+            min-height: 100vh;
+            background: transparent;
+        }
+    </style>
+</head>
+<body>
+</body>
+    <div class="sidebar">
+        <h1>WynnLab</h1>
+        <button id="btn-builder" class="active">WynnBuilder</button>
+        <button id="btn-atlas">WynnAtlas</button>
+        <button id="btn-crafter">WynnCrafter</button>
+    </div>
+    <main id="main-content">This is WynnBuilder</main>
+    <script>
+        const mainContent = document.getElementById('main-content');
+        const buttons = [
+            { id: 'btn-builder', text: 'This is WynnBuilder' },
+            { id: 'btn-atlas', text: null },
+            { id: 'btn-crafter', text: 'This is WynnCrafter' }
+        ];
+        buttons.forEach(btn => {
+            document.getElementById(btn.id).addEventListener('click', function() {
+                // Remove active from all
+                buttons.forEach(b => document.getElementById(b.id).classList.remove('active'));
+                // Set active
+                this.classList.add('active');
+                // Change main content
+                if (btn.id === 'btn-atlas') {
+                    mainContent.innerHTML = `
+                        <div id="atlas-canvas" style="width:600px;height:420px;background:#181c2f;border-radius:16px;box-shadow:0 4px 16px #0006;padding:32px 24px;display:flex;flex-direction:column;gap:24px;">
+                            <div style="width:100%;text-align:center;margin-bottom:8px;">
+                                <input type="text" placeholder="Search Items" style="width:100%;font-size:2.2rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#eebbc3;background:#232946;border:2px solid #b8c1ec;border-radius:8px;padding:16px 18px;text-align:center;box-shadow:0 2px 8px #0003;outline:none;" />
+                            </div>
+                            <div style="display:flex;gap:16px;width:100%;">
+                                <div style="flex:1;background:#232946;border-radius:8px;padding:18px;text-align:center;font-size:1.2rem;color:#b8c1ec;box-shadow:0 2px 8px #0003;">Type Filters</div>
+                                <div style="flex:1;background:#232946;border-radius:8px;padding:18px;text-align:center;font-size:1.2rem;color:#b8c1ec;box-shadow:0 2px 8px #0003;">Stat Filters</div>
+                            </div>
+                            <div style="flex:1"></div>
+                            <div style="width:100%;text-align:center;margin-top:8px;">
+                                <button style="width:100%;font-size:1.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#232946;background:#eebbc3;border:2px solid #b8c1ec;border-radius:8px;padding:14px 0;cursor:pointer;box-shadow:0 2px 8px #0003;">Search</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    mainContent.textContent = btn.text;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
