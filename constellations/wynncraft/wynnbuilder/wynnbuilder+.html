@@ -1,105 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>WynnBuilder+</title>
-	<link rel="stylesheet" href="wynnbuilder+.css">
-	<script type="module" defer src="wynnbuilder+.js"></script>
-	<link rel="stylesheet" href="../wapi/wapi.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WynnLab</title>
 </head>
 <body>
-	<div class="site-layout">
-		<aside class="sidebar">
-			<div class="sidebar-inner">
-				<h1 class="sidebar-title">Wynn Tools</h1>
-				<nav class="section-menu" aria-label="Section switcher">
-					<a class="section-link active" data-section-target="wynnbuilder" href="#wynnbuilder">WynnBuilder</a>
-					<a class="section-link" data-section-target="wynncrafting" href="#wynncrafting">WynnCrafting</a>
-					<a class="section-link" data-section-target="wynnatlas" href="#wynnatlas">WynnAtlas</a>
-				</nav>
-				<button id="api-health-check" type="button" aria-label="Check API status">API Check</button>
-			</div>
-		</aside>
-
-		<main class="content-area">
-			<section id="section-wynnbuilder" class="section-panel" data-section="wynnbuilder">
-				<div class="section-content"><p>This is wynnbuilder</p></div>
-			</section>
-
-			<section id="section-wynncrafting" class="section-panel" data-section="wynncrafting" hidden>
-				<div class="section-content"><p>This is wynncrafting</p></div>
-			</section>
-            
-			<section id="section-wynnatlas" class="section-panel" data-section="wynnatlas" hidden>
-				<div class="section-content">
-					<div class="wynn-filters">
-						<div class="filters-left">
-							<div class="filter-section">
-								<div class="filter-header"><label><input type="checkbox" checked> Type Filters</label></div>
-								<div class="filter-body">
-									<div class="field-row">
-										<label class="field-label">Item Category</label>
-										<select class="field-select"><option>Any</option></select>
-									</div>
-									<div class="field-row">
-										<label class="field-label">Item Rarity</label>
-										<select class="field-select"><option>Any</option></select>
-									</div>
-								</div>
-							</div>
-
-							<div class="filter-section">
-								<div class="filter-header"><label><input type="checkbox" checked> Weapon Filters</label></div>
-								<div class="filter-body filter-grid">
-									<div class="grid-row">
-										<div class="grid-label">Damage</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-									<div class="grid-row">
-										<div class="grid-label">Attacks per Second</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-									<div class="grid-row">
-										<div class="grid-label">Critical Chance</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-									<div class="grid-row">
-										<div class="grid-label">Damage per Second</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-									<div class="grid-row">
-										<div class="grid-label">Physical DPS</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-									<div class="grid-row">
-										<div class="grid-label">Elemental DPS</div>
-										<div class="grid-inputs"><input type="text" placeholder="min"> <input type="text" placeholder="max"></div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="filters-right">
-							<div class="filter-section stat-section">
-								<div class="filter-header">Stat Filters</div>
-								<div class="filter-body stat-body">
-									<div class="add-stat-row">
-										<span>Add Stat Filter</span>
-										<select class="field-select min-width-100"><option>ANY</option></select>
-									</div>
-									<div class="stat-groups">
-										<div class="add-group-row">
-											<span>Add Stat Group</span>
-											<select class="field-select min-width-100"><option>ANY</option></select>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-		</main>
-	</div>
+    
 </body>
 </html>

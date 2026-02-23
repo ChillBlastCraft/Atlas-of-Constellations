@@ -6,7 +6,7 @@ const constellations = [
         nodes: [
             { x: 20, y: 27, url: "#" },
             { x: 23, y: 24, url: "#" },
-            { x: 27, y: 28, url: "constellations/wynncraft/wynnbuilder/WynnBuilder+.html", label: "Wynnbuilder+", title: "Wynnbuilder+" },
+            { x: 27, y: 28, url: "constellations/wynncraft/wynnbuilder/WynnLab.html", label: "WynnLab", title: "WynnLab" },
             { x: 25, y: 33, url: "#" },
             { x: 19, y: 34, url: "#" },
             { x: 30, y: 32, url: "#" }
