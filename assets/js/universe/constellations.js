@@ -347,100 +347,105 @@
     }
 
     function onClick(constellation, dot) {
-        console.clear()
-        console.log("Clicked on constellation:", constellation.name)
-        clearAllHighlights()
+        // Batch DOM updates for performance
+        window.requestAnimationFrame(() => {
+            console.clear()
+            console.log("Clicked on constellation:", constellation.name)
+            clearAllHighlights()
 
-        const allDots = document.querySelectorAll('.constellation')
-        allDots.forEach(d => {
-            d.style.left = d.constellation.position.x + "%"
-            d.style.top = d.constellation.position.y + "%"
-            d.style.transform = 'translate(-50%, -50%)'
-            d.classList.remove('faded')
-        })
+            // Cache all dots
+            const allDots = Array.from(document.querySelectorAll('.constellation'))
+            // Prepare new positions and transforms
+            const cx = 50
+            const cy = 50
+            const x = constellation.position.x
+            const y = constellation.position.y
+            const dx = cx - x
+            const dy = cy - y
+            const dist = Math.sqrt(dx * dx + dy * dy)
 
-        // reset all nodes to close and dim before expanding the clicked constellation
-        resetAllNodesCloseAndDim(constellations)
+            // Precompute new positions for all dots
+            const dotUpdates = allDots.map(otherDot => {
+                if (otherDot === dot) {
+                    return {
+                        dot: otherDot,
+                        left: cx + "%",
+                        top: cy + "%",
+                        transform: 'translate(-50%, -50%) scale(2)',
+                        faded: false,
+                        nodeScale: NODE_ACTIVE_SCALE,
+                        spacing: getFocusedSpacingMultiplier(constellation, cx, cy),
+                        updateNodes: true,
+                        constellation: constellation
+                    }
+                }
+                const otherConst = otherDot.constellation
+                const ox = otherConst.position.x
+                const oy = otherConst.position.y
+                const vx = ox - x
+                const vy = oy - y
+                const vlen = Math.sqrt(vx * vx + vy * vy)
+                let left = ox + "%"
+                let top = oy + "%"
+                if (vlen > 0) {
+                    const nx = vx / vlen
+                    const ny = vy / vlen
+                    const newX = ox + nx * dist
+                    const newY = oy + ny * dist
+                    left = Math.max(0, Math.min(100, newX)) + "%"
+                    top = Math.max(0, Math.min(100, newY)) + "%"
+                }
+                const scale = Math.max(0.1, Math.exp(-vlen / 60))
+                const nodeScale = Math.max(MIN_NODE_SCALE, NODE_ACTIVE_SCALE * scale)
+                return {
+                    dot: otherDot,
+                    left,
+                    top,
+                    transform: `translate(-50%, -50%) scale(${scale})`,
+                    faded: true,
+                    nodeScale,
+                    spacing: CLOSE_NODE_SPACING_MULTIPLIER,
+                    updateNodes: true,
+                    constellation: otherConst
+                }
+            })
 
-        // calculate distance and direction from clicked constellation to center
-        const cx = 50
-        const cy = 50
-        const x = constellation.position.x
-        const y = constellation.position.y
+            // Apply all dot updates in a batch
+            dotUpdates.forEach(update => {
+                update.dot.style.left = update.left
+                update.dot.style.top = update.top
+                update.dot.style.transform = update.transform
+                if (update.faded) {
+                    update.dot.classList.add('faded')
+                } else {
+                    update.dot.classList.remove('faded')
+                }
+            })
 
-        // set camera focus to clicked constellation position
-        if (window.AstralBackground && typeof window.AstralBackground.setCameraFocus === 'function') {
-            window.AstralBackground.setCameraFocus(x, y)
-        }
+            // Reset all nodes to close and dim before expanding the clicked constellation
+            resetAllNodesCloseAndDim(constellations)
 
-        // calculate  distance from original position to center
-        const dx = cx - x
-        const dy = cy - y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+            // Update nodes for all constellations in a batch
+            dotUpdates.forEach(update => {
+                updateNodesForConstellation(
+                    update.constellation,
+                    parseFloat(update.left),
+                    parseFloat(update.top),
+                    update.spacing,
+                    update.faded ? LOW_NODE_OPACITY : FULL_NODE_OPACITY,
+                    update.nodeScale
+                )
+            })
 
-        // move clicked constellation to center
-        dot.style.left = cx + "%"
-        dot.style.top = cy + "%"
-        dot.style.transform = 'translate(-50%, -50%) scale(2)'
-
-        const focusedSpacingMultiplier = getFocusedSpacingMultiplier(constellation, cx, cy)
-
-        // update nodes for clicked constellation
-        updateNodesForConstellation(
-            constellation,
-            cx,
-            cy,
-            focusedSpacingMultiplier,
-            FULL_NODE_OPACITY,
-            NODE_ACTIVE_SCALE
-        )
-
-        // move other constellations away from center and fade them based on distance
-        allDots.forEach(otherDot => {
-            if (otherDot === dot) {
-                return
+            // set camera focus to clicked constellation position
+            if (window.AstralBackground && typeof window.AstralBackground.setCameraFocus === 'function') {
+                window.AstralBackground.setCameraFocus(x, y)
             }
 
-            // calculate distance and direction from clicked constellation to other constellation
-            const otherConst = otherDot.constellation
-            const ox = otherConst.position.x
-            const oy = otherConst.position.y
-            const vx = ox - x
-            const vy = oy - y
-            const vlen = Math.sqrt(vx * vx + vy * vy)
-
-            // move other constellation away from center based on distance
-            if (vlen > 0) {
-                const nx = vx / vlen
-                const ny = vy / vlen
-                const newX = ox + nx * dist
-                const newY = oy + ny * dist
-                otherDot.style.left = Math.max(0, Math.min(100, newX)) + "%"
-                otherDot.style.top = Math.max(0, Math.min(100, newY)) + "%"
-            }
-
-            // fade and scale other constellation based on distance 
-            const scale = Math.max(0.1, Math.exp(-vlen / 60))
-            otherDot.style.transform = `translate(-50%, -50%) scale(${scale})`
-            otherDot.classList.add('faded')
-
-            // nodeScale = base_scale * distance_scale (but not smaller than MIN_NODE_SCALE)
-            const nodeScale = Math.max(MIN_NODE_SCALE, NODE_ACTIVE_SCALE * scale)
-            updateNodesForConstellation(
-                otherConst,
-                parseFloat(otherDot.style.left),
-                parseFloat(otherDot.style.top),
-                CLOSE_NODE_SPACING_MULTIPLIER,
-                LOW_NODE_OPACITY,
-                nodeScale
-            )
-
-            console.log(`Constellation ${otherConst.name}: distance ${vlen.toFixed(2)}, scale ${scale.toFixed(2)}`)
+            // show back button
+            const backButton = document.getElementById('back-button')
+            backButton.classList.add('active')
         })
-
-        // show back button
-        const backButton = document.getElementById('back-button')
-        backButton.classList.add('active')
     }
 
     // reset universe to original state (after back button click)
