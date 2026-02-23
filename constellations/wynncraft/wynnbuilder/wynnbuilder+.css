@@ -1,9 +1,26 @@
+/*
+┌──────────────────────────────┐
+│   INLINE STYLE MIGRATIONS   │
+└──────────────────────────────┘
+*/
+.add-stat-row,
+.add-group-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.min-width-100 {
+    min-width: 100px;
+}
 /* 
 ┌─────────────────────────┐
 │          RESET          │
 └─────────────────────────┘
 */
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -13,8 +30,6 @@
 └────────────────────────┘
 */
 body {
-    margin: 0;
-    min-height: 100vh;
     font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
     background: linear-gradient(120deg, #0b1020 0%, #1a2340 100%);
     color: #e8f0ff;
@@ -211,65 +226,6 @@ body {
 }
 
 /* 
-┌────────────────────────────────────┐
-│        RESPONSIVE: 1100px          │
-└────────────────────────────────────┘
-*/
-@media (max-width: 1100px) {
-    .content-area {
-        padding: 2rem 1.2rem 1.2rem 1.2rem;
-        align-items: center;
-        justify-content: center;
-    }
-    .sidebar {
-        width: 180px;
-    }
-}
-
-/* 
-┌────────────────────────────────────┐
-│        RESPONSIVE: 700px           │
-└────────────────────────────────────┘
-*/
-@media (max-width: 700px) {
-    .site-layout {
-        flex-direction: column;
-    }
-    .sidebar {
-        position: static;
-        width: 100%;
-        min-height: unset;
-        border-right: none;
-        border-bottom: 2px solid rgba(80,120,255,0.13);
-        box-shadow: none;
-    }
-    .sidebar-inner {
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 1rem 0.5rem 1rem 0.5rem;
-        gap: 1.5rem;
-    }
-    .sidebar-title {
-        font-size: 1.1rem;
-        margin: 0 1.2rem 0 0;
-    }
-    .section-menu {
-        flex-direction: row;
-        gap: 0.3rem;
-    }
-    #api-health-check {
-        margin-top: 0;
-        margin-left: 1.2rem;
-    }
-    .content-area {
-        padding: 1.2rem 0.5rem;
-        align-items: center;
-        justify-content: center;
-    }
-}
-
-/* 
 ┌──────────────────────────────┐
 │         ANIMATIONS           │
 └──────────────────────────────┘
@@ -279,7 +235,6 @@ body {
     to { opacity: 1; transform: none; }
 }
 
-/* WynnAtlas filter UI (match provided mockup) */
 .wynn-filters {
     display: flex;
     gap: 1.6rem;
@@ -309,25 +264,4 @@ body {
     color: #e8f0ff;
     padding: 0.45rem 0.6rem;
     font-size: 0.95rem;
-}
-.filter-header label { display: inline-flex; align-items: center; gap: 0.6rem; }
-.filter-header input[type="checkbox"] { width: 16px; height: 16px; accent-color: #5078ff; }
-.filter-body { padding: 0.6rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.field-row { display: flex; align-items: center; gap: 0.8rem; }
-.field-label { width: 150px; color: #b7cfff; font-weight: 600; }
-.field-select { flex: 1 1 auto; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); color: #e8f0ff; padding: 0.5rem; border-radius: 6px; }
-.filter-grid { display: flex; flex-direction: column; gap: 0.45rem; }
-.grid-row { display: grid; grid-template-columns: 1fr 160px; align-items: center; gap: 0.6rem; padding: 0.25rem 0; }
-.grid-label { color: #e8f0ff; font-weight: 600; }
-.grid-inputs { display: flex; gap: 0.5rem; justify-content: flex-end; }
-.grid-inputs input { width: 68px; padding: 0.35rem 0.45rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.04); color: #e8f0ff; border-radius: 6px; text-align: center; }
-.stat-section .filter-header { font-size: 1.04rem; }
-.add-stat, .add-group { display: inline-block; width: 100%; text-align: left; background: rgba(80,120,255,0.06); border: 1px dashed rgba(80,120,255,0.12); color: #dfe8ff; padding: 0.7rem 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 700; }
-.add-stat:hover, .add-group:hover { background: rgba(80,120,255,0.12); }
-.stat-body { display: flex; flex-direction: column; gap: 0.8rem; }
-.stat-groups { display: flex; justify-content: flex-end; }
-
-@media (max-width: 900px) {
-    .wynn-filters { flex-direction: column; }
-    .filters-right { order: 2; }
 }
