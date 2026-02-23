@@ -18,3 +18,5 @@ buttons.forEach(btn => {
 	})
 })
 
+// atlas type/stat filter logic removed for reset
+

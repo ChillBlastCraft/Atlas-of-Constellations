@@ -1,132 +1,361 @@
-.atlas-filter-label {
-	display: flex;
-	align-items: center;
-	gap: 8px;
+/*
+┌─────────────────────────┐
+│         RESET           │
+└─────────────────────────┘
+*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
+
+/*
+┌─────────────────────────┐
+│      UTILITY CLASSES    │
+└─────────────────────────┘
+*/
 .hidden {
-	display: none;
+    display: none;
 }
+
+/*
+┌─────────────────────────┐
+│          BODY           │
+└─────────────────────────┘
+*/
 body {
-	margin: 0;
-	font-family: 'Cinzel', serif;
-	background: radial-gradient(ellipse at top left, #232946 60%, #121629 100%);
-	color: #eaeaea;
-	min-height: 100vh;
-	display: flex;
+    font-family: 'Cinzel', serif;
+    background: radial-gradient(ellipse at top left, #232946 60%, #121629 100%);
+    color: #eaeaea;
+    min-height: 100vh;
+    display: flex;
 }
+
+/*
+┌─────────────────────────┐
+│         SIDEBAR         │
+└─────────────────────────┘
+*/
 .sidebar {
-	width: 220px;
-	background: linear-gradient(180deg, #181c2f 80%, #232946 100%);
-	box-shadow: 2px 0 8px #0004;
-	padding: 32px 0 0 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+    width: 220px;
+    background: linear-gradient(180deg, #181c2f 80%, #232946 100%);
+    box-shadow: 2px 0 8px #0004;
+    padding: 32px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
+
 .sidebar h1 {
-	font-size: 2rem;
-	font-weight: 700;
-	margin-bottom: 2.5rem;
-	letter-spacing: 2px;
-	color: #b8c1ec;
-	text-shadow: 0 2px 8px #0008;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    letter-spacing: 2px;
+    color: #b8c1ec;
+    text-shadow: 0 2px 8px #0008;
 }
+
 .sidebar button {
-	width: 160px;
-	margin: 0.5rem 0;
-	padding: 0.75rem 0;
-	background: #232946;
-	border: 1px solid #b8c1ec;
-	border-radius: 8px;
-	color: #eaeaea;
-	font-size: 1.1rem;
-	font-family: inherit;
-	cursor: pointer;
-	transition: background 0.2s, color 0.2s, border 0.2s;
+    width: 160px;
+    margin: 0.5rem 0;
+    padding: 0.75rem 0;
+    background: #232946;
+    border: 1px solid #b8c1ec;
+    border-radius: 8px;
+    color: #eaeaea;
+    font-size: 1.1rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s;
 }
-.sidebar button.active, .sidebar button:hover {
-	background: #b8c1ec;
-	color: #232946;
-	border-color: #eebbc3;
+
+.sidebar button.active,
+.sidebar button:hover {
+    background: #b8c1ec;
+    color: #232946;
+    border-color: #eebbc3;
 }
+
+/*
+┌────────────────────────────┐
+│      MAIN CONTENT AREA     │
+└────────────────────────────┘
+*/
 main {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-size: 2rem;
-	letter-spacing: 1px;
-	min-height: 100vh;
-	background: transparent;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    letter-spacing: 1px;
+    min-height: 100vh;
+    background: transparent;
 }
+
+/*
+┌────────────────────────────┐
+│      ATLAS CANVAS CARD     │
+└────────────────────────────┘
+*/
 #atlas-canvas {
-	width: 600px;
-	height: 420px;
-	background: #181c2f;
-	border-radius: 16px;
-	box-shadow: 0 4px 16px #0006;
-	padding: 32px 24px;
-	display: flex;
-	flex-direction: column;
-	gap: 24px;
+    min-width: 840px;
+    background: #181c2f;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px #0006;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
+
+/*
+┌────────────────────────────┐
+│        SEARCH ROW          │
+└────────────────────────────┘
+*/
 .atlas-search-row {
-	width: 100%;
-	text-align: center;
-	margin-bottom: 8px;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 8px;
 }
+
+/*
+┌────────────────────────────┐
+│      SEARCH INPUT FIELD    │
+└────────────────────────────┘
+*/
 .atlas-search-input {
-	width: 100%;
-	font-size: 2.2rem;
-	font-weight: 700;
-	letter-spacing: 2px;
-	text-transform: uppercase;
-	color: #eebbc3;
-	background: #232946;
-	border: 2px solid #b8c1ec;
-	border-radius: 8px;
-	padding: 16px 18px;
-	text-align: center;
-	box-shadow: 0 2px 8px #0003;
-	outline: none;
+    width: 100%;
+    max-width: 340px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #eebbc3;
+    background: #232946;
+    border: 2px solid #b8c1ec;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px #0003;
+    outline: none;
+    margin: 0 auto;
+    display: block;
+    box-sizing: border-box;
 }
-.atlas-filters-row {
-	display: flex;
-	gap: 16px;
-	width: 100%;
-}
-.atlas-type-filters, .atlas-stat-filters {
-	flex: 1;
-	background: #232946;
-	border-radius: 8px;
-	padding: 18px;
-	text-align: center;
-	font-size: 1.2rem;
-	color: #b8c1ec;
-	box-shadow: 0 2px 8px #0003;
-}
-.atlas-type-sub, .atlas-stat-sub {
-	margin-top: 16px;
-}
+
+/*
+┌────────────────────────────┐
+│   TWO-COLUMN FILTER AREA   │
+└────────────────────────────┘
+*/
 .atlas-spacer {
-	flex: 1;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
 }
+
+/*
+┌────────────────────────────┐
+│     TYPE FILTER CARD       │
+└────────────────────────────┘
+*/
+.atlas-type-filter {
+    background: #232946;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #0003;
+    padding: 18px 20px 20px 20px;
+    border: 1.5px solid #b8c1ec;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.atlas-type-filter h3 {
+    margin: 0 0 8px 0;
+    font-size: 1.3rem;
+    color: #eebbc3;
+    letter-spacing: 1px;
+}
+
+.atlas-type-filter-line {
+    display: block;
+    width: 100%;
+    height: 1.5px;
+    background: linear-gradient(90deg, #b8c1ec 0%, #eebbc3 100%);
+    margin: 0 0 16px 0;
+    border-radius: 1px;
+    opacity: 0.7;
+}
+
+/*
+┌────────────────────────────┐
+│      TYPE FILTER GRID      │
+└────────────────────────────┘
+*/
+.atlas-type-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+/*
+┌────────────────────────────┐
+│    TYPE FILTER ITEM ROW    │
+└────────────────────────────┘
+*/
+.atlas-type-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 0px;
+    min-width: 0;
+    max-width: 320px;
+    white-space: nowrap;
+}
+
+/*
+┌────────────────────────────┐
+│   TYPE FILTER ITEM LABEL   │
+└────────────────────────────┘
+*/
+.atlas-type-filter-item p {
+    margin: 0;
+    font-size: 1.08rem;
+    color: #eaeaea;
+    width: 90px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/*
+┌────────────────────────────┐
+│      DROPDOWN STYLES       │
+└────────────────────────────┘
+*/
+.atlas-dropdown {
+    background: #181c2f;
+    color: #eebbc3;
+    border: 1.5px solid #b8c1ec;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    width: 160px;
+    min-width: 120px;
+    max-width: 180px;
+    transition: border 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px #0002;
+    outline: none;
+    margin-left: auto;
+}
+
+/*
+┌────────────────────────────┐
+│    DROPDOWN FOCUS STATE    │
+└────────────────────────────┘
+*/
+.atlas-dropdown:focus {
+    border-color: #eebbc3;
+    box-shadow: 0 0 0 2px #eebbc366;
+}
+
+/*
+┌────────────────────────────┐
+│     DROPDOWN OPTIONS       │
+└────────────────────────────┘
+*/
+.atlas-dropdown option {
+    background: #232946;
+    color: #b8c1ec;
+}
+
+/*
+┌────────────────────────────┐
+│     STAT FILTER CARD       │
+└────────────────────────────┘
+*/
+.atlas-stat-filter {
+    background: #232946;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px #0003;
+    padding: 18px 20px 20px 20px;
+    border: 1.5px solid #b8c1ec;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/*
+┌────────────────────────────┐
+│     SEARCH BUTTON ROW      │
+└────────────────────────────┘
+*/
 .atlas-search-btn-row {
-	width: 100%;
-	text-align: center;
-	margin-top: 8px;
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
 }
+
+/*
+┌────────────────────────────┐
+│      SEARCH BUTTON         │
+└────────────────────────────┘
+*/
 .atlas-search-btn {
-	width: 100%;
-	font-size: 1.7rem;
-	font-weight: 700;
-	letter-spacing: 2px;
-	text-transform: uppercase;
-	color: #232946;
-	background: #eebbc3;
-	border: 2px solid #b8c1ec;
-	border-radius: 8px;
-	padding: 14px 0;
-	cursor: pointer;
-	box-shadow: 0 2px 8px #0003;
+    width: 100%;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #232946;
+    background: #eebbc3;
+    border: 2px solid #b8c1ec;
+    border-radius: 8px;
+    padding: 14px 0;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #0003;
+}
+
+/*
+┌────────────────────────────┐
+│   COLLAPSIBLE FILTER HDR   │
+└────────────────────────────┘
+*/
+.atlas-filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #b8c1ec;
+    margin-bottom: 0.5rem;
+}
+
+/*
+┌────────────────────────────┐
+│     TOGGLE BUTTON STYLE    │
+└────────────────────────────┘
+*/
+.atlas-toggle-btn {
+    background: #232946;
+    color: #b8c1ec;
+    border: 1px solid #b8c1ec;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    padding: 2px 12px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+/*
+┌────────────────────────────┐
+│   TOGGLE BUTTON COLLAPSED  │
+└────────────────────────────┘
+*/
+.atlas-toggle-btn[aria-expanded="false"] {
+    background: #b8c1ec;
+    color: #232946;
+    border-color: #eebbc3;
 }

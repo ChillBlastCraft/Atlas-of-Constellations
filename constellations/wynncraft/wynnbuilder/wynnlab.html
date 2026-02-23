@@ -4,63 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WynnLab</title>
-    <link rel="stylesheet" href="../../../assets/css/style.css">
     <link rel="stylesheet" href="wynnlab.css">
     <script defer src="wynnlab.js"></script>
 </head>
 <body>
-
     <div class="sidebar">
         <h1>WynnLab</h1>
         <button id="btn-builder" class="active">WynnBuilder</button>
         <button id="btn-atlas">WynnAtlas</button>
         <button id="btn-crafter">WynnCrafter</button>
     </div>
+
     <main id="main-content">
         <div id="builder-content">This is WynnBuilder</div>
+
         <div id="atlas-content" class="hidden">
             <div id="atlas-canvas">
                 <div class="atlas-search-row">
                     <input type="text" placeholder="Search Items" class="atlas-search-input" />
                 </div>
-                <div class="atlas-filters-row">
-                    <div class="atlas-type-filters">
-                        <label class="atlas-filter-label">
-                            <input type="checkbox" class="atlas-type-checkbox" checked />
-                            Type Filters
-                        </label>
-                        <div class="atlas-type-sub">
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST
+                <div class="atlas-spacer">
+                    <div class="atlas-type-filter">
+                        <h3>Type Filter</h3>
+                        <span class="atlas-type-filter-line"></span>
+                        <div class="atlas-type-filters">
+                            <div class="atlas-type-filter-item" id="item-category">
+                                <p>Item Category</p>
+                                <select class="atlas-dropdown atlas-category-dropdown">
+                                    <option value="">ANY</option>
+                                    <option value="placeholder1">Placeholder 1</option>
+                                    <option value="placeholder2">Placeholder 2</option>
+                                    <option value="placeholder3">Placeholder 3</option>
+                                </select>
+                            </div>
+                            <div class="atlas-type-filter-item" id="item-rarity">
+                                <p>Item Rarity</p>
+                                <select class="atlas-dropdown atlas-rarity-dropdown">
+                                    <option value="">ANY</option>
+                                    <option value="placeholderA">Placeholder A</option>
+                                    <option value="placeholderB">Placeholder B</option>
+                                    <option value="placeholderC">Placeholder C</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="atlas-stat-filters">
-                        <label class="atlas-filter-label">
-                            <input type="checkbox" class="atlas-stat-checkbox" checked />
-                            Stat Filters
-                        </label>
-                        <div class="atlas-stat-sub">
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST <br>
-                            TEST
-                        </div>
+                    <div class="atlas-stat-filter">
+                        <h3>Stat Filter</h3>
                     </div>
                 </div>
-                <div class="atlas-spacer"></div>
                 <div class="atlas-search-btn-row">
                     <button class="atlas-search-btn">Search</button>
                 </div>
             </div>
         </div>
+
         <div id="crafter-content" class="hidden">This is WynnCrafter</div>
     </main>
 </body>
