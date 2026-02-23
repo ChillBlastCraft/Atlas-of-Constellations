@@ -173,11 +173,18 @@ main {
 }
 
 .atlas-type-filter h3,
-.atlas-stat-filter h3 {
+.atlas-stat-filter h3,
+.atlas-weapon-filter h3 {
     margin: 0 0 8px 0;
     font-size: 1.3rem;
     color: #eebbc3;
     letter-spacing: 1px;
+    text-align: center;
+}
+
+.atlas-weapon-filter h3 {
+    padding-top: 20px;
+    display: block;
 }
 
 .atlas-filter-line {
@@ -228,6 +235,65 @@ main {
     width: 90px;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+.atlas-weapon-filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.atlas-weapon-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.atlas-weapon-filter-item p {
+    margin: 0;
+    font-size: 1rem;
+    color: #eaeaea;
+    width: 100px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.atlas-weapon-minmax-group {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.atlas-weapon-filter-item input[type="number"] {
+    background: #232946;
+    color: #eebbc3;
+    border: 1.5px solid #b8c1ec;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    width: 70px;
+    outline: none;
+    box-shadow: 0 1px 4px #0002;
+    appearance: textfield;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.atlas-weapon-filter-item input[type="number"]::-webkit-outer-spin-button,
+.atlas-weapon-filter-item input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.atlas-weapon-filter-item input[type="number"]:focus {
+    border-color: #eebbc3;
+    box-shadow: 0 0 0 2px #eebbc366;
+}
+
+.atlas-weapon-filter-item .atlas-dropdown {
+    width: auto;
+    min-width: 140px;
+    flex: 0 1 auto;
 }
 
 /*
@@ -301,6 +367,10 @@ main {
     min-width: 0;
     max-width: 320px;
     white-space: nowrap;
+}
+
+.atlas-weapon-filter-item input[type="number"]:first-of-type {
+     margin-left: auto;
 }
 
 .atlas-stat-filter-item p {

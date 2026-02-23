@@ -11,12 +11,15 @@
     <div class="sidebar">
         <h1>WynnLab</h1>
         <button id="btn-builder" class="active">WynnBuilder</button>
+        <button id="btn-calc">WynnCalc</button>
         <button id="btn-atlas">WynnAtlas</button>
         <button id="btn-crafter">WynnCrafter</button>
     </div>
 
     <main id="main-content">
         <div id="builder-content">This is WynnBuilder</div>
+
+        <div id="calc-content" class="hidden">This is WynnCalc</div>
 
         <div id="atlas-content" class="hidden">
             <div id="atlas-canvas">
@@ -45,6 +48,68 @@
                                     <option value="placeholderB">Placeholder B</option>
                                     <option value="placeholderC">Placeholder C</option>
                                 </select>
+                            </div>
+                        </div>
+                        <!-- Weapon Filter -->
+                        <div class="atlas-weapon-filter">
+                            <h3>Weapon Filter</h3>
+                            <span class="atlas-filter-line"></span>
+                            <div class="atlas-weapon-filter-row">
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Base DPS</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Earth Damage</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Thunder Damage</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Water Damage</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Fire Damage</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Air Damage</p>
+                                    <div class="atlas-weapon-minmax-group">
+                                        <input type="number" class="atlas-weapon-min" placeholder="Min" min="0" />
+                                        <input type="number" class="atlas-weapon-max" placeholder="Max" min="0" />
+                                    </div>
+                                </div>
+                                <div class="atlas-weapon-filter-item">
+                                    <p>Attack Speed</p>
+                                    <select class="atlas-dropdown atlas-weapon-speed-dropdown">
+                                        <option value="">ANY</option>
+                                        <option value="super_slow">Super Slow</option>
+                                        <option value="very_slow">Very Slow</option>
+                                        <option value="slow">Slow</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="fast">Fast</option>
+                                        <option value="very_fast">Very Fast</option>
+                                        <option value="super_fast">Super Fast</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
