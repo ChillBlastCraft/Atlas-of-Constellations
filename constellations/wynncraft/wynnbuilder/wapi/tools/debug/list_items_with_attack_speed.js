@@ -1,6 +1,9 @@
-const fs = require('fs')
-const path = require('path')
-const dataPath = path.join(__dirname, '..', '..', 'constellations', 'wynncraft', 'wynnbuilder', 'wapi', 'data', 'items.categorized.json')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const dataPath = path.join(__dirname, '..', '..', 'data', 'items.categorized.json')
 const items = JSON.parse(fs.readFileSync(dataPath, 'utf8'))
 function getAttackSpeed(item) {
   const paths = ['rawAttackSpeed','attackSpeed','identifications.attackSpeed','base.attackSpeed']

@@ -3,6 +3,15 @@
 
 If you want, I can run any of these commands here and paste the output. 
 
+## Developer notes
+
+- Developer tools were moved into the `wapi/tools` folder. Debug and helper scripts now live under `tools/` (e.g. `tools/debug`).
+- Debug scripts are ES modules (the `wapi` package uses `type: "module"`); run them from the `wapi` folder with Node 18+:
+
+```bash
+node tools/debug/extract_stats.js
+```
+
 ## Finding Stats
 
 - Count how many items contain a stat (case-insensitive):

@@ -1,7 +1,10 @@
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
-const file = path.join(__dirname, '../constellations/wynncraft/wynnbuilder/wapi/data/items.categorized.json')
+const file = path.join(__dirname, '..', '..', 'data', 'items.categorized.json')
 const raw = fs.readFileSync(file, 'utf8')
 let data
 try {
@@ -37,5 +40,5 @@ console.log('\n--- Nested property paths (sample) ---')
 for (const p of sortedNested) console.log(p)
 
 // Also output a JSON file for further manual mapping if needed
-fs.writeFileSync(path.join(__dirname, '../stats-keys.json'), JSON.stringify({keys: sortedKeys, paths: sortedNested}, null, 2))
+fs.writeFileSync(path.join(__dirname, '..', 'stats-keys.json'), JSON.stringify({keys: sortedKeys, paths: sortedNested}, null, 2))
 console.log('\nWrote tools/stats-keys.json')
