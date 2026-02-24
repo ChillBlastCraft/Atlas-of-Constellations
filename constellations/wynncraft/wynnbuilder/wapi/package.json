@@ -6,7 +6,9 @@
   "main": "wapi-client.js",
   "scripts": {
     "start": "node getItems.js",
-    "items": "node getItems.js"
+    "items": "node getItems.js",
+    "categorize": "node categorizeItems.js",
+    "categories": "node categorizeItems.js --list"
   },
   "engines": {
     "node": ">=24"
