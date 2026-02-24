@@ -1,28 +1,41 @@
-# Wynncraft WAPI helper
+# Wynncraft — Items API quick checks
 
-Quick helper to call the Wynncraft public API (WAPI). Files added:
+This repository includes a small `getItems.js` probe script. Below are minimal terminal commands to quickly verify whether the Wynncraft items API is reachable and returning data.
 
-- `package.json` — project metadata (ESM, node>=24)
-- `wapi-client.js` — exported helpers: `getPlayerStats`, `getGuild`
-- `getPlayer.js` — CLI sample to fetch a player's stats
+Endpoint to try:
 
-Requirements
-- Node.js 24.x LTS installed (you already have v24.13.1)
+- https://api.wynncraft.com/v3/item/database?fullResult
 
-Usage
+curl (Linux/macOS/WSL or Windows with curl available):
 
-Run the sample script to fetch player stats:
-
-```powershell
-node constellations/wynncraft/wynnbuilder/wapi/getPlayer.js <username>
+```sh
+curl -sS https://api.wynncraft.com/v3/item/database?fullResult | head -n 20
+# check HTTP status only
+curl -sS -o /dev/null -w "%{http_code}\n" https://api.wynncraft.com/v3/item/database?fullResult
 ```
 
-Example:
+wget:
 
-```powershell
-node constellations/wynncraft/wynnbuilder/wapi/getPlayer.js somePlayer
+```sh
+wget -qO- https://api.wynncraft.com/v3/item/database?fullResult | head -n 20
 ```
 
-Notes
-- This uses the built-in `fetch` available in Node 18+.
-- For more endpoints add functions to `wapi-client.js`.
+PowerShell (Windows):
+
+```powershell
+Invoke-RestMethod 'https://api.wynncraft.com/v3/item/database?fullResult' | ConvertTo-Json -Depth 2 | Select-Object -First 1
+$r = Invoke-WebRequest 'https://api.wynncraft.com/v3/item/database?fullResult' -UseBasicParsing; $r.StatusCode
+```
+
+Node one-liner (Node 18+ for built-in `fetch`):
+
+```sh
+node -e "(async()=>{const r=await fetch('https://api.wynncraft.com/v3/item/database?fullResult');console.log(r.status);const j=await r.json();console.log(Array.isArray(j)?j.length:Object.keys(j||{}).length);})();"
+```
+
+Quick notes
+
+- A `200` HTTP status and JSON output (array or object with `items`/`data`) means the endpoint is working.
+- If you see non-200 status codes or empty responses, try adding a client timeout (e.g. `curl --max-time 10`) or retry later — the API may be down or rate-limited.
+
+If you want, I can also run one of these checks from this environment and paste the result here.

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "wapi-client.js",
   "scripts": {
-    "start": "node getPlayer.js",
+    "start": "node getItems.js",
     "items": "node getItems.js"
   },
   "engines": {
