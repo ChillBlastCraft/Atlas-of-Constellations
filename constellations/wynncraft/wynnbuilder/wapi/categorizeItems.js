@@ -8,6 +8,12 @@ function normalize(s) {
 }
 
 const MAPS = {
+        Tome: {
+            subgroup: {
+                Tome: ['tome'],
+                Aspect: ['aspect']
+            }
+        },
     Weapons: {
         subgroup: {
             Sword: ['sword'],
@@ -25,7 +31,7 @@ const MAPS = {
     Armour: {
         subgroup: {
             Helmet: ['helmet', 'helm', 'hood', 'cap', 'mask', 'head'],
-            Chestplate: ['chestplate', 'chestplates', 'chest', 'plate', 'vest', 'armor', 'armour', 'robe', 'tunic', 'coat', 'mail', 'suit', 'body', 'torso', 'chestpiece'],
+            Chestplate: ['chestplate', 'chestplates', 'chestpiece', 'vest', 'robe', 'tunic', 'coat', 'mail', 'suit'],
             Leggings: ['leggings', 'pants', 'leggins', 'greaves', 'legs', 'leg'],
             Boots: ['boots', 'shoe', 'shoes', 'foot', 'feet', 'greaves', 'sabatons'],
             Shield: ['shield', 'buckler']
@@ -153,7 +159,9 @@ function tally(items) {
     const counts = {}
     for (const it of items) {
         const c = it.category || 'UNKNOWN'
-        const s = it.subcategory || 'UNKNOWN'
+        let s = it.subcategory || 'UNKNOWN'
+        // Rename Armour UNKNOWN to Quest/Other Armour
+        if (c === 'Armour' && s === 'UNKNOWN') s = 'Quest/Other Armour'
         counts[c] ??= { total: 0, subs: {} }
         counts[c].total += 1
         counts[c].subs[s] = (counts[c].subs[s] || 0) + 1
