@@ -1,0 +1,14 @@
+{
+  "name": "wynn-wapi",
+  "version": "0.1.0",
+  "description": "Wynncraft WAPI helper for Atlas-of-Constellations",
+  "type": "module",
+  "main": "wapi-client.js",
+  "scripts": {
+    "start": "node getPlayer.js",
+    "items": "node getItems.js"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
