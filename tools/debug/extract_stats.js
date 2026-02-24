@@ -37,5 +37,5 @@ console.log('\n--- Nested property paths (sample) ---')
 for (const p of sortedNested) console.log(p)
 
 // Also output a JSON file for further manual mapping if needed
-fs.writeFileSync(path.join(__dirname, 'stats-keys.json'), JSON.stringify({keys: sortedKeys, paths: sortedNested}, null, 2))
+fs.writeFileSync(path.join(__dirname, '../stats-keys.json'), JSON.stringify({keys: sortedKeys, paths: sortedNested}, null, 2))
 console.log('\nWrote tools/stats-keys.json')

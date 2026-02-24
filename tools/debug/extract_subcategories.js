@@ -16,5 +16,5 @@ for (const it of data) {
 const out = {}
 for (const k of Object.keys(map)) out[k] = Array.from(map[k]).sort()
 
-fs.writeFileSync(path.join(__dirname, 'subcategories.json'), JSON.stringify(out, null, 2))
+fs.writeFileSync(path.join(__dirname, '../subcategories.json'), JSON.stringify(out, null, 2))
 console.log('Wrote tools/subcategories.json')

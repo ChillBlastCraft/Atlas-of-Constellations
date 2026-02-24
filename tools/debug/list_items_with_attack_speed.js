@@ -1,8 +1,9 @@
 const fs = require('fs')
 const path = require('path')
-const dataPath = path.join(__dirname, '..', 'constellations', 'wynncraft', 'wynnbuilder', 'wapi', 'data', 'items.categorized.json')
+const dataPath = path.join(__dirname, '..', '..', 'constellations', 'wynncraft', 'wynnbuilder', 'wapi', 'data', 'items.categorized.json')
 const items = JSON.parse(fs.readFileSync(dataPath, 'utf8'))
-function getStat(item, paths) {
+function getAttackSpeed(item) {
+  const paths = ['rawAttackSpeed','attackSpeed','identifications.attackSpeed','base.attackSpeed']
   for (const p of paths) {
     const parts = p.split('.')
     let cur = item
@@ -21,7 +22,7 @@ function getStat(item, paths) {
 }
 let count=0
 for (const it of items) {
-  const asp = getStat(it, ['rawAttackSpeed','attackSpeed','identifications.attackSpeed','base.attackSpeed'])
+  const asp = getAttackSpeed(it)
   if (asp !== null) {
     count++
   }
@@ -30,7 +31,7 @@ console.log('Items with attack speed:', count, 'of', items.length)
 // print first 20 examples
 let printed=0
 for (const it of items) {
-  const asp = getStat(it, ['rawAttackSpeed','attackSpeed','identifications.attackSpeed','base.attackSpeed'])
+  const asp = getAttackSpeed(it)
   if (asp !== null) {
     console.log(it.name || it.internalName || '[no name]', '->', asp, 'category=', it.category, 'sub=', it.subcategory)
     printed++
