@@ -583,12 +583,82 @@
 				resultsContainer.textContent = 'No items found.'
 				return
 			}
+			// Auto-open the first matching item for quick preview
+			renderItemDetail(matchesList[0])
+			return
+			// NOTE: if you prefer to show the full list and still open the first item,
+			// we could render the list and the detail side-by-side. Currently we
+			// replace the results with the item's detail; the detail has a Back
+			// button that calls runSearch() to return to the list view.
 			const ul = document.createElement('ul')
 			ul.className = 'atlas-results-list'
 			for (const it of matchesList.slice(0, 200)) {
 				const li = document.createElement('li')
+				li.className = 'atlas-result-item'
 				const itemSub = inferSubcategory(it) || it.subcategory || '?'
-				li.textContent = `${it.name || it.displayName || it.id || '[no name]'} — ${it.category || '?'} / ${itemSub} — ${it.rarity || it.tier || ''}`
+
+				const nameDiv = document.createElement('div')
+				nameDiv.className = 'item-name'
+				nameDiv.textContent = it.name || it.displayName || it.id || '[no name]'
+				li.appendChild(nameDiv)
+
+				const metaDiv = document.createElement('div')
+				metaDiv.className = 'item-meta'
+
+				const catSpan = document.createElement('span')
+				catSpan.className = 'badge badge-category'
+				catSpan.textContent = it.category || '?'
+				metaDiv.appendChild(catSpan)
+
+				const subSpan = document.createElement('span')
+				subSpan.className = 'badge badge-subcat'
+				subSpan.textContent = itemSub
+				metaDiv.appendChild(subSpan)
+
+				if (it.rarity || it.tier) {
+					const rarSpan = document.createElement('span')
+					rarSpan.className = 'badge badge-rarity'
+					rarSpan.textContent = (it.rarity || it.tier)
+					metaDiv.appendChild(rarSpan)
+				}
+
+				li.appendChild(metaDiv)
+
+				// compact summary for list view (attack speed + elemental ranges)
+				const summary = document.createElement('div')
+				summary.className = 'item-summary'
+				if (it.attackSpeed) {
+					const as = document.createElement('span')
+					as.className = 'summary-as'
+					const dpsNum = it.averageDps || it.baseDps || it.averageDps
+					as.innerHTML = prettyEnum(it.attackSpeed) + (dpsNum ? ` <span class="summary-dps">⚔ ${dpsNum}</span>` : '')
+					summary.appendChild(as)
+				}
+				if (it.base) {
+					const order = [
+						['baseEarthDamage','Earth','\u2692'],
+						['baseThunderDamage','Thunder','\u26A1'],
+						['baseWaterDamage','Water','\u2744'],
+						['baseFireDamage','Fire','\u2737'],
+						['baseAirDamage','Air','\u2733']
+					]
+					for (const [k,label,iconSym] of order) {
+						if (it.base[k]) {
+							const b = it.base[k]
+							const span = document.createElement('span')
+							span.className = 'summary-damage'
+							span.innerHTML = `${iconSym} ${b.min || ''}-${b.max || ''}`
+							summary.appendChild(span)
+						}
+					}
+				}
+				li.appendChild(summary)
+
+				// Make the result clickable to show details
+				li.tabIndex = 0
+				li.addEventListener('click', function () { renderItemDetail(it) })
+				li.addEventListener('keydown', function (e) { if (e.key === 'Enter') renderItemDetail(it) })
+
 				ul.appendChild(li)
 			}
 			resultsContainer.appendChild(ul)
@@ -600,6 +670,364 @@
 		} catch (err) {
 			resultsContainer.textContent = 'Search failed: ' + (err.message || err)
 		}
+	}
+
+	function prettyEnum(s) {
+		if (!s) return ''
+		return s.toString().replace(/([A-Z])/g, '_$1').replace(/[- ]/g, '_').toUpperCase()
+	}
+
+	function renderItemDetail(item) {
+			resultsContainer.innerHTML = ''
+			// DEBUG: dump item key fields to console to help diagnose missing UI values
+			try { console.groupCollapsed && console.groupCollapsed('renderItemDetail - ' + (item.name || item.displayName || 'item')) } catch(e){}
+			console.debug('item.identifications ->', item.identifications)
+			console.debug('item.powderSlots ->', item.powderSlots)
+			console.debug('item.lore ->', item.lore)
+		const wrap = document.createElement('div')
+		wrap.className = 'atlas-item-detail'
+
+		const header = document.createElement('div')
+		header.className = 'item-header'
+
+		const icon = document.createElement('div')
+		icon.className = 'item-icon'
+		// try to render a real icon image if available, otherwise fallback to gradient + letter
+		try {
+			(function attachIcon() {
+				function getGradientForIconName(name) {
+					const n = (name || '').toLowerCase()
+					if (n.includes('fire')) return 'radial-gradient(circle at 30% 25%, #ffb46b, #7b2b1a)'
+					if (n.includes('water')) return 'radial-gradient(circle at 30% 25%, #8fe3ff, #1b4f6b)'
+					if (n.includes('earth')) return 'radial-gradient(circle at 30% 25%, #9be78c, #23421a)'
+					if (n.includes('thunder')) return 'radial-gradient(circle at 30% 25%, #ffe58a, #6b4b00)'
+					if (n.includes('air')) return 'radial-gradient(circle at 30% 25%, #cfe6ff, #2b2f3a)'
+					if (n.includes('multi')) return 'radial-gradient(circle at 30% 25%, #e6b8ff, #2b1632)'
+					if (n.includes('basicgold') || n.includes('gold')) return 'radial-gradient(circle at 30% 25%, #ffd27a, #8b5f12)'
+					if (n.includes('basicwood') || n.includes('wood')) return 'radial-gradient(circle at 30% 25%, #d6b88f, #3b2b12)'
+					return 'radial-gradient(circle at 30% 25%, #6b2f8f, #2b1632)'
+				}
+
+				const ico = item.icon && item.icon.value
+				// prefer a named asset like "relik.fire3"
+				let tryName = null
+				if (ico && typeof ico === 'object' && ico.name) tryName = ico.name.replace(/[^a-zA-Z0-9._-]/g, '')
+				if (tryName) {
+					const attempt = new Image()
+					attempt.crossOrigin = 'anonymous'
+					attempt.src = 'assets/icons/' + tryName + '.png'
+					attempt.onload = function () {
+						icon.style.backgroundImage = `url(${attempt.src})`
+						icon.classList.add('has-image')
+					}
+					attempt.onerror = function () {
+						// fallback gradient based on name
+						icon.style.backgroundImage = getGradientForIconName(tryName)
+						icon.textContent = (item.name || '').charAt(0) || '?'
+					}
+					return
+				}
+				// other formats (legacy id) or no image
+				icon.style.backgroundImage = getGradientForIconName(item.subcategory || item.category || '')
+				icon.textContent = (item.name || '').charAt(0) || '?'
+			})()
+		} catch (err) {
+			console.warn('attachIcon failed', err)
+		}
+		try { console.groupEnd && console.groupEnd() } catch(e){}
+		header.appendChild(icon)
+
+		const titleWrap = document.createElement('div')
+		titleWrap.className = 'item-title-wrap'
+		const title = document.createElement('h2')
+		title.className = 'item-title'
+		title.textContent = item.name || item.displayName || '[no name]'
+		titleWrap.appendChild(title)
+
+		const subBadges = document.createElement('div')
+		subBadges.className = 'item-badges'
+		const cat = document.createElement('span')
+		cat.className = 'badge badge-category'
+		cat.textContent = item.category || ''
+		subBadges.appendChild(cat)
+		if (item.subcategory) {
+			const sub = document.createElement('span')
+			sub.className = 'badge badge-subcat'
+			sub.textContent = item.subcategory
+			subBadges.appendChild(sub)
+		}
+		if (item.rarity || item.tier) {
+			const r = document.createElement('span')
+			r.className = 'badge badge-rarity'
+			r.textContent = item.rarity || item.tier
+			subBadges.appendChild(r)
+		}
+		titleWrap.appendChild(subBadges)
+		header.appendChild(titleWrap)
+
+		wrap.appendChild(header)
+
+		// Quick stats block
+		const stats = document.createElement('div')
+		stats.className = 'item-stats'
+
+		if (item.attackSpeed) {
+			const as = document.createElement('div')
+			as.className = 'item-stat-line stat-attackspeed'
+			const left = document.createElement('div')
+			left.className = 'stat-left'
+			left.innerHTML = `<strong>Attack Speed:</strong> ${prettyEnum(item.attackSpeed)}`
+			const right = document.createElement('div')
+			right.className = 'stat-right'
+			as.appendChild(left)
+			as.appendChild(right)
+			stats.appendChild(as)
+		}
+
+		// base damage values (earth, thunder, water, fire, air)
+		if (item.base) {
+			const order = [
+				['baseEarthDamage','Earth','\u2692'],
+				['baseThunderDamage','Thunder','\u26A1'],
+				['baseWaterDamage','Water','\u2744'],
+				['baseFireDamage','Fire','\u2737'],
+				['baseAirDamage','Air','\u2733']
+			]
+			for (const [k,label,iconSym] of order) {
+				if (item.base[k]) {
+					const b = item.base[k]
+					const line = document.createElement('div')
+					line.className = 'item-stat-line damage-line stat-' + label.toLowerCase()
+					const left = document.createElement('div')
+					left.className = 'stat-left'
+					left.innerHTML = `${iconSym} ${label} Damage:`
+					const right = document.createElement('div')
+					right.className = 'stat-right'
+					right.textContent = `${b.min || ''}-${b.max || ''}`
+					line.appendChild(left)
+					line.appendChild(right)
+					stats.appendChild(line)
+				}
+			}
+		}
+
+		// requirements
+		if (item.requirements) {
+			const req = document.createElement('div')
+			req.className = 'item-reqs'
+			if (item.requirements.classRequirement) {
+				const c = document.createElement('div')
+				c.innerHTML = '<strong>Class Req:</strong> ' + item.requirements.classRequirement
+				req.appendChild(c)
+			}
+			if (item.requirements.level) {
+				const lvl = document.createElement('div')
+				lvl.innerHTML = '<strong>Combat Level Min:</strong> ' + item.requirements.level
+				req.appendChild(lvl)
+			}
+			// show numeric stat minimums if present
+			const mins = ['strength','dexterity','intelligence','agility','defence']
+			for (const m of mins) {
+				if (item.requirements[m] !== undefined) {
+					const el = document.createElement('div')
+					el.textContent = `${m.charAt(0).toUpperCase()+m.slice(1)} Min: ${item.requirements[m]}`
+					req.appendChild(el)
+				}
+			}
+			stats.appendChild(req)
+		}
+
+		// Highlight primary attribute and a few important idents (Intelligence, Mana Regen/Steal, Spell Costs, Powder Slots)
+		(function renderQuickIdents() {
+			// helper to lookup identification entries with several common keys
+			function pickIdent(keys) {
+				if (!item.identifications) return null
+				for (const k of keys) {
+					if (item.identifications[k] !== undefined) return item.identifications[k]
+				}
+				return null
+			}
+
+			function valText(v, key) {
+				if (!v) return null
+				if (typeof v === 'object') {
+					if (v.min !== undefined && v.max !== undefined) {
+						if (/SpellCost|spellCost|1stSpellCost|2ndSpellCost|3rdSpellCost|4thSpellCost/i.test(key)) return `${v.min}%–${v.max}%`
+						if (/manaRegen|healthRegen/i.test(key)) return `${v.min}/5s–${v.max}/5s`
+						return `${v.min}–${v.max}`
+					}
+					if (v.raw !== undefined) {
+						if (/SpellCost|spellCost|1stSpellCost|2ndSpellCost|3rdSpellCost|4thSpellCost/i.test(key)) return `${v.raw}%`
+						if (/manaRegen|healthRegen/i.test(key)) return `${v.raw}/5s`
+						return String(v.raw)
+					}
+				}
+				return String(v)
+			}
+
+			// Intelligence (show prominently if present)
+			const intel = pickIdent(['rawIntelligence','intelligence','rawInt'])
+			if (intel) {
+				const v = (intel.raw !== undefined) ? intel.raw : (intel.min !== undefined ? intel.min : intel)
+				const p = document.createElement('div')
+				p.className = 'item-primary-attr'
+				p.innerHTML = `<span class="primary-key">Intelligence</span> <span class="primary-val ${Number(v) >= 0 ? 'val-pos' : 'val-neg'}">${v}</span>`
+				stats.appendChild(p)
+			}
+
+			// other quick idents to show
+			const quick = [
+				{ keyDisplay: 'Mana Regen', keys: ['manaRegen','ManaRegen'] },
+				{ keyDisplay: 'Mana Steal', keys: ['manaSteal','ManaSteal'] },
+				{ keyDisplay: '1st Spell Cost%', keys: ['1stSpellCost','1st Spell Cost','1stSpellCost%'] },
+				{ keyDisplay: '2nd Spell Cost%', keys: ['2ndSpellCost','2nd Spell Cost','2ndSpellCost%'] },
+				{ keyDisplay: '3rd Spell Cost%', keys: ['3rdSpellCost','3rd Spell Cost','3rdSpellCost%'] },
+				{ keyDisplay: '4th Spell Cost%', keys: ['4thSpellCost','4th Spell Cost','4thSpellCost%'] }
+			]
+			for (const q of quick) {
+				const v = pickIdent(q.keys)
+				const txt = valText(v, q.keys[0])
+				if (txt) {
+					let cls = 'item-stat-line'
+					if (/Mana Regen/i.test(q.keyDisplay)) cls += ' stat-mana'
+					else if (/Mana Steal/i.test(q.keyDisplay)) cls += ' stat-mana-steal'
+					else if (/Spell Cost/i.test(q.keyDisplay)) cls += ' stat-spell-cost'
+					const line = document.createElement('div')
+					line.className = cls
+					const left = document.createElement('div')
+					left.className = 'stat-left'
+					left.textContent = q.keyDisplay + ':'
+					const right = document.createElement('div')
+					right.className = 'stat-right'
+					right.innerHTML = `<span class="${(typeof v === 'object' && (v.raw||v.min) < 0) ? 'val-neg' : 'val-pos'}">${txt}</span>`
+					line.appendChild(left)
+					line.appendChild(right)
+					stats.appendChild(line)
+				}
+			}
+
+			// Powder Slots
+			const pslots = (item.powderSlots !== undefined) ? item.powderSlots : (item.identifications && (item.identifications.powderSlots || item.identifications['Powder Slots']))
+			if (pslots !== undefined && pslots !== null) {
+				const ps = document.createElement('div')
+				ps.className = 'item-stat-line stat-powder'
+				const left = document.createElement('div')
+				left.className = 'stat-left'
+				left.textContent = 'Powder Slots:'
+				const right = document.createElement('div')
+				right.className = 'stat-right'
+				right.textContent = String(pslots)
+				ps.appendChild(left)
+				ps.appendChild(right)
+				stats.appendChild(ps)
+			}
+		})()
+
+		wrap.appendChild(stats)
+
+		// Identifications / stats list (primary attributes and formatted idents)
+		if (item.identifications) {
+			const idWrap = document.createElement('div')
+			idWrap.className = 'item-identifications'
+
+			// Primary attribute bonuses (rawIntelligence/rawStrength etc.) — render prominently
+			const primaryAttrs = ['rawStrength','rawDexterity','rawAgility','rawDefence']
+			for (const attr of primaryAttrs) {
+				const info = item.identifications[attr]
+				if (info && info.raw !== undefined) {
+					const label = attr.replace(/^raw/,'')
+					const p = document.createElement('div')
+					p.className = 'item-primary-attr'
+					p.innerHTML = `<span class="primary-key">${label.charAt(0).toUpperCase()+label.slice(1)}</span> <span class="primary-val val-pos">${info.raw}</span>`
+					idWrap.appendChild(p)
+				}
+			}
+
+			// Helper to format identification values
+			function fmtVal(k, v) {
+				// prefer explicit ranges when both min and max exist
+				if (v && v.min !== undefined && v.max !== undefined) {
+					// percent-style stats
+					if (/spellDamage|SpellDamage|SpellCost|spellCost|1stSpellCost|2ndSpellCost|3rdSpellCost|4thSpellCost/i.test(k)) {
+						return `${v.min}%–${v.max}%`
+					}
+					if (/manaRegen|healthRegen/i.test(k)) {
+						return `${v.min}/5s–${v.max}/5s`
+					}
+					return `${v.min}–${v.max}`
+				}
+				// fallback to raw when available
+				if (v && v.raw !== undefined) {
+					// apply units for certain keys
+					if (/spellDamage|SpellDamage/i.test(k)) return `${v.raw}%`
+					if (/SpellCost|spellCost|1stSpellCost|2ndSpellCost|3rdSpellCost|4thSpellCost/i.test(k)) return `${v.raw}%`
+					if (/manaRegen|healthRegen/i.test(k) && v.raw !== undefined) return `${v.raw}/5s`
+					return String(v.raw)
+				}
+				if (v && v.min !== undefined) return String(v.min)
+				return ''
+			}
+
+			// Preferred display order for idents
+			const prefer = ['rawIntelligence','manaRegen','manaSteal','spellDamage','1stSpellCost','2ndSpellCost','3rdSpellCost','4thSpellCost']
+			const seen = new Set()
+			function appendIdent(k) {
+				const v = item.identifications[k]
+				if (!v) return
+				seen.add(k)
+				const line = document.createElement('div')
+				line.className = 'ident-line'
+				const valText = fmtVal(k, v)
+				const numeric = Number((v.raw !== undefined) ? v.raw : (v.min !== undefined ? v.min : 0))
+				const colorClass = (numeric > 0) ? 'val-pos' : (numeric < 0) ? 'val-neg' : 'val-neu'
+				const left = document.createElement('span')
+				left.className = `ident-val ${colorClass}`
+				left.textContent = valText
+				const right = document.createElement('span')
+				right.className = 'ident-key'
+				// pretty key label
+				const pretty = k.replace(/([A-Z])/g, ' $1').replace(/^raw /i,'').replace(/_/g,' ')
+				right.textContent = pretty
+				line.appendChild(left)
+				line.appendChild(right)
+				idWrap.appendChild(line)
+			}
+
+			for (const k of prefer) appendIdent(k)
+			for (const k of Object.keys(item.identifications)) {
+				if (!seen.has(k)) appendIdent(k)
+			}
+
+			wrap.appendChild(idWrap)
+		}
+
+		// lore
+		if (item.lore) {
+			const lore = document.createElement('div')
+			lore.className = 'item-lore'
+			lore.textContent = item.lore
+			wrap.appendChild(lore)
+		}
+
+		// average/base DPS
+		if (item.averageDps || item.baseDps) {
+			const base = document.createElement('div')
+			base.className = 'item-base-dps'
+			base.innerHTML = '<strong>Base DPS:</strong> ' + (item.averageDps || item.baseDps)
+			wrap.appendChild(base)
+		}
+
+		// back button
+		const backRow = document.createElement('div')
+		backRow.className = 'item-back-row'
+		const backBtn = document.createElement('button')
+		backBtn.className = 'atlas-search-btn'
+		backBtn.textContent = 'Back to results'
+		backBtn.addEventListener('click', function () { runSearch() })
+		backRow.appendChild(backBtn)
+		wrap.appendChild(backRow)
+
+		resultsContainer.appendChild(wrap)
 	}
 
 	if (searchBtn) searchBtn.addEventListener('click', runSearch)

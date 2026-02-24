@@ -24,7 +24,7 @@
 └─────────────────────────┘
 */
 body {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel', Georgia, serif;
     background: radial-gradient(ellipse at top left, #232946 60%, #121629 100%);
     color: #eaeaea;
     min-height: 100vh;
@@ -149,6 +149,201 @@ main {
     display: block;
     box-sizing: border-box;
 }
+
+/* Suggestions / autocomplete dropdown */
+.atlas-search-row {
+    position: relative; /* anchor for absolute suggestions box */
+}
+.atlas-suggestions {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(100% + 10px);
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(180deg, #1b2033 0%, #232946 100%);
+    border: 1.5px solid #b8c1ec;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    z-index: 30;
+    display: none;
+}
+.atlas-suggestions-list {
+    list-style: none;
+    margin: 0;
+    padding: 6px 0;
+    max-height: 260px;
+    overflow: auto;
+}
+.atlas-suggestion-item {
+    padding: 10px 14px;
+    font-size: 1rem;
+    color: #eaeaea;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.12s ease, color 0.12s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.atlas-suggestion-item:last-child { border-bottom: none; }
+.atlas-suggestion-item:hover,
+.atlas-suggestion-item:focus {
+    background: linear-gradient(90deg, rgba(238,187,195,0.08), rgba(184,193,236,0.04));
+    color: #ffdfe6;
+}
+
+/* styled scrollbar for WebKit */
+.atlas-suggestions-list::-webkit-scrollbar { width: 10px; }
+.atlas-suggestions-list::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.35);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+/* Results styling */
+.atlas-results {
+    margin-top: 14px;
+}
+.atlas-results-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.atlas-result-item {
+    background: linear-gradient(180deg, rgba(27,32,51,0.6), rgba(35,41,70,0.6));
+    border: 1px solid rgba(184,193,236,0.14);
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.atlas-result-item { display:flex; flex-direction:column; align-items:flex-start }
+.atlas-result-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 26px rgba(0,0,0,0.6);
+}
+.item-meta { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
+.item-summary {
+    margin-top: 10px;
+    display:flex;
+    gap:8px;
+    flex-direction:column;
+    align-items:flex-start;
+}
+.summary-as {
+    font-size:0.85rem;
+    padding:4px 8px;
+    border-radius:6px;
+    background:rgba(200,150,230,0.08);
+    color:#d8b2ff;
+    font-weight:700;
+}
+.summary-damage {
+    font-size:0.95rem;
+    color:#dfefff;
+    background:rgba(255,255,255,0.02);
+    padding:6px 8px;
+    border-radius:6px;
+    display:inline-block;
+}
+.summary-dps {
+    font-size:0.85rem;
+    color:#ffeebb;
+    background:rgba(255,230,130,0.06);
+    padding:3px 6px;
+    border-radius:6px;
+}
+.stat-dps { font-weight:700; color:#ffd27a; margin-left:6px }
+.item-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #ffdfe6;
+    margin-bottom: 6px;
+}
+.item-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: #121629;
+    background: #b8c1ec;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+.badge-subcat { background: linear-gradient(90deg,#eebbc3,#b8c1ec); color: #232946 }
+.badge-rarity { background: linear-gradient(90deg,#ffd27a,#ffb86b); color: #33240a }
+.badge-category { background: linear-gradient(90deg,#9be7ff,#7bdff6); color: #05202a }
+
+/* Small note for overflow */
+.atlas-results > div {
+    margin-top: 8px;
+    color: #eaeaea;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+/* Item detail view */
+.atlas-item-detail {
+    display: block;
+    background: linear-gradient(180deg, #14151a, #1b2033);
+    border: 1px solid rgba(184,193,236,0.06);
+    padding: 14px;
+    border-radius: 12px;
+    color: #e8e8e8;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+}
+.item-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.item-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, #6b2f8f, #2b1632);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #ffdfe6;
+    font-size: 1.3rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 18px rgba(121,70,156,0.16), inset 0 -6px 14px rgba(0,0,0,0.25);
+    background-size: cover;
+    background-position: center center;
+}
+.item-icon.has-image { color: transparent }
+.item-title-wrap { display:flex; flex-direction:column; gap:6px }
+.item-title { color: #d86de0; margin:0; font-size:1.25rem }
+.item-badges { display:flex; gap:8px; align-items:center }
+.item-stats { margin-top:8px; display:flex; gap:12px; flex-direction:column }
+.item-stat-line { color:#eaeaea; font-size:0.95rem; line-height:1.25 }
+.damage-line .damage-label { font-weight:700; margin-right:6px; color:#cfe6ff }
+.item-reqs div { font-size:0.9rem; color:#dfe8f8 }
+.item-identifications { margin-top:10px; display:flex; flex-direction:column; gap:4px }
+.ident-line { display:flex; gap:12px; align-items:center; justify-content:space-between }
+.ident-val { font-weight:700; min-width:84px; text-align:left; display:inline-block }
+.ident-key { color:#b8c1ec; font-size:0.95rem; opacity:0.95 }
+.item-primary-attr { display:flex; gap:10px; align-items:center; margin-bottom:6px }
+.primary-key { color:#dfefff; font-weight:700; min-width:120px }
+.primary-val { font-size:1rem }
+.val-pos { color:#4cd964 }
+.val-neg { color:#ff5c6a }
+.val-neu { color:#eaeaea }
+.item-lore { margin-top:12px; font-style:italic; color:#d9ccf1; opacity:0.95; line-height:1.25 }
+.item-base-dps { margin-top:10px; font-weight:700; color:#ffeebb }
+.item-back-row { margin-top:12px; display:flex; justify-content:center }
 
 /*
 ┌────────────────────────────┐
@@ -593,3 +788,97 @@ main {
     color: #232946;
     border-color: #eebbc3;
 }
+
+/* Compact item card (override to match pasted image style) */
+.atlas-item-detail {
+    width: 300px;
+    padding: 20px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #0f0f12 0%, #1a1720 100%);
+    border: 1px solid rgba(120,80,180,0.18);
+    box-shadow: 0 12px 40px rgba(8,6,12,0.8), inset 0 1px 0 rgba(255,255,255,0.02);
+    font-size: 0.92rem;
+    line-height: 1.3;
+}
+.atlas-item-detail .item-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+}
+.atlas-item-detail .item-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    color: #fff;
+    box-shadow: 0 8px 28px rgba(70,20,120,0.45), 0 0 32px rgba(168,92,196,0.18) inset;
+    border: 2px solid rgba(200,140,220,0.12);
+    background-size: cover;
+}
+.atlas-item-detail .item-title { 
+    font-size: 1.05rem; 
+    color: #d86de0; 
+    text-align: center; 
+    margin: 0;
+    text-decoration: underline dotted rgba(216,109,224,0.12);
+}
+.atlas-item-detail .item-badges { display:none }
+.atlas-item-detail .item-stats { width:100%; display:flex; flex-direction:column; gap:8px; margin-top:6px }
+.atlas-item-detail .item-stat-line { width:100%; display:flex; justify-content:space-between; align-items:center }
+
+/* full-width blocks */
+.atlas-item-detail .item-reqs,
+.atlas-item-detail .item-identifications,
+.atlas-item-detail .item-lore,
+.atlas-item-detail .item-base-dps,
+.atlas-item-detail .item-back-row { width:100% }
+.atlas-item-detail .item-stat-line { color:#dcd6df; font-size:0.92rem }
+.atlas-item-detail .damage-line .damage-label { color:#cfe6ff; font-weight:700; margin-right:6px }
+.atlas-item-detail .item-reqs div { color:#cfc9d8; font-size:0.88rem }
+.atlas-item-detail .item-identifications { margin-top:10px; border-top:1px dashed rgba(255,255,255,0.03); padding-top:8px }
+.atlas-item-detail .ident-line { display:flex; gap:8px; align-items:flex-start; justify-content:space-between }
+.atlas-item-detail .ident-val { font-weight:700; min-width:68px; text-align:left; display:inline-block }
+.atlas-item-detail .ident-key { color:#9fa3b8; font-size:0.86rem; text-align:right }
+.atlas-item-detail .val-pos { color:#33cc66 }
+.atlas-item-detail .val-neg { color:#ff6b6b }
+.atlas-item-detail .val-neu { color:#e0e0e0 }
+.atlas-item-detail .item-lore { color:#d9ccf1; font-style:italic; font-size:0.86rem; opacity:0.95 }
+.atlas-item-detail .item-base-dps { margin-top:8px; font-weight:700; color:#ffeebb; text-align:left }
+.atlas-item-detail .item-back-row { margin-top:12px; display:flex; justify-content:center }
+
+/* Icons for stat rows (using pseudo-elements keeps HTML clean) */
+.atlas-item-detail .item-stat-line .stat-left::before {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+}
+
+/* SVG data-URI icons (simple shapes) applied to the left label */
+.atlas-item-detail .stat-attackspeed .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ffd27a' d='M12 2 L15 8 L22 9 L17 14 L18 21 L12 18 L6 21 L7 14 L2 9 L9 8 Z'/></svg>") }
+.atlas-item-detail .stat-earth .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='%239be78c'/><path fill='%2323421a' d='M8 12h8v1H8z'/></svg>") }
+.atlas-item-detail .stat-thunder .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ffe58a' d='M13 2 L3 14 H11 L10 22 L21 10 H13 L14 2 Z'/></svg>") }
+.atlas-item-detail .stat-water .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%238fe3ff' d='M12 2 C10 6 6 9 6 12 A6 6 0 0 0 18 12 C18 9 14 6 12 2 Z'/></svg>") }
+.atlas-item-detail .stat-fire .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ffb46b' d='M12 2 C10 7 6 9 6 13 C6 17 9 20 12 22 C15 20 18 17 18 13 C18 9 14 7 12 2 Z'/></svg>") }
+.atlas-item-detail .stat-air .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><g fill='%23cfe6ff'><circle cx='6' cy='12' r='2'/><circle cx='12' cy='8' r='2'/><circle cx='18' cy='12' r='2'/></g></svg>") }
+.atlas-item-detail .stat-mana .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='3' y='7' width='18' height='10' rx='2' fill='%236ec1ff'/><rect x='6' y='10' width='4' height='4' fill='%230b1220'/></svg>") }
+.atlas-item-detail .stat-mana-steal .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ff8fb6' d='M12 2 C14 6 18 8 18 12 C18 16 15 19 12 22 C9 19 6 16 6 12 C6 8 10 6 12 2 Z'/></svg>") }
+.atlas-item-detail .stat-spell-cost .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='9' fill='%23cfa8ff'/><path fill='%230b1220' d='M12 7 L15 12 L12 17 L9 12 Z'/></svg>") }
+.atlas-item-detail .stat-powder .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='7' cy='12' r='2' fill='%23ffdfe6'/><circle cx='12' cy='12' r='2' fill='%23ffdfe6'/><circle cx='17' cy='12' r='2' fill='%23ffdfe6'/></svg>") }
+.atlas-item-detail .item-primary-attr .stat-left::before { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%23ffd27a' d='M12 2 L15 8 L22 9 L17 14 L18 21 L12 18 L6 21 L7 14 L2 9 L9 8 Z'/></svg>") }
+
+/* Tidy spacing for compact view */
+.atlas-item-detail .item-stat-line { padding: 6px 0; border-radius:6px }
+.atlas-item-detail .item-identifications .ident-line { padding:4px 0 }
+.atlas-item-detail .item-lore { margin-top:10px; max-height: 7.5rem; overflow: auto }
+
+/* Make result list items use a compact preview resembling the card */
+.atlas-result-item { padding:12px; max-width:320px }
+.atlas-result-item .item-summary { align-items:flex-start }
