@@ -10,3 +10,25 @@ Think of it as a project galaxy:
 - shared foundations for future expansion
 
 The goal is simple: keep everything connected, organized, and easy to grow over time.
+
+## Wynncraft WAPI — PowerShell stat counts
+
+To count how many items contain a specific stat (e.g. `walkSpeed`) using PowerShell, run the npm helper which outputs and parses JSON:
+
+```powershell
+cd constellations/wynncraft/wynnbuilder/wapi
+npm run pwsh-stat-walkSpeed
+# or for a custom stat name and parse the JSON manually:
+node categorizeItems.js --stat walkSpeed | ConvertFrom-Json
+```
+
+To list all detected stats with counts as JSON:
+
+```powershell
+cd constellations/wynncraft/wynnbuilder/wapi
+npm run stat-list
+```
+
+---
+
+See `constellations/wynncraft/wynnbuilder/wapi` for scripts and the `categorizeItems.js` tool.

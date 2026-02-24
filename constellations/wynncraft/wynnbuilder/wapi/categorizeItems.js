@@ -39,10 +39,21 @@ const MAPS = {
     },
     Accessories: {
         subgroup: {
-            Ring: ['ring'],
-            Bracelet: ['bracelet'],
-            Necklace: ['necklace', 'amulet', 'pendant'],
-            Trinket: ['trinket', 'charm']
+            Ring: [
+                'ring', 'band', 'loop', 'signet', 'circlet', 'seal', 'annulus', 'wedding ring', 'engagement ring', 'eternity ring', 'promise ring', 'mood ring', 'class ring', 'championship ring', 'cocktail ring', 'birthstone ring', 'halo ring', 'solitaire ring', 'stacking ring', 'thumb ring', 'toe ring', 'spinner ring', 'poison ring', 'puzzle ring', 'claddagh', 'fede', 'gimmel', 'signet', 'insignia', 'crest', 'badge', 'token'
+            ],
+            Bracelet: [
+                'bracelet', 'bangle', 'cuff', 'chain', 'wristband', 'armlet', 'anklet', 'friendship bracelet', 'tennis bracelet', 'link bracelet', 'beaded bracelet', 'slap bracelet', 'leather bracelet', 'cord bracelet', 'shamballa', 'macrame', 'wrap bracelet', 'power bracelet', 'paracord', 'wristlet', 'manacle', 'fetters', 'shackle', 'bracer', 'brace', 'wrist', 'bracelet cuff', 'bracelet band', 'bracelet loop'
+            ],
+            Necklace: [
+                'necklace', 'amulet', 'pendant', 'locket', 'torc', 'torque', 'choker', 'chain', 'collar', 'medallion', 'talisman', 'gorget', 'necklet', 'string', 'strand', 'beads', 'rosary', 'paten', 'riviere', 'sautoir', 'lavaliere', 'festoon', 'bib necklace', 'dog tag', 'id tag', 'badge', 'crest', 'insignia', 'medal', 'medallion', 'order', 'decoration', 'ribbon', 'neckpiece', 'neckband', 'neckwear', 'neck ornament', 'neck jewel', 'necklace jewel', 'necklace chain', 'necklace pendant', 'necklace locket', 'necklace amulet', 'necklace talisman', 'necklace medallion', 'necklace badge', 'necklace insignia', 'necklace crest', 'necklace medal', 'necklace order', 'necklace decoration', 'necklace ribbon'
+            ],
+            Trinket: [
+                'trinket', 'charm', 'bauble', 'token', 'keepsake', 'souvenir', 'curio', 'fob', 'tchotchke', 'ornament', 'novelty', 'gadget', 'gizmo', 'amulet', 'talisman', 'fetish', 'mojo', 'gris-gris', 'lucky charm', 'good luck charm', 'protective charm', 'ward', 'totem', 'idol', 'icon', 'relic', 'reliquary', 'pendant', 'miniature', 'figure', 'figurine', 'statue', 'statuette', 'doll', 'puppet', 'mascot', 'badge', 'pin', 'brooch', 'button', 'patch', 'tag', 'clip', 'fastener', 'hook', 'hanger', 'hanger-on', 'hanger charm', 'hanger trinket', 'hanger bauble', 'hanger token', 'hanger keepsake', 'hanger souvenir', 'hanger curio', 'hanger fob', 'hanger tchotchke', 'hanger ornament', 'hanger novelty', 'hanger gadget', 'hanger gizmo', 'hanger amulet', 'hanger talisman', 'hanger fetish', 'hanger mojo', 'hanger gris-gris', 'hanger lucky charm', 'hanger good luck charm', 'hanger protective charm', 'hanger ward', 'hanger totem', 'hanger idol', 'hanger icon', 'hanger relic', 'hanger reliquary', 'hanger pendant', 'hanger miniature', 'hanger figure', 'hanger figurine', 'hanger statue', 'hanger statuette', 'hanger doll', 'hanger puppet', 'hanger mascot', 'hanger badge', 'hanger pin', 'hanger brooch', 'hanger button', 'hanger patch', 'hanger tag', 'hanger clip', 'hanger fastener', 'hanger hook'
+            ],
+            Earring: [
+                'earring', 'stud', 'hoop', 'drop', 'dangle', 'chandelier', 'clip-on', 'sleeper', 'ear cuff', 'ear pin', 'ear jacket', 'ear climber', 'ear thread', 'ear spike', 'ear wrap', 'ear shield', 'ear plug', 'ear tunnel', 'ear stretcher', 'ear weight', 'ear hanger', 'ear charm', 'ear trinket', 'ear bauble', 'ear token', 'ear keepsake', 'ear souvenir', 'ear curio', 'ear fob', 'ear tchotchke', 'ear ornament', 'ear novelty', 'ear gadget', 'ear gizmo', 'ear amulet', 'ear talisman', 'ear fetish', 'ear mojo', 'ear gris-gris', 'ear lucky charm', 'ear good luck charm', 'ear protective charm', 'ear ward', 'ear totem', 'ear idol', 'ear icon', 'ear relic', 'ear reliquary', 'ear pendant', 'ear miniature', 'ear figure', 'ear figurine', 'ear statue', 'ear statuette', 'ear doll', 'ear puppet', 'ear mascot', 'ear badge', 'ear pin', 'ear brooch', 'ear button', 'ear patch', 'ear tag', 'ear clip', 'ear fastener', 'ear hook'
+            ]
         }
     },
     Ingredients: {
@@ -94,6 +105,7 @@ function categorizeItem(item) {
     const type = normalize(item.type || item.itemType || item.category || '')
     const weaponType = normalize(item.weaponType || item.weapon_type || '')
     const armorType = normalize(item.armorType || item.armor_type || item.armor || '')
+    const accessoryType = normalize(item.accessoryType || item.accessory_type || item.accessory || '')
     const slot = normalize(item.slot || item.equipmentSlot || '')
     const craftable = Array.isArray(item.craftable) ? item.craftable.join(' ') : normalize(item.craftable || '')
     const full = [name, internal, desc, type, weaponType, armorType, slot, craftable].join(' ')
@@ -119,6 +131,28 @@ function categorizeItem(item) {
             }
         }
         return { category: 'Weapons', subcategory: sub || 'UNKNOWN' }
+    }
+    // Accessories: prefer explicit accessoryType when available
+    if (type.includes('accessory') || accessoryType) {
+        const accessoryKeys = Object.keys(MAPS.Accessories.subgroup)
+        let sub = null
+        if (accessoryType) {
+            const cand = cap(accessoryType)
+            if (accessoryKeys.includes(cand)) sub = cand
+        }
+        if (!sub) {
+            for (const [subKey, keywords] of Object.entries(MAPS.Accessories.subgroup)) {
+                for (const kw of keywords) {
+                    if (!kw) continue
+                    if (full.includes(kw)) {
+                        sub = subKey
+                        break
+                    }
+                }
+                if (sub) break
+            }
+        }
+        return { category: 'Accessories', subcategory: sub || 'UNKNOWN' }
     }
     const armourKeys = Object.keys(MAPS.Armour.subgroup)
     // match 'armor'/'armour' explicitly to avoid matching words like 'charm'
@@ -169,6 +203,34 @@ function tally(items) {
     return counts
 }
 
+function statCounts(items) {
+    const IGNORE = [
+        'internalName','type','identified','requirements','craftable','icon','tier','name','category','subcategory','description','lore','id','displayName','internal','n','weaponType','armorType','accessoryType','slot'
+    ]
+    const IGNORE_LOWER = new Set(IGNORE.map(s => s.toLowerCase()))
+    const counts = {}
+    // For each item, walk its object tree and count unique property names per-item
+    for (const it of items) {
+        const seen = new Set()
+        function walk(obj) {
+            if (!obj || typeof obj !== 'object') return
+            if (Array.isArray(obj)) return
+            for (const [k, v] of Object.entries(obj)) {
+                if (IGNORE_LOWER.has(k.toLowerCase())) continue
+                if (v === null || v === undefined) continue
+                const key = k.toLowerCase()
+                if (!seen.has(key)) {
+                    counts[key] = (counts[key] || 0) + 1
+                    seen.add(key)
+                }
+                walk(v)
+            }
+        }
+        walk(it)
+    }
+    return counts
+}
+
 function printCounts(counts) {
     for (const [cat, info] of Object.entries(counts)) {
         console.log(`${cat}: ${info.total}`)
@@ -178,9 +240,50 @@ function printCounts(counts) {
     }
 }
 
+function rarityCounts(items) {
+    const order = ['normal', 'unique', 'rare', 'set', 'legendary', 'fabled', 'mythic']
+    const counts = {}
+    for (const it of items) {
+        const r = normalizeRarity(it.rarity || it.tier)
+        counts[r] = (counts[r] || 0) + 1
+    }
+    for (const k of order) counts[k] ??= 0
+    counts['non-rarity'] ??= 0
+    counts.special ??= 0
+    return counts
+}
+
+function normalizeRarity(raw) {
+    let r = raw
+    if (typeof r === 'object') r = '' + (r.name || '')
+    r = ('' + (r || '')).toLowerCase()
+    if (r === 'common' || r === 'white') return 'normal'
+    if (r === 'epic') return 'legendary'
+    if (r.includes('legend')) return 'legendary'
+    if (r.includes('myth')) return 'mythic'
+    if (r.includes('fabled')) return 'fabled'
+    if (r.includes('set')) return 'set'
+    if (r.includes('rare')) return 'rare'
+    if (r.includes('unique')) return 'unique'
+    if (r === '' || r === 'non-rarity' || r === 'unknown') return 'non-rarity'
+    return 'special'
+}
+
+function rarityByCategory(items) {
+    const map = {}
+    for (const it of items) {
+        const cat = it.category || 'UNKNOWN'
+        const r = normalizeRarity(it.rarity || it.tier)
+        map[cat] ??= {}
+        map[cat][r] = (map[cat][r] || 0) + 1
+    }
+    return map
+}
+
 async function run() {
     const args = process.argv.slice(2)
     const listOnly = args.includes('--list') || args.includes('-l')
+    const listUnknown = args.includes('--list-unknown')
     const writeBack = args.includes('--write') || args.includes('-w')
     try {
         const items = await loadItems()
@@ -195,11 +298,89 @@ async function run() {
         }
         const categorized = arr.map(it => {
             const cat = categorizeItem(it)
-            return { ...it, category: it.category || cat.category, subcategory: it.subcategory || cat.subcategory }
+            const finalCat = (it.category && it.category !== 'UNKNOWN') ? it.category : cat.category
+            const finalSub = (it.subcategory && it.subcategory !== 'UNKNOWN') ? it.subcategory : cat.subcategory
+            return { ...it, category: finalCat, subcategory: finalSub }
         })
         const counts = tally(categorized)
+        const statcounts = statCounts(categorized)
+        const statArgIndex = args.indexOf('--stat')
+        if (statArgIndex !== -1) {
+            const statName = args[statArgIndex + 1]
+            if (!statName) {
+                console.error('Usage: --stat <statName>')
+                process.exit(2)
+            }
+            // case-insensitive stat lookup (stat keys stored lowercased)
+            const n = statcounts[statName.toLowerCase()] || 0
+            // output JSON for easy PowerShell parsing
+            console.log(JSON.stringify({ stat: statName, count: n }))
+            return
+        }
+        const statItemsIndex = args.indexOf('--stat-items')
+        if (statItemsIndex !== -1) {
+            const statName = args[statItemsIndex + 1]
+            if (!statName) {
+                console.error('Usage: --stat-items <statName>')
+                process.exit(2)
+            }
+            const statLower = statName.toLowerCase()
+            function itemHasStat(item) {
+                let found = false
+                function walk(obj) {
+                    if (!obj || typeof obj !== 'object') return
+                    if (Array.isArray(obj)) {
+                        for (const el of obj) {
+                            if (found) break
+                            walk(el)
+                        }
+                        return
+                    }
+                    for (const [k, v] of Object.entries(obj)) {
+                        if (k.toLowerCase() === statLower) {
+                            found = true
+                            return
+                        }
+                        if (found) return
+                        walk(v)
+                        if (found) return
+                    }
+                }
+                walk(item)
+                return found
+            }
+            const matches = categorized.filter(it => itemHasStat(it))
+            // print simple list: name and id/internalName
+            const out = matches.map(it => ({ name: it.name || it.displayName || it.id || '[no name]', id: it.id || it.internalName || null }))
+            console.log(JSON.stringify({ stat: statName, count: out.length, items: out }, null, 2))
+            return
+        }
+        if (args.includes('--stat-list')) {
+            console.log(JSON.stringify(statcounts, null, 2))
+            return
+        }
+        if (args.includes('--rarity-list')) {
+            console.log(JSON.stringify(rarityCounts(categorized), null, 2))
+            return
+        }
+        if (args.includes('--rarity-by-category')) {
+            console.log(JSON.stringify(rarityByCategory(categorized), null, 2))
+            return
+        }
         if (listOnly) {
             printCounts(counts)
+            return
+        }
+        if (listUnknown) {
+            const unknowns = categorized.filter(it => it.category === 'UNKNOWN')
+            if (unknowns.length === 0) {
+                console.log('No UNKNOWN items found.')
+            } else {
+                console.log(`UNKNOWN items (${unknowns.length}):`)
+                for (const item of unknowns) {
+                    console.log(`- ${item.name || item.id || '[no name]'} | id: ${item.id || '[no id]'} | desc: ${(item.description || item.lore || item.desc || '').slice(0, 80)}`)
+                }
+            }
             return
         }
         // write categorized file
@@ -207,6 +388,12 @@ async function run() {
         await fs.writeFile(outPath, JSON.stringify(categorized, null, 2), 'utf8')
         console.log('Wrote', outPath)
         printCounts(counts)
+        // print rarity breakdown
+        const rarities = rarityCounts(categorized)
+        console.log('Rarities:')
+        for (const [r, n] of Object.entries(rarities)) {
+            console.log(`  ${r}: ${n}`)
+        }
         if (writeBack) {
             await fs.writeFile(path.join(process.cwd(), 'data', 'items.json'), JSON.stringify(categorized, null, 2), 'utf8')
             console.log('Overwrote data/items.json with categorized items')

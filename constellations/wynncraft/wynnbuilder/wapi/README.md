@@ -1,4 +1,55 @@
 # Wynncraft — Items API quick checks
+# This folder contains `getItems.js` (probe) and `categorizeItems.js` (categorize/list counts).
+
+If you want, I can run any of these commands here and paste the output. 
+
+## Finding Stats
+
+- Count how many items contain a stat (case-insensitive):
+
+```bash
+node categorizeItems.js --stat <statName>
+# example
+node categorizeItems.js --stat manaRegen
+```
+
+- List the items that contain a specific stat (searches nested objects and is case-insensitive). Outputs JSON with `name`, `id` and `count`:
+
+```bash
+node categorizeItems.js --stat-items <statName>
+# example
+node categorizeItems.js --stat-items manaRegen
+```
+
+- Print a JSON map of all detected stat keys and counts:
+
+```bash
+node categorizeItems.js --stat-list
+```
+
+Notes:
+- The categorizer normalizes stat/property keys to lowercase and searches nested objects (so `identifications.manaRegen` is found by `manaRegen`).
+ - Rarity buckets are normalized to: `normal`, `unique`, `rare`, `set`, `legendary`, `fabled`, `mythic`, `non-rarity` (missing/unspecified), and `special` (present but unmapped/nonstandard).
+
+## Rarity by category
+
+- Show normalized rarity counts grouped by item category (JSON):
+
+```bash
+node categorizeItems.js --rarity-by-category
+```
+
+- Output shape: a JSON object where each top-level key is a `category` (e.g. `Accessories`, `Weapons`) and the value is a map of normalized rarities to counts. Example:
+
+```json
+{
+	"Accessories": { "unique": 265, "legendary": 148, "rare": 228, "special": 84, ... },
+	"Weapons": { "unique": 686, "legendary": 279, "rare": 493, ... }
+}
+```
+
+Note: use `--rarity-list` for an overall rarity summary, or `node categorizeItems.js` (no flags) to write `data/items.categorized.json` and print counts + rarity breakdown.
+# Wynncraft — Items API quick checks
 This folder contains `getItems.js` (probe) and `categorizeItems.js` (categorize/list counts).
 
 Below are the concise terminal commands you can use for:

@@ -8,7 +8,10 @@
     "start": "node getItems.js",
     "items": "node getItems.js",
     "categorize": "node categorizeItems.js",
-    "categories": "node categorizeItems.js --list"
+    "categories": "node categorizeItems.js --list",
+    "stat-list": "node categorizeItems.js --stat-list",
+    "stat-walkSpeed": "node categorizeItems.js --stat walkSpeed",
+    "pwsh-stat-walkSpeed": "pwsh -NoProfile -Command \"node categorizeItems.js --stat walkSpeed | ConvertFrom-Json\""
   },
   "engines": {
     "node": ">=24"
