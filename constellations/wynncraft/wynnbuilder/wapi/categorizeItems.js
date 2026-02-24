@@ -24,12 +24,11 @@ const MAPS = {
     },
     Armour: {
         subgroup: {
-            Helmet: ['helmet', 'helm'],
-            Chest: ['chest', 'chestplate', 'chestplate'],
-            Chestplate: ['chestplate', 'chestplates', 'plate', 'vest'],
-            Leggings: ['leggings', 'pants', 'leggins'],
-            Boots: ['boots', 'shoe', 'shoes'],
-            Shield: ['shield']
+            Helmet: ['helmet', 'helm', 'hood', 'cap', 'mask', 'head'],
+            Chestplate: ['chestplate', 'chestplates', 'chest', 'plate', 'vest', 'armor', 'armour', 'robe', 'tunic', 'coat', 'mail', 'suit', 'body', 'torso', 'chestpiece'],
+            Leggings: ['leggings', 'pants', 'leggins', 'greaves', 'legs', 'leg'],
+            Boots: ['boots', 'shoe', 'shoes', 'foot', 'feet', 'greaves', 'sabatons'],
+            Shield: ['shield', 'buckler']
         }
     },
     Accessories: {
@@ -37,7 +36,7 @@ const MAPS = {
             Ring: ['ring'],
             Bracelet: ['bracelet'],
             Necklace: ['necklace', 'amulet', 'pendant'],
-            Trinket: ['trinket']
+            Trinket: ['trinket', 'charm']
         }
     },
     Ingredients: {
@@ -116,7 +115,8 @@ function categorizeItem(item) {
         return { category: 'Weapons', subcategory: sub || 'UNKNOWN' }
     }
     const armourKeys = Object.keys(MAPS.Armour.subgroup)
-    if (type.includes('arm') || armorType) {
+    // match 'armor'/'armour' explicitly to avoid matching words like 'charm'
+    if (type.includes('armor') || type.includes('armour') || armorType) {
         let sub = null
         if (armorType) {
             const cand = cap(armorType)
@@ -133,6 +133,14 @@ function categorizeItem(item) {
                 }
                 if (sub) break
             }
+        }
+        // fallback: try to infer from equipment slot or common terms when keywords miss
+        if (!sub) {
+            if (slot.includes('head') || full.includes(' head') || full.includes('helm')) sub = 'Helmet'
+            else if (slot.includes('chest') || slot.includes('torso') || full.includes('torso') || full.includes('body') || full.includes('chest')) sub = 'Chestplate'
+            else if (slot.includes('leg') || slot.includes('legs') || full.includes('leggings') || full.includes('legs')) sub = 'Leggings'
+            else if (slot.includes('feet') || slot.includes('foot') || full.includes('boots') || full.includes('shoe')) sub = 'Boots'
+            else if (slot.includes('offhand') || full.includes('shield')) sub = 'Shield'
         }
         return { category: 'Armour', subcategory: sub || 'UNKNOWN' }
     }
