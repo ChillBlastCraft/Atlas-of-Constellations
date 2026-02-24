@@ -31,6 +31,11 @@ body {
     display: flex;
 }
 
+:root {
+    --stat-input-width: 70px;
+    --stat-input-gap: 6px;
+}
+
 /*
 ┌─────────────────────────┐
 │         SIDEBAR         │
@@ -274,7 +279,7 @@ main {
     padding: 8px 10px;
     font-size: 1rem;
     font-family: inherit;
-    width: 70px;
+    width: var(--stat-input-width);
     outline: none;
     box-shadow: 0 1px 4px #0002;
     appearance: textfield;
@@ -288,6 +293,43 @@ main {
 .atlas-weapon-filter-item input[type="number"]:focus {
     border-color: #eebbc3;
     box-shadow: 0 0 0 2px #eebbc366;
+}
+
+/* Apply same numeric input styling to min/max used in stat filters */
+.atlas-weapon-min,
+.atlas-weapon-max {
+    background: #232946;
+    color: #eebbc3;
+    border: 1.5px solid #b8c1ec;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    width: var(--stat-input-width);
+    outline: none;
+    box-shadow: 0 1px 4px #0002;
+    appearance: textfield;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.atlas-weapon-min::-webkit-outer-spin-button,
+.atlas-weapon-min::-webkit-inner-spin-button,
+.atlas-weapon-max::-webkit-outer-spin-button,
+.atlas-weapon-max::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.atlas-weapon-min:focus,
+.atlas-weapon-max:focus {
+    border-color: #eebbc3;
+    box-shadow: 0 0 0 2px #eebbc366;
+}
+
+/* Ensure min/max group in stat filters aligns to the right like weapon filters */
+.atlas-stat-group .atlas-weapon-minmax-group {
+    display: flex;
+    gap: 4px;
+    flex: 1 1 45%;
+    justify-content: flex-end;
 }
 
 .atlas-weapon-filter-item .atlas-dropdown {
@@ -395,41 +437,87 @@ main {
     background: #232946;
     border: 1.5px solid #b8c1ec;
     border-radius: 8px;
-    padding: 8px 16px;
-    margin-bottom: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
     box-shadow: 0 2px 8px #0002;
-    display: flex;
+    display: grid;
+    grid-template-columns: 120px 1fr 220px;
+    grid-template-rows: auto auto;
+    gap: 8px 12px; /* tightened vertical gap between rows */
     align-items: center;
-    gap: 18px;
     position: relative;
 }
 
-.atlas-stat-group-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #eebbc3;
-    flex: 1 1 0;
+.atlas-stat-label {
+    font-size: 1rem;
+    color: #eaeaea;
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    align-self: center;
+    justify-self: start;
+    padding-left: 4px;
+}
+
+/* stat select placed in bottom-left of the 2x2 grid */
+.atlas-stat-select {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0; /* override default */
 }
 
 .atlas-stat-group-remove {
-    margin-left: auto;
     background: #232946;
     border: 1px solid #b8c1ec;
     color: #eebbc3;
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     cursor: pointer;
-    font-weight: bold;
-    padding: 4px 12px;
+    font-weight: 700;
+    padding: 6px 10px;
     border-radius: 6px;
     transition: color 0.2s, background 0.2s, border 0.2s;
-    position: static;
-    display: flex;
-    align-items: center;
+    grid-column: 3 / 4;
+    grid-row: 1 / 2; /* top-right cell */
+    justify-self: end;
+    align-self: start;
+    width: calc(var(--stat-input-width) * 2 + var(--stat-input-gap));
+    box-sizing: border-box;
 }
 .atlas-stat-group-remove:hover {
     color: #e57373;
     background: #b8c1ec;
     border-color: #eebbc3;
+}
+
+/* Arrange stat group controls into two rows: two selects on first row, min/max+remove on second */
+.atlas-stat-group > select.atlas-dropdown {
+    flex: 1 1 45%;
+    min-width: 140px;
+}
+.atlas-stat-group .atlas-dropdown:first-child {
+    flex-basis: 30%;
+    max-width: 220px;
+}
+.atlas-stat-group .atlas-dropdown:nth-child(2) {
+    flex-basis: 60%;
+}
+.atlas-stat-op {
+    width: 120px;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    margin-left: 0; /* override .atlas-dropdown default */
+}
+.atlas-stat-group > select.atlas-dropdown { margin-left: 0; }
+.atlas-stat-group .atlas-weapon-minmax-group {
+    display: flex;
+    gap: var(--stat-input-gap);
+    grid-column: 3 / 4;
+    grid-row: 2 / 3; /* bottom-right cell */
+    justify-self: end;
+    align-items: center;
+    min-width: 0;
+    margin-top: 2px; /* tightened space under Remove */
 }
 
 /*

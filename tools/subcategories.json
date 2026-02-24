@@ -1,0 +1,33 @@
+{
+  "Accessories": [
+    "Bracelet",
+    "Necklace",
+    "Ring",
+    "Trinket"
+  ],
+  "Ingredients": [
+    "Ingredient"
+  ],
+  "Weapons": [
+    "Axe",
+    "Bow",
+    "Dagger",
+    "Relik",
+    "Spear",
+    "Staff",
+    "Sword",
+    "Wand"
+  ],
+  "Armour": [
+    "Boots",
+    "Chestplate",
+    "Helmet",
+    "Leggings",
+    "Shield",
+    "UNKNOWN"
+  ],
+  "Tome": [
+    "Aspect",
+    "Tome"
+  ]
+}

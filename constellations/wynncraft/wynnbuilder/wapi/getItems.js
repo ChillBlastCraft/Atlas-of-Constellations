@@ -39,7 +39,6 @@ async function tryFetch(url) {
 
 async function findItems() {
     for (const url of CANDIDATES) {
-        console.log('Trying', url)
         const r = await tryFetch(url)
         if (r.error) {
             console.warn(url, 'error:', r.error)
