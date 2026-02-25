@@ -300,7 +300,11 @@ async function run() {
             const cat = categorizeItem(it)
             const finalCat = (it.category && it.category !== 'UNKNOWN') ? it.category : cat.category
             const finalSub = (it.subcategory && it.subcategory !== 'UNKNOWN') ? it.subcategory : cat.subcategory
-            return { ...it, category: finalCat, subcategory: finalSub }
+            // restore a `categories` array (useful for consumers that expect multiple category tags)
+            const cats = []
+            if (finalCat && finalCat !== 'UNKNOWN') cats.push(finalCat)
+            if (finalSub && finalSub !== 'UNKNOWN') cats.push(finalSub)
+            return { ...it, category: finalCat, subcategory: finalSub, categories: cats }
         })
         const counts = tally(categorized)
         const statcounts = statCounts(categorized)

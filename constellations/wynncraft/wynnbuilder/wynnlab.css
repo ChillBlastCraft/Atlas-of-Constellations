@@ -798,6 +798,61 @@ main { z-index: 1; }
 /* Remove list bullets and center headers for identifications */
 .search-item-identifications ul,
 .atlas-item-detail .item-identifications ul { list-style: none; padding-left: 0; margin-left: 0; }
+
+/* Search controls (summary, page size, pagination) */
+.search-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: linear-gradient(180deg, rgba(27,32,51,0.6), rgba(35,41,70,0.6));
+    border: 1px solid rgba(184,193,236,0.14);
+    padding: 8px 12px;
+    border-radius: 10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    margin-bottom: 12px;
+}
+
+/* Keep search controls visible while scrolling through results */
+
+.search-summary {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffeebb;
+    letter-spacing: 0.4px;
+}
+.search-page-size {
+    background: #232946;
+    color: #eebbc3;
+    border: 1.5px solid #b8c1ec;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.search-controls button {
+    background: #232946;
+    color: #eebbc3;
+    border: 1.25px solid #b8c1ec;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.search-controls button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.page-info {
+    color: #b8c1ec;
+    font-size: 0.95rem;
+}
+
+/* Tweak search controls layout on small screens */
+@media (max-width: 720px) {
+    .search-controls { flex-direction: column; align-items: stretch; }
+    .search-controls > * { width: 100%; }
+    .page-info { text-align: center; }
+}
 .search-item-identifications strong,
 .atlas-item-detail .item-identifications strong { display: block; text-align: left; margin-bottom: 6px; }
 
