@@ -51,6 +51,17 @@ body {
     align-items: center;
 }
 
+/* Keep the sidebar visible while scrolling */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 9999; /* ensure sidebar stays above other content */
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .sidebar h1 {
     font-size: 2rem;
     font-weight: 700;
@@ -96,6 +107,17 @@ main {
     min-height: 100vh;
     background: transparent;
 }
+
+/* Make room for the fixed sidebar so content doesn't hide underneath it */
+main {
+    margin-left: 240px; /* a small gap past the 220px sidebar */
+}
+
+/* Ensure main content doesn't capture pointer-events above the sidebar */
+main { z-index: 1; }
+
+.sidebar, .sidebar * { pointer-events: auto; }
+.sidebar button { position: relative; z-index: 10000; }
 
 /*
 ┌────────────────────────────┐
@@ -202,154 +224,43 @@ main {
     background-clip: padding-box;
 }
 
-/* Results styling */
-.atlas-results {
-    margin-top: 14px;
+.atlas-results-placeholder-note {
+    /* Item/result styling removed — placeholder for redesign */
 }
-.atlas-results-list {
-    list-style: none;
+.atlas-results {
+    margin-top: 14px; /* keep spacing for layout */
+}
+.atlas-results-list,
+.atlas-result-item,
+.item-meta,
+.item-summary,
+.summary-as,
+.summary-damage,
+.summary-dps,
+.stat-dps,
+.item-name,
+.badge,
+.badge-subcat,
+.badge-rarity,
+.badge-category {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
     margin: 0;
-    padding: 8px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
+    color: inherit;
+    font-size: inherit;
+    border-radius: 0;
 }
 .atlas-result-item {
-    background: linear-gradient(180deg, rgba(27,32,51,0.6), rgba(35,41,70,0.6));
-    border: 1px solid rgba(184,193,236,0.14);
-    border-radius: 10px;
-    padding: 12px 14px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-.atlas-result-item { display:flex; flex-direction:column; align-items:flex-start }
-.atlas-result-item:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 26px rgba(0,0,0,0.6);
-}
-.item-meta { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap }
-.item-summary {
-    margin-top: 10px;
-    display:flex;
-    gap:8px;
-    flex-direction:column;
-    align-items:flex-start;
-}
-.summary-as {
-    font-size:0.85rem;
-    padding:4px 8px;
-    border-radius:6px;
-    background:rgba(200,150,230,0.08);
-    color:#d8b2ff;
-    font-weight:700;
-}
-.summary-damage {
-    font-size:0.95rem;
-    color:#dfefff;
-    background:rgba(255,255,255,0.02);
-    padding:6px 8px;
-    border-radius:6px;
-    display:inline-block;
-}
-.summary-dps {
-    font-size:0.85rem;
-    color:#ffeebb;
-    background:rgba(255,230,130,0.06);
-    padding:3px 6px;
-    border-radius:6px;
-}
-.stat-dps { font-weight:700; color:#ffd27a; margin-left:6px }
-.item-name {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #ffdfe6;
-    margin-bottom: 6px;
-}
-.item-meta {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    color: #121629;
-    background: #b8c1ec;
-    border: 1px solid rgba(0,0,0,0.08);
-}
-.badge-subcat { background: linear-gradient(90deg,#eebbc3,#b8c1ec); color: #232946 }
-.badge-rarity { background: linear-gradient(90deg,#ffd27a,#ffb86b); color: #33240a }
-.badge-category { background: linear-gradient(90deg,#9be7ff,#7bdff6); color: #05202a }
-
-/* Small note for overflow */
-.atlas-results > div {
-    margin-top: 8px;
-    color: #eaeaea;
-    opacity: 0.9;
-    font-size: 0.95rem;
-}
-
-/* Item detail view */
-.atlas-item-detail {
     display: block;
-    background: linear-gradient(180deg, #14151a, #1b2033);
-    border: 1px solid rgba(184,193,236,0.06);
-    padding: 14px;
-    border-radius: 12px;
-    color: #e8e8e8;
-    box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+    width: 100%;
 }
-.item-header {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 12px;
+.atlas-item-detail {
+    display: none !important; /* hide legacy detail card until redesigned */
 }
-.item-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 25%, #6b2f8f, #2b1632);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #ffdfe6;
-    font-size: 1.3rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 18px rgba(121,70,156,0.16), inset 0 -6px 14px rgba(0,0,0,0.25);
-    background-size: cover;
-    background-position: center center;
-}
-.item-icon.has-image { color: transparent }
-.item-title-wrap { display:flex; flex-direction:column; gap:6px }
-.item-title { color: #d86de0; margin:0; font-size:1.25rem }
-.item-badges { display:flex; gap:8px; align-items:center }
-.item-stats { margin-top:8px; display:flex; gap:12px; flex-direction:column }
-.item-stat-line { color:#eaeaea; font-size:0.95rem; line-height:1.25 }
-.damage-line .damage-label { font-weight:700; margin-right:6px; color:#cfe6ff }
-.item-reqs div { font-size:0.9rem; color:#dfe8f8 }
-.item-identifications { margin-top:10px; display:flex; flex-direction:column; gap:4px }
-.ident-line { display:flex; gap:12px; align-items:center; justify-content:space-between }
-.ident-val { font-weight:700; min-width:84px; text-align:left; display:inline-block }
-.ident-key { color:#b8c1ec; font-size:0.95rem; opacity:0.95 }
-.item-primary-attr { display:flex; gap:10px; align-items:center; margin-bottom:6px }
-.primary-key { color:#dfefff; font-weight:700; min-width:120px }
-.primary-val { font-size:1rem }
-.val-pos { color:#4cd964 }
-.val-neg { color:#ff5c6a }
-.val-neu { color:#eaeaea }
-.item-lore { margin-top:12px; font-style:italic; color:#d9ccf1; opacity:0.95; line-height:1.25 }
-.item-base-dps { margin-top:10px; font-weight:700; color:#ffeebb }
-.item-back-row { margin-top:12px; display:flex; justify-content:center }
 
-/*
-┌────────────────────────────┐
-│   TWO-COLUMN FILTER AREA   │
-└────────────────────────────┘
-*/
+/* Keep minimal structure so new styles can be designed from scratch */
 .atlas-spacer {
     flex: 1;
     display: grid;
@@ -635,11 +546,7 @@ main {
     padding: 8px 12px;
     margin-bottom: 8px;
     box-shadow: 0 2px 8px #0002;
-    display: grid;
-    grid-template-columns: 120px 1fr 220px;
-    grid-template-rows: auto auto;
-    gap: 8px 12px; /* tightened vertical gap between rows */
-    align-items: center;
+    display: block;
     position: relative;
 }
 
@@ -686,34 +593,28 @@ main {
 }
 
 /* Arrange stat group controls into two rows: two selects on first row, min/max+remove on second */
-.atlas-stat-group > select.atlas-dropdown {
-    flex: 1 1 45%;
-    min-width: 140px;
+.atlas-stat-row-grid {
+    display: grid;
+    grid-template-columns: 48px 1fr 48px;
+    gap: 8px;
+    align-items: center;
 }
-.atlas-stat-group .atlas-dropdown:first-child {
-    flex-basis: 30%;
-    max-width: 220px;
-}
-.atlas-stat-group .atlas-dropdown:nth-child(2) {
-    flex-basis: 60%;
-}
-.atlas-stat-op {
-    width: 120px;
-    grid-column: 1 / 2;
-    grid-row: 1 / 2;
-    margin-left: 0; /* override .atlas-dropdown default */
-}
-.atlas-stat-group > select.atlas-dropdown { margin-left: 0; }
 .atlas-stat-group .atlas-weapon-minmax-group {
     display: flex;
     gap: var(--stat-input-gap);
-    grid-column: 3 / 4;
-    grid-row: 2 / 3; /* bottom-right cell */
-    justify-self: end;
-    align-items: center;
-    min-width: 0;
-    margin-top: 2px; /* tightened space under Remove */
+    margin-top: 8px;
+    justify-content: center;
 }
+.atlas-stat-group .atlas-stat-group-add {
+    background: #232946;
+    border: 1px solid #b8c1ec;
+    color: #eebbc3;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+.atlas-stat-row-grid .atlas-dropdown.atlas-stat-select { justify-self: center; }
 
 /*
 ┌────────────────────────────┐
@@ -877,8 +778,119 @@ main {
 /* Tidy spacing for compact view */
 .atlas-item-detail .item-stat-line { padding: 6px 0; border-radius:6px }
 .atlas-item-detail .item-identifications .ident-line { padding:4px 0 }
+
+/* Remove list bullets and center headers for identifications */
+.search-item-identifications ul,
+.atlas-item-detail .item-identifications ul { list-style: none; padding-left: 0; margin-left: 0; }
+.search-item-identifications strong,
+.atlas-item-detail .item-identifications strong { display: block; text-align: left; margin-bottom: 6px; }
+
+/* Single ident line: Label: Value */
+.ident-single-line { display: flex; gap: 8px; align-items: center; }
+.ident-single-line .ident-key { color: #b8c1ec; font-weight: 700; }
+.ident-single-line .ident-val { color: #eaeaea; font-weight: 700; }
+
+/* Range ident line: 3-column layout: min | label(center) | max */
+.ident-range-line { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 4px 0; }
+.ident-range-left { text-align: left; color: #ffdfe6; font-weight:700 }
+.ident-range-label { text-align: center; color: #b8c1ec; font-weight:700 }
+.ident-range-right { text-align: right; color: #ffdfe6; font-weight:700 }
 .atlas-item-detail .item-lore { margin-top:10px; max-height: 7.5rem; overflow: auto }
 
 /* Make result list items use a compact preview resembling the card */
 .atlas-result-item { padding:12px; max-width:320px }
 .atlas-result-item .item-summary { align-items:flex-start }
+
+/* Minimal search result presentation used by JS renderer */
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    justify-content: center; /* center grid so single item doesn't stretch */
+}
+.search-item {
+    padding: 10px;
+    font-size: 0.9rem;
+    line-height: 1.2;
+    color: #eaeaea;
+    border: 1px solid rgba(184,193,236,0.08);
+    border-radius: 8px;
+    background: rgba(0,0,0,0.03);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    width: 100%;
+    max-width: 300px; /* limit to roughly 1/4 column width */
+    margin: 0 auto; /* center when fewer columns */
+}
+.search-item h3 {
+    margin: 0 0 6px 0;
+    font-size: 0.98rem;
+    color: #ffdfe6;
+}
+.search-item h3 {
+    /* Use the same feel as lore (italic serif) per user preference */
+    font-style: italic;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.94rem; /* slightly smaller and sleeker */
+    line-height: 1.05;
+}
+
+/* Search item identifications: smaller, single-line labels/values */
+.search-item-identifications { margin-top: 6px; }
+.search-item-identifications .ident-label {
+    font-size: 0.78rem;
+    color: #cfc9d8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-item-identifications .ident-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    min-width: 48px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Range display used in search results and detail view */
+.ident-range-item,
+.ident-range-line { color: #eaeaea; font-size: 0.82rem; padding: 4px 0; }
+.ident-range-text { font-weight: 700; color: #ffdfe6 }
+.search-item div { margin: 4px 0 }
+.search-item-identifications ul { margin: 6px 0 0 18px }
+.search-item-identifications li { margin: 2px 0 }
+.search-item-lore {
+    font-size: 0.72rem; /* decreased further per request */
+    color: #d9ccf1;
+    font-style: italic;
+    margin-top: 6px;
+    max-height: 6rem;
+    overflow: auto;
+}
+.search-item-lore {
+    font-size: 0.72rem; /* decreased further per request */
+    color: #d9ccf1;
+    font-style: italic;
+    margin-top: 6px;
+    max-height: 6rem;
+    overflow: auto;
+}
+
+/* Section spacing */
+.section-name { padding-bottom: 6px }
+.section-damage { padding: 8px 0 6px 0; border-top: 0; }
+.section-reqs { padding: 6px 0; }
+.section-ident { padding: 6px 0; }
+.section-lore { padding: 6px 0; }
+
+/* Footer layout */
+.search-item-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.03) }
+.search-item-footer .footer-left { text-align: left; color: #eaeaea }
+.search-item-footer .footer-right { text-align: right; color: #ffd27a; font-weight: 700 }
+
+/* label/value alignment helpers */
+.field-row, .req-row { display: flex; justify-content: space-between; gap: 8px; align-items: center }
+.field-label, .req-label, .ident-label { width: 110px; color: #b8c1ec; font-weight: 700 }
+.field-value, .req-value, .ident-value { text-align: right; color: #eaeaea }
+.ident-label { display: inline-block }
+.ident-value { display: inline-block; margin-left: 8px }
