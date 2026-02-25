@@ -636,7 +636,22 @@
                     function appendRangeListItem(key, v) {
                         const li = document.createElement('li');
                         li.className = 'ident-range-item';
-                        li.textContent = `${formatIdentNumber(key, v.min)} ${prettyIdentKey(key)} ${formatIdentNumber(key, v.max)}`;
+
+                        const left = document.createElement('div');
+                        left.className = 'ident-range-left';
+                        left.textContent = formatIdentNumber(key, v.min);
+
+                        const mid = document.createElement('div');
+                        mid.className = 'ident-range-label';
+                        mid.textContent = prettyIdentKey(key);
+
+                        const right = document.createElement('div');
+                        right.className = 'ident-range-right';
+                        right.textContent = formatIdentNumber(key, v.max);
+
+                        li.appendChild(left);
+                        li.appendChild(mid);
+                        li.appendChild(right);
                         ul.appendChild(li);
                     }
 
@@ -649,7 +664,7 @@
                                 const li = document.createElement('li');
                                 const lab = document.createElement('span');
                                 lab.className = 'ident-label';
-                                lab.textContent = prettyIdentKey(k);
+                                lab.textContent = prettyIdentKey(k) + ':'; // add colon
                                 const val = document.createElement('span');
                                 val.className = 'ident-value';
                                 val.textContent = prettyIdentVal(k, v);
@@ -670,7 +685,7 @@
                         const li = document.createElement('li');
                         const lab = document.createElement('span');
                         lab.className = 'ident-label';
-                        lab.textContent = prettyIdentKey(k);
+                        lab.textContent = prettyIdentKey(k) + ':'; // add colon
                         const val = document.createElement('span');
                         val.className = 'ident-value';
                         val.textContent = prettyIdentVal(k, v);
@@ -894,7 +909,7 @@
                 const v = (intel.raw !== undefined) ? intel.raw : (intel.min !== undefined ? intel.min : intel);
                 const p = document.createElement('div');
                 p.className = 'item-primary-attr';
-                p.innerHTML = `<span class="primary-key">Intelligence</span> <span class="primary-val ${Number(v) >= 0 ? 'val-pos' : 'val-neg'}">${v}</span>`;
+                p.innerHTML = `<span class="primary-key">Intelligence:</span> <span class="primary-val ${Number(v) >= 0 ? 'val-pos' : 'val-neg'}">${v}</span>`;
                 statsDiv.appendChild(p);
             }
 
@@ -958,7 +973,7 @@
                     const label = attr.replace(/^raw/, '');
                     const p = document.createElement('div');
                     p.className = 'item-primary-attr';
-                    p.innerHTML = `<span class="primary-key">${label.charAt(0).toUpperCase()+label.slice(1)}</span> <span class="primary-val val-pos">${info.raw}</span>`;
+                    p.innerHTML = `<span class="primary-key">${label.charAt(0).toUpperCase()+label.slice(1)}:</span> <span class="primary-val val-pos">${info.raw}</span>`;
                     idWrap.appendChild(p);
                 }
             }
@@ -974,8 +989,28 @@
                 return '';
             }
 
-            const prefer = ['rawIntelligence','manaRegen','manaSteal','spellDamage','1stSpellCost','2ndSpellCost','3rdSpellCost','4thSpellCost'];
+            const prefer = ['manaRegen','manaSteal','spellDamage','1stSpellCost','2ndSpellCost','3rdSpellCost','4thSpellCost'];
             const seen = new Set();
+
+            // If Intelligence exists as a single non-range ident, render it like the Requirements block
+            (function renderIntelligenceAsReq() {
+                const intelKeys = ['rawIntelligence','intelligence','rawInt'];
+                for (const k of intelKeys) {
+                    const v = item.identifications[k];
+                    if (v === undefined) continue;
+                    // skip ranged idents
+                    if (v && typeof v === 'object' && v.min !== undefined && v.max !== undefined) continue;
+                    const val = (v && v.raw !== undefined) ? v.raw : (v && v.min !== undefined ? v.min : v);
+                    const intelBlock = document.createElement('div');
+                    intelBlock.className = 'item-reqs';
+                    const line = document.createElement('div');
+                    line.textContent = 'Intelligence: ' + val;
+                    intelBlock.appendChild(line);
+                    idWrap.appendChild(intelBlock);
+                    seen.add(k);
+                    break;
+                }
+            })();
 
             function appendSingleIdent(k) {
                 const v = item.identifications[k];
