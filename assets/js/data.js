@@ -9,7 +9,7 @@ const constellations = [
             { x: 27, y: 28, url: "constellations/wynncraft/wynnbuilder/WynnLab.html", label: "WynnLab", title: "WynnLab" },
             { x: 25, y: 33, url: "#" },
             { x: 19, y: 34, url: "#" },
-            { x: 30, y: 32, url: "#" }
+            { x: 30, y: 32, url: "constellations/wynncraft/wynntest/WynnCalc.html", label: "WynnCalc", title: "WynnCalc" }
         ],
         links: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]]
     },
