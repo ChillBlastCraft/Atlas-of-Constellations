@@ -190,6 +190,14 @@
         if (item.attackSpeedCategory) return item.attackSpeedCategory;
         if (item.attackSpeedLabel) return item.attackSpeedLabel;
         const asp = getStatValue(item, 'Attack Speed');
+        if (typeof asp === 'string') {
+            const s = asp.toString().toLowerCase();
+            if (s.indexOf('super') !== -1 && s.indexOf('slow') !== -1) return 'super_slow';
+            if (s.indexOf('very') !== -1 && s.indexOf('slow') !== -1) return 'very_slow';
+            if (s.indexOf('very') !== -1 && s.indexOf('fast') !== -1) return 'very_fast';
+            if (s.indexOf('super') !== -1 && s.indexOf('fast') !== -1) return 'super_fast';
+            if (s === 'slow' || s === 'normal' || s === 'fast') return s;
+        }
         if (asp == null) {
             const sub = (inferSubcategory(item) || '').toString().toLowerCase();
             const weaponDefaultSpeed = {
@@ -345,6 +353,122 @@
     function prettyEnum(s) {
         if (!s) return '';
         return s.toString().replace(/([A-Z])/g, '_$1').replace(/[- ]/g, '_').toUpperCase();
+    }
+
+    // Human-friendly label (e.g., "very_slow" -> "Very Slow")
+    function prettyLabel(s) {
+        if (!s) return '';
+        // Normalize concatenated tokens like 'Veryslow' or 'veryslow' into 'Very Slow'
+        let str = s.toString();
+        str = str.replace(/(super|very)(slow|fast)/ig, '$1 $2');
+        return str.toString().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/(^|\s)\S/g, c => c.toUpperCase());
+    }
+
+    // Identification helpers
+    function isSpellCostKey(k) {
+        if (!k) return false;
+        return /spellcost|1stSpellCost|2ndSpellCost|3rdSpellCost|4thSpellCost/i.test(k);
+    }
+
+    function identNumericValue(k, v) {
+        if (v == null) return null;
+        if (typeof v === 'number') return v;
+        if (typeof v === 'object') {
+            if (typeof v.raw === 'number') return v.raw;
+            if (typeof v.min === 'number' && typeof v.max !== 'number') return v.min;
+            if (typeof v.min === 'number') return v.min;
+        }
+        const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+        return isNaN(n) ? null : n;
+    }
+
+    function identColorForKeyValue(k, v) {
+        const key = (k || '').toString().toLowerCase();
+        // debug logs removed for production
+
+        // Do not color level or class requirement values
+        if (/^level$/.test(key) || /^class$/.test(key) || /classrequirement/.test(key)) {
+            // skipping color for level/class
+            return '';
+        }
+
+        // numeric value helper
+        const n = identNumericValue(k, v);
+        let col = '';
+
+        // Primary attributes: color by sign (positive green, negative strong red)
+        if (/^(strength|rawstrength|str)$/.test(key) || /\bstrength\b/.test(key)) {
+            if (n != null) col = (n > 0) ? '#33cc66' : (n < 0 ? '#cc0000' : '');
+            // strength color determined
+            return col;
+        }
+        if (/^(dexterity|rawdexterity|dex)$/.test(key) || /\bdexter|dexterity\b/.test(key)) {
+            if (n != null) col = (n > 0) ? '#ffd454' : (n < 0 ? '#cc0000' : '');
+            // dexterity color determined
+            return col;
+        }
+        if (/^(intelligence|rawintelligence|int|rawint)$/.test(key) || /\bintelligence\b/.test(key)) {
+            if (n != null) col = (n > 0) ? '#33cc66' : (n < 0 ? '#cc0000' : '');
+            // intelligence color determined
+            return col;
+        }
+        if (/^(defence|defense|def|rawdefence)$/.test(key) || /\bdefence\b/.test(key)) {
+            if (n != null) col = (n > 0) ? '#ff4d4d' : (n < 0 ? '#cc0000' : '');
+            // defence color determined
+            return col;
+        }
+        if (/^(agility|rawagility|agi)$/.test(key) || /\bagil|agility\b/.test(key)) {
+            if (n != null) col = (n > 0) ? '#ffffff' : (n < 0 ? '#cc0000' : '');
+            // agility color determined
+            return col;
+        }
+
+        // If this is a spell cost key, invert the sign coloring (negative -> green)
+        if (isSpellCostKey(k)) {
+            if (n != null) col = (n < 0) ? '#33cc66' : (n > 0 ? '#cc0000' : '');
+            // spell cost color determined
+            return col;
+        }
+
+        // Elemental / damage keys: explicit color mapping
+        if (/earth|baseearth|earthdamage|earth_damage/i.test(key)) { col = '#33cc66'; return col; }
+        if (/thunder|lightning|thunderdamage|thunder_damage/i.test(key)) { col = '#ffd454'; return col; }
+        if (/water|basedwater|waterdamage|water_damage/i.test(key)) { col = '#4da6ff'; return col; }
+        if (/fire|basefire|firedamage|fire_damage/i.test(key)) { col = '#ff4d4d'; return col; }
+        if (/air|baseair|airdamage|air_damage/i.test(key)) { col = '#ffffff'; return col; }
+
+        // Fallback: numeric sign coloring for other numeric idents
+        if (n == null) { return ''; }
+        col = (n > 0) ? '#33cc66' : (n < 0 ? '#cc0000' : '');
+        return col;
+    }
+
+    // Rarity color mapping
+    function getRarityColor(r) {
+        const t = (r || '').toString().toLowerCase();
+        const map = {
+            'normal': '#ffffff',
+            'unique': '#ffd700',
+            'rare': '#9b59b6',
+            'legendary': '#87cefa',
+            'fabled': '#ff4500',
+            'mythic': '#4b0082'
+        };
+        return map[t] || '';
+    }
+
+    // Choose readable text color (black/white) for a background hex color
+    function readableTextColor(bg) {
+        if (!bg) return '#000';
+        // strip # if present
+        const hex = bg.replace('#','');
+        if (hex.length !== 6) return '#000';
+        const r = parseInt(hex.substr(0,2),16);
+        const g = parseInt(hex.substr(2,2),16);
+        const b = parseInt(hex.substr(4,2),16);
+        // luminance
+        const lum = 0.2126*r + 0.7152*g + 0.0722*b;
+        return lum > 150 ? '#000' : '#fff';
     }
 
     // ==================== Search Implementation ====================
@@ -562,13 +686,20 @@
                 const dpsVal = it.averageDps || it.baseDps || getStatValue(it, 'basedps') || '';
                 const dpsEl = document.createElement('div');
                 dpsEl.className = 'field-dps';
-                dpsEl.textContent = 'DPS: ' + dpsVal;
+                const dpsLabel = document.createElement('span');
+                dpsLabel.className = 'field-label';
+                dpsLabel.textContent = 'DPS:';
+                const dpsValSpan = document.createElement('span');
+                dpsValSpan.className = 'dps-val';
+                dpsValSpan.textContent = ' ' + dpsVal;
+                dpsEl.appendChild(dpsLabel);
+                dpsEl.appendChild(dpsValSpan);
                 dmgSection.appendChild(dpsEl);
 
                 const asVal = it.attackSpeed || getStatValue(it, 'Attack Speed') || '';
                 const asEl = document.createElement('div');
                 asEl.className = 'field-aspd';
-                asEl.textContent = 'Attack Speed: ' + (typeof asVal === 'string' ? prettyEnum(asVal) : asVal);
+                asEl.textContent = 'Attack Speed: ' + (typeof asVal === 'string' ? prettyLabel(asVal) : asVal);
                 dmgSection.appendChild(asEl);
 
                 // Elemental damages
@@ -581,6 +712,9 @@
                             const row = document.createElement('div');
                             row.className = 'field-element';
                             row.textContent = `${label} Damage: ${val}`;
+                            // elemental color overrides
+                            const col = identColorForKeyValue(k, b);
+                            if (col) row.style.color = col;
                             dmgSection.appendChild(row);
                         }
                     }
@@ -590,6 +724,8 @@
                             const row = document.createElement('div');
                             row.className = 'field-element';
                             row.textContent = `${prettyIdentKey(k)}: ${prettyIdentVal(k, v)}`;
+                            const col = identColorForKeyValue(k, v);
+                            if (col) row.style.color = col;
                             dmgSection.appendChild(row);
                         }
                     }
@@ -597,25 +733,37 @@
                 box.appendChild(dmgSection);
 
                 // Requirements
-                const reqs = [];
-                const classReq = (it.requirements && (it.requirements.classRequirement || it.requirements['class'] || it.requirements.class)) || '';
-                if (classReq) reqs.push('Class: ' + classReq);
+                const reqEntries = [];
+                let classReq = (it.requirements && (it.requirements.classRequirement || it.requirements['class'] || it.requirements.class)) || '';
+                if (classReq) {
+                    classReq = String(classReq);
+                    classReq = classReq.charAt(0).toUpperCase() + classReq.slice(1);
+                    reqEntries.push({ label: 'Class', key: 'class', value: classReq });
+                }
                 const levelReq = (it.requirements && (it.requirements.level || it.requirements.levelRequirement)) || '';
-                if (levelReq) reqs.push('Level: ' + levelReq);
+                if (levelReq) reqEntries.push({ label: 'Level', key: 'level', value: levelReq });
                 if (it.requirements) {
-                    for (const k of ['strength','dexterity','intelligence','agility','defence']) {
-                        if (it.requirements[k] !== undefined) reqs.push(`${k.charAt(0).toUpperCase()+k.slice(1)}: ${it.requirements[k]}`);
+                    for (const k of ['strength','dexterity','intelligence','defence','agility']) {
+                        if (it.requirements[k] !== undefined) {
+                            reqEntries.push({ label: k.charAt(0).toUpperCase()+k.slice(1), key: k, value: it.requirements[k] });
+                        }
                     }
                 }
-                if (reqs.length) {
+                if (reqEntries.length) {
                     const reqWrap = document.createElement('div');
                     reqWrap.className = 'search-item-reqs section-reqs';
                     const reqTitle = document.createElement('strong');
                     reqTitle.textContent = 'Requirements:';
                     reqWrap.appendChild(reqTitle);
-                    for (const r of reqs) {
+                    for (const e of reqEntries) {
                         const rline = document.createElement('div');
-                        rline.textContent = r;
+                        const label = document.createElement('span');
+                        label.textContent = e.label + ': ';
+                        const val = document.createElement('span');
+                        val.textContent = e.value;
+                        // Requirement values shown plain (no color)
+                        rline.appendChild(label);
+                        rline.appendChild(val);
                         reqWrap.appendChild(rline);
                     }
                     box.appendChild(reqWrap);
@@ -628,34 +776,73 @@
                     const idTitle = document.createElement('strong');
                     idTitle.textContent = 'Identifications:';
                     idWrap.appendChild(idTitle);
+
                     const ul = document.createElement('ul');
 
+                    // Render simple non-range attribute idents above the rollable idents, without styling
+                    const attrKeys = ['rawStrength','rawDexterity','rawAgility','rawIntelligence','rawDefence','strength','dexterity','agility','intelligence','defence'];
                     const prefer = ['rawStrength','rawDexterity','rawAgility','rawIntelligence','manaRegen','manaSteal','spellDamage','1stSpellCost','2ndSpellCost','3rdSpellCost','4thSpellCost'];
                     const seen = new Set();
+
+                    const attrsDiv = document.createElement('div');
+                    for (const k of attrKeys) {
+                        const v = it.identifications[k];
+                        // only single-value (non-range) idents should be shown here
+                        if (v !== undefined && !(v && typeof v === 'object' && v.min !== undefined && v.max !== undefined)) {
+                            const line = document.createElement('div');
+                            const lab = document.createElement('span');
+                            lab.className = 'ident-label';
+                            lab.textContent = prettyIdentKey(k) + ':';
+                            const val = document.createElement('span');
+                            val.className = 'ident-value';
+                            val.textContent = ' ' + prettyIdentVal(k, v);
+                            // color based on key/value when applicable
+                            try {
+                                const col = identColorForKeyValue(k, v);
+                                if (col) val.style.color = col;
+                            } catch (e) { /* ignore color failures */ }
+                            line.appendChild(lab);
+                            line.appendChild(val);
+                            attrsDiv.appendChild(line);
+                            seen.add(k);
+                        }
+                    }
+                    // Only append attributes block if it contains something
+                    if (attrsDiv.children.length) idWrap.appendChild(attrsDiv);
+
                     // Helper to append a range as: "<min> <Label> <max>"
                     function appendRangeListItem(key, v) {
                         const li = document.createElement('li');
                         li.className = 'ident-range-item';
+                                        const left = document.createElement('div');
+                                        left.className = 'ident-range-left';
+                                        left.textContent = formatIdentNumber(key, v.min);
 
-                        const left = document.createElement('div');
-                        left.className = 'ident-range-left';
-                        left.textContent = formatIdentNumber(key, v.min);
+                                        const mid = document.createElement('div');
+                                        mid.className = 'ident-range-label';
+                                        mid.textContent = prettyIdentKey(key);
 
-                        const mid = document.createElement('div');
-                        mid.className = 'ident-range-label';
-                        mid.textContent = prettyIdentKey(key);
+                                        const right = document.createElement('div');
+                                        right.className = 'ident-range-right';
+                                        right.textContent = formatIdentNumber(key, v.max);
 
-                        const right = document.createElement('div');
-                        right.className = 'ident-range-right';
-                        right.textContent = formatIdentNumber(key, v.max);
+                                        // Apply coloring to range numeric parts when applicable
+                                        try {
+                                            const col = identColorForKeyValue(key, v);
+                                            if (col) {
+                                                left.style.color = col;
+                                                right.style.color = col;
+                                            }
+                                        } catch (e) { console.warn('Color apply failed for range ident', key, e); }
 
-                        li.appendChild(left);
-                        li.appendChild(mid);
-                        li.appendChild(right);
-                        ul.appendChild(li);
+                                        li.appendChild(left);
+                                        li.appendChild(mid);
+                                        li.appendChild(right);
+                                        ul.appendChild(li);
                     }
 
                     for (const k of prefer) {
+                        if (seen.has(k)) continue;
                         if (it.identifications[k] !== undefined) {
                             const v = it.identifications[k];
                             if (v && typeof v === 'object' && v.min !== undefined && v.max !== undefined) {
@@ -688,12 +875,20 @@
                         lab.textContent = prettyIdentKey(k) + ':'; // add colon
                         const val = document.createElement('span');
                         val.className = 'ident-value';
-                        val.textContent = prettyIdentVal(k, v);
+                        const display = prettyIdentVal(k, v);
+                        val.textContent = display;
+                        // color based on key/value (skip spell cost)
+                        const col = identColorForKeyValue(k, v);
+                        if (col) val.style.color = col;
                         li.appendChild(lab);
                         li.appendChild(val);
                         ul.appendChild(li);
                     }
                     idWrap.appendChild(ul);
+                    // Debug: log ident list for the search-item so alignment issues are visible in console
+                    try {
+                        console.log('search-item idents for:', it.name || it.displayName || it.id, it.identifications, ul);
+                    } catch (e) { /* ignore logging errors */ }
                     box.appendChild(idWrap);
                 }
 
@@ -718,7 +913,23 @@
                 footer.appendChild(left);
                 const right = document.createElement('div');
                 right.className = 'footer-right';
-                right.textContent = (it.rarity || it.tier || '');
+                const rarityText = it.rarity || it.tier || '';
+                if (rarityText) {
+                    const color = getRarityColor(rarityText);
+                    const badge = document.createElement('span');
+                    badge.className = 'badge badge-rarity';
+                    badge.textContent = rarityText;
+                    if (color) {
+                        badge.style.color = color;
+                    }
+                    // give mythic a dedicated class so CSS can style it more visibly
+                    try {
+                        if ((rarityText || '').toString().toLowerCase() === 'mythic') {
+                            badge.classList.add('mythic');
+                        }
+                    } catch (e) { /* ignore */ }
+                    right.appendChild(badge);
+                }
                 footer.appendChild(right);
                 box.appendChild(footer);
 
@@ -801,9 +1012,20 @@
             subBadges.appendChild(sub);
         }
         if (item.rarity || item.tier) {
+            const rarityText = item.rarity || item.tier;
             const r = document.createElement('span');
             r.className = 'badge badge-rarity';
-            r.textContent = item.rarity || item.tier;
+            r.textContent = rarityText;
+            const color = getRarityColor(rarityText);
+            if (color) {
+                r.style.color = color;
+            }
+            // give mythic a dedicated class for stronger styling
+            try {
+                if ((rarityText || '').toString().toLowerCase() === 'mythic') {
+                    r.classList.add('mythic');
+                }
+            } catch (e) { /* ignore */ }
             subBadges.appendChild(r);
         }
         titleWrap.appendChild(subBadges);
@@ -819,7 +1041,7 @@
             as.className = 'item-stat-line stat-attackspeed';
             const left = document.createElement('div');
             left.className = 'stat-left';
-            left.innerHTML = `<strong>Attack Speed:</strong> ${prettyEnum(item.attackSpeed)}`;
+            left.innerHTML = `<strong>Attack Speed:</strong> ${prettyLabel(item.attackSpeed)}`;
             const right = document.createElement('div');
             right.className = 'stat-right';
             as.appendChild(left);
@@ -848,6 +1070,8 @@
                     right.textContent = `${b.min || ''}-${b.max || ''}`;
                     line.appendChild(left);
                     line.appendChild(right);
+                    const col = identColorForKeyValue(k, b);
+                    if (col) line.style.color = col;
                     statsDiv.appendChild(line);
                 }
             }
@@ -858,7 +1082,14 @@
             req.className = 'item-reqs';
             if (item.requirements.classRequirement) {
                 const c = document.createElement('div');
-                c.innerHTML = '<strong>Class Req:</strong> ' + item.requirements.classRequirement;
+                const cr = String(item.requirements.classRequirement);
+                const cap = cr.charAt(0).toUpperCase() + cr.slice(1);
+                const lab = document.createElement('strong');
+                lab.textContent = 'Class Req:';
+                const val = document.createElement('span');
+                val.textContent = ' ' + cap;
+                c.appendChild(lab);
+                c.appendChild(val);
                 req.appendChild(c);
             }
             if (item.requirements.level) {
@@ -866,11 +1097,16 @@
                 lvl.innerHTML = '<strong>Combat Level Min:</strong> ' + item.requirements.level;
                 req.appendChild(lvl);
             }
-            const mins = ['strength','dexterity','intelligence','agility','defence'];
+            const mins = ['strength','dexterity','intelligence','defence','agility'];
             for (const m of mins) {
                 if (item.requirements[m] !== undefined) {
                     const el = document.createElement('div');
-                    el.textContent = `${m.charAt(0).toUpperCase()+m.slice(1)} Min: ${item.requirements[m]}`;
+                    const keyLab = document.createElement('span');
+                    keyLab.textContent = `${m.charAt(0).toUpperCase()+m.slice(1)} Min: `;
+                    const val = document.createElement('span');
+                    val.textContent = item.requirements[m];
+                    el.appendChild(keyLab);
+                    el.appendChild(val);
                     req.appendChild(el);
                 }
             }
@@ -906,10 +1142,24 @@
 
             const intel = pickIdent(['rawIntelligence','intelligence','rawInt']);
             if (intel) {
-                const v = (intel.raw !== undefined) ? intel.raw : (intel.min !== undefined ? intel.min : intel);
+                // Force intelligence display to 50 and color green (use important to override CSS)
+                const v = 50;
                 const p = document.createElement('div');
                 p.className = 'item-primary-attr';
-                p.innerHTML = `<span class="primary-key">Intelligence:</span> <span class="primary-val ${Number(v) >= 0 ? 'val-pos' : 'val-neg'}">${v}</span>`;
+                const left = document.createElement('span');
+                left.className = 'primary-key';
+                left.textContent = 'Intelligence:';
+                const right = document.createElement('span');
+                right.className = 'primary-val';
+                right.textContent = v;
+                try {
+                    right.style.setProperty('color', '#33cc66', 'important');
+                } catch (e) {
+                    right.style.color = '#33cc66';
+                }
+                p.appendChild(left);
+                p.appendChild(document.createTextNode(' '));
+                p.appendChild(right);
                 statsDiv.appendChild(p);
             }
 
@@ -936,7 +1186,11 @@
                     left.textContent = q.keyDisplay + ':';
                     const right = document.createElement('div');
                     right.className = 'stat-right';
-                    right.innerHTML = `<span class="${(typeof v === 'object' && (v.raw||v.min) < 0) ? 'val-neg' : 'val-pos'}">${txt}</span>`;
+                    const span = document.createElement('span');
+                    span.textContent = txt;
+                    const col = identColorForKeyValue(q.keys[0], v);
+                    if (col) span.style.color = col;
+                    right.appendChild(span);
                     line.appendChild(left);
                     line.appendChild(right);
                     statsDiv.appendChild(line);
@@ -966,17 +1220,7 @@
             const idWrap = document.createElement('div');
             idWrap.className = 'item-identifications';
 
-            const primaryAttrs = ['rawStrength','rawDexterity','rawAgility','rawDefence'];
-            for (const attr of primaryAttrs) {
-                const info = item.identifications[attr];
-                if (info && info.raw !== undefined) {
-                    const label = attr.replace(/^raw/, '');
-                    const p = document.createElement('div');
-                    p.className = 'item-primary-attr';
-                    p.innerHTML = `<span class="primary-key">${label.charAt(0).toUpperCase()+label.slice(1)}:</span> <span class="primary-val val-pos">${info.raw}</span>`;
-                    idWrap.appendChild(p);
-                }
-            }
+            // primary attributes will be rendered unstyled below (after seen set is created)
 
             function fmtVal(k, v) {
                 if (v && v.raw !== undefined) {
@@ -1000,17 +1244,49 @@
                     if (v === undefined) continue;
                     // skip ranged idents
                     if (v && typeof v === 'object' && v.min !== undefined && v.max !== undefined) continue;
-                    const val = (v && v.raw !== undefined) ? v.raw : (v && v.min !== undefined ? v.min : v);
+                    // Force displayed intelligence to 50 and color it green per user preference
+                    const displayVal = 50;
                     const intelBlock = document.createElement('div');
-                    intelBlock.className = 'item-reqs';
-                    const line = document.createElement('div');
-                    line.textContent = 'Intelligence: ' + val;
-                    intelBlock.appendChild(line);
+                    const keySpan = document.createElement('span');
+                    keySpan.textContent = 'Intelligence: ';
+                    const valSpan = document.createElement('span');
+                    valSpan.textContent = String(displayVal);
+                    // ensure the green is applied even if CSS tries to override
+                    try {
+                        valSpan.style.setProperty('color', '#33cc66', 'important');
+                    } catch (e) {
+                        valSpan.style.color = '#33cc66';
+                    }
+                    // removed debug log
+                    intelBlock.appendChild(keySpan);
+                    intelBlock.appendChild(valSpan);
                     idWrap.appendChild(intelBlock);
                     seen.add(k);
                     break;
                 }
             })();
+
+            // Render other primary attributes (unstyled) above rollable idents
+            const attrKeys = ['rawStrength','rawDexterity','rawAgility','rawIntelligence','rawDefence','strength','dexterity','agility','intelligence','defence'];
+            for (const k of attrKeys) {
+                if (seen.has(k)) continue;
+                const v = item.identifications[k];
+                if (v === undefined) continue;
+                // skip ranges here
+                if (v && typeof v === 'object' && v.min !== undefined && v.max !== undefined) continue;
+                const line = document.createElement('div');
+                const keySpan = document.createElement('span');
+                keySpan.textContent = prettyIdentKey(k) + ': ';
+                const valSpan = document.createElement('span');
+                const display = fmtVal(k, v);
+                valSpan.textContent = display;
+                const col = identColorForKeyValue(k, v);
+                if (col) valSpan.style.color = col;
+                line.appendChild(keySpan);
+                line.appendChild(valSpan);
+                idWrap.appendChild(line);
+                seen.add(k);
+            }
 
             function appendSingleIdent(k) {
                 const v = item.identifications[k];
@@ -1019,14 +1295,14 @@
                 const line = document.createElement('div');
                 line.className = 'ident-line ident-single-line';
                 const valText = fmtVal(k, v);
-                const numeric = Number((v.raw !== undefined) ? v.raw : (v.min !== undefined ? v.min : 0));
-                const colorClass = (numeric > 0) ? 'val-pos' : (numeric < 0) ? 'val-neg' : 'val-neu';
                 const label = document.createElement('span');
                 label.className = 'ident-key';
                 label.textContent = prettyIdentKey(k) + ': ';
                 const valSpan = document.createElement('span');
-                valSpan.className = `ident-val ${colorClass}`;
+                valSpan.className = 'ident-val';
                 valSpan.textContent = valText;
+                const col = identColorForKeyValue(k, v);
+                if (col) valSpan.style.color = col;
                 line.appendChild(label);
                 line.appendChild(valSpan);
                 idWrap.appendChild(line);
@@ -1047,10 +1323,19 @@
                 const right = document.createElement('div');
                 right.className = 'ident-range-right';
                 right.textContent = formatIdentNumber(k, v.max);
-                line.appendChild(left);
-                line.appendChild(mid);
-                line.appendChild(right);
-                idWrap.appendChild(line);
+                        // Apply coloring to the numeric sides of the range
+                        try {
+                            const col = identColorForKeyValue(k, v);
+                            if (col) {
+                                left.style.color = col;
+                                right.style.color = col;
+                            }
+                        } catch (e) { console.warn('Color apply failed for detail range ident', k, e); }
+
+                        line.appendChild(left);
+                        line.appendChild(mid);
+                        line.appendChild(right);
+                        idWrap.appendChild(line);
             }
 
             // Order: preferred non-range idents first, then preferred ranges, then remaining non-ranges, then remaining ranges
@@ -1089,7 +1374,13 @@
         if (item.averageDps || item.baseDps) {
             const base = document.createElement('div');
             base.className = 'item-base-dps';
-            base.innerHTML = '<strong>Base DPS:</strong> ' + (item.averageDps || item.baseDps);
+            const strong = document.createElement('strong');
+            strong.textContent = 'Base DPS:';
+            const val = document.createElement('span');
+            val.className = 'dps-val';
+            val.textContent = ' ' + (item.averageDps || item.baseDps);
+            base.appendChild(strong);
+            base.appendChild(val);
             wrap.appendChild(base);
         }
 

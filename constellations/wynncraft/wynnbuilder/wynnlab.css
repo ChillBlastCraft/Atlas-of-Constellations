@@ -34,6 +34,7 @@ body {
 :root {
     --stat-input-width: 70px;
     --stat-input-gap: 6px;
+    --ident-val-width: 56px;
 }
 
 /*
@@ -256,6 +257,14 @@ main { z-index: 1; }
     display: block;
     width: 100%;
 }
+.badge-rarity.mythic {
+    color: #d18cff !important;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(209,140,255,0.85), 0 0 18px rgba(209,140,255,0.35);
+    -webkit-text-stroke: 0.35px rgba(0,0,0,0.65);
+    filter: drop-shadow(0 2px 6px rgba(160,112,210,0.45));
+}
+
 .atlas-item-detail {
     display: none !important; /* hide legacy detail card until redesigned */
 }
@@ -751,7 +760,7 @@ main { z-index: 1; }
 .atlas-item-detail .ident-key { grid-column: 2; justify-self: center; color:#9fa3b8; font-size:0.86rem; text-align:center }
 .atlas-item-detail .ident-val { grid-column: 3; justify-self: end; font-weight:700; min-width:68px; text-align:right }
 .atlas-item-detail .val-pos { color:#33cc66 }
-.atlas-item-detail .val-neg { color:#ff6b6b }
+.atlas-item-detail .val-neg { color:#cc0000 }
 .atlas-item-detail .val-neu { color:#e0e0e0 }
 .atlas-item-detail .item-lore { color:#d9ccf1; font-style:italic; font-size:0.86rem; opacity:0.95 }
 .atlas-item-detail .item-base-dps { margin-top:8px; font-weight:700; color:#ffeebb; text-align:left }
@@ -816,6 +825,33 @@ main { z-index: 1; }
 .ident-range-right { justify-self: end; text-align: right; color: #ffdfe6; font-weight: 700 }
 .atlas-item-detail .item-lore { margin-top:10px; max-height: 7.5rem; overflow: auto }
 
+/* Align primary attribute label and value vertically and keep sizes consistent */
+.atlas-item-detail .item-primary-attr {
+    display: inline-flex;
+    align-items: baseline; /* align text baselines for label and numeric value */
+    gap: 8px;
+    margin-top: 6px;
+}
+.atlas-item-detail .primary-key {
+    color: #9fa3b8;
+    font-weight: 700;
+    font-size: 0.92rem;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: baseline;
+}
+.atlas-item-detail .primary-val {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.92rem;
+    line-height: 1;
+    min-width: 36px;
+    text-align: right;
+    margin-left: 6px;
+    display: inline-block;
+    vertical-align: baseline;
+}
+
 /* Make result list items use a compact preview resembling the card */
 .atlas-result-item { padding:12px; max-width:320px }
 .atlas-result-item .item-summary { align-items:flex-start }
@@ -857,25 +893,31 @@ main { z-index: 1; }
 /* Search item identifications: smaller, single-line labels/values */
 .search-item-identifications { margin-top: 6px; text-align: left; }
 .search-item-identifications ul { margin: 0; padding: 0; }
-.search-item-identifications li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* compact label/value for search results: remove fixed width so label and value sit together */
+/* Redesigned search result ident rows: fixed-width value column so values
+   line up vertically but don't hug the card edge. Labels will ellipsize if
+   too long. */
+.search-item-identifications li {
+    display: grid;
+    grid-template-columns: 1fr var(--ident-val-width, 72px);
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+}
 .search-item-identifications .ident-label {
     font-size: 0.78rem;
     color: #cfc9d8;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: auto; /* allow label to size to content */
-    display: inline-block;
-    margin-right: 6px;
+    justify-self: start;
 }
 .search-item-identifications .ident-value {
     font-size: 0.78rem;
     font-weight: 700;
-    min-width: 0;
-    text-align: left; /* keep value next to label */
-    white-space: nowrap;
-    display: inline-block;
+    color: inherit;
+    text-align: right;
+    justify-self: end;
+    width: auto; /* let it size naturally */
 }
 
 /* Range display used in search results and detail view */
@@ -887,7 +929,7 @@ main { z-index: 1; }
 .search-item-identifications .ident-range-item .ident-range-left { text-align: left; font-weight:700 }
 .search-item-identifications .ident-range-item .ident-range-label { text-align: center; color: #b8c1ec; font-weight:700; justify-self:center }
 .search-item-identifications .ident-range-item .ident-range-right { text-align: right; font-weight:700; justify-self:end }
-.ident-range-text { font-weight: 700; color: #ffdfe6 }
+.ident-range-text { font-weight: 700; color: #cc0000 }
 .search-item div { margin: 4px 0 }
 .search-item-identifications ul { margin: 6px 0 0 18px }
 .search-item-identifications li { margin: 2px 0 }
@@ -926,6 +968,42 @@ main { z-index: 1; }
 .field-value, .req-value { text-align: right; color: #eaeaea }
 .ident-label { display: inline-block }
 .ident-value { display: inline-block; margin-left: 8px }
+
+/* Numeric font & tabular numbers for clearer alignment */
+.ident-value,
+.ident-range-left,
+.ident-range-right,
+.ident-val,
+.primary-val,
+.field-dps,
+.item-base-dps,
+.stat-right,
+.req-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ensure the numeric part of DPS uses the monospace numeric font */
+.dps-val,
+.field-dps .dps-val,
+.item-base-dps .dps-val {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Strong overrides to ensure numeric font and intelligence color are visible */
+.search-item .field-dps,
+.atlas-item-detail .item-base-dps {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+.atlas-item-detail .primary-val {
+    color: #33cc66 !important;
+}
+
+.atlas-item-detail .item-identifications .ident-val {
+    color: #33cc66 !important;
+}
 
 /* Center identification names in the detail view while keeping values right-aligned */
 .atlas-item-detail .ident-key { grid-column: 2; justify-self: center; color: #9fa3b8; font-size: 0.86rem }
