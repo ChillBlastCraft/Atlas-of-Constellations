@@ -6,16 +6,16 @@ const constellations = [
         nodes: [
             { x: 20, y: 27, url: "#" },
             { x: 23, y: 24, url: "#" },
-            { x: 27, y: 28, url: "constellations/wynncraft/wynnbuilder/WynnLab.html", label: "WynnLab", title: "WynnLab" },
+            { x: 27, y: 28, url: "#" },
             { x: 25, y: 33, url: "#" },
             { x: 19, y: 34, url: "#" },
-            { x: 30, y: 32, url: "constellations/wynncraft/wynntest/WynnCalc.html", label: "WynnCalc", title: "WynnCalc" }
+            { x: 30, y: 32, url: "#" }
         ],
         links: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]]
     },
     {
-        id: "path-of-exile",
-        name: "Path of Exile",
+        id: "mythic-mobs",
+        name: "Mythic Mobs",
         position: { x: 68, y: 28 },
         nodes: [
             { x: 66.2, y: 31.0, url: "#" },
