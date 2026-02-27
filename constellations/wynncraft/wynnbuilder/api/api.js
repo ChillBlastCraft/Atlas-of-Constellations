@@ -107,25 +107,27 @@ async function itemCategories() {
         material: 'materialType',
         ingredient: 'ingredientType',
     }
-    
+
     for (const item of Object.values(data)) {
         if (item.type) {
             if (!categoryMap[item.type]) {
-                categoryMap[item.type] = new Set()
+                categoryMap[item.type] = { subcats: new Set(), count: 0 }
             }
+            categoryMap[item.type].count++
             const subcatProp = subcategoryProps[item.type]
             if (subcatProp && item[subcatProp]) {
-                categoryMap[item.type].add(item[subcatProp])
+                categoryMap[item.type].subcats.add(item[subcatProp])
             } else if (item.subtype) {
-                categoryMap[item.type].add(item.subtype)
+                categoryMap[item.type].subcats.add(item.subtype)
             } else {
-                categoryMap[item.type].add('none')
+                categoryMap[item.type].subcats.add('none')
             }
         }
     }
+    
     console.log('Item categories and subcategories:')
-    for (const [category, subcats] of Object.entries(categoryMap)) {
-        console.log(`- ${category}: [${Array.from(subcats).join(', ')}]`)
+    for (const [category, info] of Object.entries(categoryMap)) {
+        console.log(`- ${category} (${info.count} items): [${Array.from(info.subcats).join(', ')}]`)
     }
 }
 
@@ -187,8 +189,9 @@ async function commands() {
 
 const args = process.argv.slice(2)
 if (args.length > 0) {
-    console.clear();
+    console.clear()
 }
+
 if (args.includes('showAllItems')) {
     showAllItems()
 } else if (args.includes('itemCategories')) {
