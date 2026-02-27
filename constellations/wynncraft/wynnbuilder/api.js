@@ -6,6 +6,7 @@ async function fetchJson(url) {
 }
 
 function findClassByName(data, input) {
+
     if (!input || !data) return null
     const lowerArg = input.toLowerCase()
     return Object.values(data).find(cls => {
@@ -14,152 +15,6 @@ function findClassByName(data, input) {
     })
 }
 
-async function skillpointPlanner(className) {
-    const classKey = className.toLowerCase()
-    let treeData
-    try {
-        treeData = await fetchJson(`https://api.wynncraft.com/v3/ability/tree/${classKey}`)
-    } catch (e) {
-        console.log('Failed to load ability tree:', e.message)
-        return
-    }
-
-    const abilities = {}
-    for (const page of Object.values(treeData.pages)) {
-        for (const [id, ability] of Object.entries(page)) {
-            abilities[id] = ability
-        }
-    }
-
-    const assigned = {}
-    let points = 0
-
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
-
-    const bold = s => `\x1b[1m${s}\x1b[22m`
-    const green = s => `\x1b[32m${s}\x1b[0m`
-    const yellow = s => `\x1b[33m${s}\x1b[0m`
-    const magenta = s => `\x1b[35m${s}\x1b[0m`
-    const cyan = s => `\x1b[36m${s}\x1b[0m`
-    const white = s => `\x1b[37m${s}\x1b[0m`
-    const red = s => `\x1b[31m${s}\x1b[0m`
-
-    function colorName(name) {
-        if (/Totem|Haul|Aura|Uproot|Nature|Overseer|Rain|Shocking|Flaming|Puppet|Mask|Hymn|Sacrificial|Stagnation|Blood|Chant|Vengeful|Double|Storm|Regeneration|Twisted|Crimson|Eldritch|Maddening|Seeking|Fluid|Commander|Friendly|Depersonalization|Deeper|Bloodletting|Hummingbird|Shepherd|Awakened|Rite|Triple|Invigorating|Frog|Sanguine|Soaring|Sorrow/.test(name)) return magenta(bold(name))
-        if (/Earth|Air|Thunder|Fire|Water/.test(name)) return cyan(bold(name))
-        if (/Cheaper|More|Larger|Imbued|Bullwhip|Shatter|Reach|Bloodier/.test(name)) return white(bold(name))
-        if (/Relik|Proficiency/.test(name)) return white(bold(name))
-        if (/Smash|Grasp|Shove|Connection|Exploding|Fanatic|Heretic/.test(name)) return yellow(bold(name))
-        return green(bold(name))
-    }
-
-    function formatDescription(desc) {
-        if (/Click Combo:/i.test(desc)) {
-            desc = desc.replace(/Click Combo:/i, yellow('Click Combo:'))
-            desc = desc.replace(/([A-Z\-]+)/g, m => magenta(bold(m)))
-        }
-        return desc
-    }
-
-    function canAssign(id) {
-        const ab = abilities[id]
-        if (!ab || assigned[id]) return false
-        const req = ab.requirements || {}
-        if (req.ABILITY_POINTS && points < req.ABILITY_POINTS) return false
-        if (req.NODE && !assigned[req.NODE]) return false
-        return true
-    }
-
-    function isEdge(id) {
-        if (!assigned[id]) return false
-        for (const otherId in abilities) {
-            const other = abilities[otherId]
-            if (other.requirements && other.requirements.NODE === id && assigned[otherId]) {
-                return false
-            }
-        }
-        return true
-    }
-
-    function printAbilities(mode = 'view') {
-        console.log()
-        if (mode === 'view') {
-            console.log('Assigned abilities:')
-            for (const [id, ab] of Object.entries(abilities)) {
-                if (assigned[id]) {
-                    const desc = formatDescription(ab.description ? ab.description[0] : '')
-                    console.log(`[X] ${colorName(ab.name)} (${id}) - ${desc}`)
-                }
-            }
-            console.log(`\nTotal points assigned: ${bold(points)}`)
-        } else if (mode === 'assign') {
-            console.log('Assignable abilities:')
-            for (const [id, ab] of Object.entries(abilities)) {
-                if (canAssign(id)) {
-                    const desc = formatDescription(ab.description ? ab.description[0] : '')
-                    console.log(`[ ] ${colorName(ab.name)} (${id}) - ${desc} ${green('(assignable)')}`)
-                }
-            }
-        } else if (mode === 'unassign') {
-            console.log('Unassignable abilities (leaf nodes):')
-            for (const [id, ab] of Object.entries(abilities)) {
-                if (assigned[id] && isEdge(id)) {
-                    const desc = formatDescription(ab.description ? ab.description[0] : '')
-                    console.log(`[X] ${colorName(ab.name)} (${id}) - ${desc} ${red('(unassignable)')}`)
-                }
-            }
-        }
-    }
-
-    function prompt() {
-        rl.question('\nEnter command (assign, unassign, view, exit): ', cmd => {
-            cmd = cmd.trim().toLowerCase()
-            if (cmd === 'exit') {
-                rl.close()
-                return
-            }
-            if (cmd === 'view') {
-                printAbilities('view')
-                prompt()
-            } else if (cmd === 'assign') {
-                printAbilities('assign')
-                rl.question('Enter ability ID to assign: ', id => {
-                    id = id.trim()
-                    if (abilities[id] && canAssign(id)) {
-                        assigned[id] = true
-                        points++
-                        console.log(`Assigned ${abilities[id].name}`)
-                    } else {
-                        console.log('Cannot assign this ability now.')
-                    }
-                    printAbilities('view')
-                    prompt()
-                })
-            } else if (cmd === 'unassign') {
-                printAbilities('unassign')
-                rl.question('Enter ability ID to unassign: ', id => {
-                    id = id.trim()
-                    if (abilities[id] && isEdge(id)) {
-                        delete assigned[id]
-                        points--
-                        console.log(`Unassigned ${abilities[id].name}`)
-                    } else {
-                        console.log('Cannot unassign this ability now.')
-                    }
-                    printAbilities('view')
-                    prompt()
-                })
-            } else {
-                console.log('Invalid command. Use "assign", "unassign", "view", or "exit".')
-                prompt()
-            }
-        })
-    }
-
-    console.log(`\nSkillpoint planner for ${className}`)
-    printAbilities('view')
-    prompt()
-}
 
 async function showClasses() {
     try {
@@ -331,6 +186,9 @@ async function commands() {
 }
 
 const args = process.argv.slice(2)
+if (args.length > 0) {
+    console.clear();
+}
 if (args.includes('showAllItems')) {
     showAllItems()
 } else if (args.includes('itemCategories')) {
