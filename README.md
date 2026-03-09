@@ -14,9 +14,7 @@ Atlas of Constellations is a monorepo for visual experiments, interactive tools,
 
 ## Subprojects
 
-- **wip**: Work-in-progress experiments and prototypes.
 - **wynncalc / wynnbuilder**: A build optimizer for Wynncraft, featuring a beam search algorithm to find optimal gear combinations based on user-defined constraints and weights. See [constellations/wynncraft/wynnbuilder/main.js](constellations/wynncraft/wynnbuilder/main.js) for the entry point.
-- **explain**: Documentation and explanations for the universe and its systems.
 
 ## WynnBuilder Optimizer
 
