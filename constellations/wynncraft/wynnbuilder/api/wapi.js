@@ -1,8 +1,6 @@
 import fetch from 'node-fetch'
-
-const DAMAGE_ID = "rawDamage"
-const HP_ID = "rawHealth"
-const MANAREGEN_ID = "manaRegen"
+import { TRACKED_STATS } from '../config/priorities.js'
+import { weaponMeanDamage } from '../engine/damageEngine.js'
 
 export async function fetchAllItems() {
     try {
@@ -13,7 +11,6 @@ export async function fetchAllItems() {
         }
 
         const data = await response.json()
-
         let items
         if (typeof data.items !== 'undefined') {
             items = data.items
@@ -33,70 +30,75 @@ export async function fetchAllItems() {
     }
 }
 
-export function filterRelevantItems(allItems) {
-    const weapons = []
-    const helmets = []
-    const chests = []
+function getRaw(idents, apiId) {
+    const entry = idents[apiId]
+    if (!entry) {
+        return 0
+    }
+    if (typeof entry.max !== 'undefined') {
+        return Number(entry.max)
+    }
+    if (typeof entry.raw !== 'undefined') {
+        return Number(entry.raw)
+    }
+    return 0
+}
 
-    for (const item of Object.values(allItems)) {
-        if (!item) {
-            continue
-        }
-        if (item.crafted) {
-            continue
-        }
-
-        let idents
-        if (item.identifications) {
-            idents = item.identifications
+function buildItemStats(item) {
+    let idents
+    if (item.identifications) {
+        idents = item.identifications
+    } else {
+        idents = {}
+    }
+    let stats
+    if (item.internalName !== undefined) {
+        stats = { name: item.internalName }
+    } else {
+        stats = { name: item.name }
+    }
+    for (const [statKey, apiId] of Object.entries(TRACKED_STATS)) {
+        if (apiId) {
+            stats[statKey] = getRaw(idents, apiId)
         } else {
-            idents = {}
-        }
-
-        function getRaw(id) {
-            if (idents[id] && typeof idents[id].raw !== 'undefined') {
-                return Number(idents[id].raw)
-            } else {
-                return 0
-            }
-        }
-
-        let name
-        if (typeof item.internalName !== 'undefined') {
-            name = item.internalName
-        } else {
-            name = item.name
-        }
-
-        if (item.type === 'weapon') {
-            weapons.push({
-                name: name,
-                dps: getRaw(DAMAGE_ID),
-                hp: getRaw(HP_ID),
-                manaRegen: getRaw(MANAREGEN_ID)
-            })
-        }
-
-        if (item.type === 'armour') {
-            if (item.armourType === 'helmet') {
-                helmets.push({
-                    name: name,
-                    dps: getRaw(DAMAGE_ID),
-                    hp: getRaw(HP_ID),
-                    manaRegen: getRaw(MANAREGEN_ID)
-                })
-            }
-
-            if (item.armourType === 'chestplate') {
-                chests.push({
-                    name: name,
-                    dps: getRaw(DAMAGE_ID),
-                    hp: getRaw(HP_ID),
-                    manaRegen: getRaw(MANAREGEN_ID)
-                })
-            }
+            stats[statKey] = 0
         }
     }
 
-    return { weapons, helmets, chests }
+    if (item.type === 'weapon') {
+        let baseObj
+        if (item.base) {
+            baseObj = item.base
+        } else {
+            baseObj = {}
+        }
+        stats.baseMeanDmg = weaponMeanDamage(baseObj)
+    }
+    return stats
+}
+
+export function filterRelevantItems(allItems) {
+    const weapons = [], helmets = [], chests = [], leggings = [], boots = []
+    const necklaces = [], bracelets = [], rings = []
+
+    for (const item of Object.values(allItems)) {
+        if (!item || item.crafted) continue
+
+        const stats = buildItemStats(item)
+
+        if (item.type === 'weapon') {
+            weapons.push(stats)
+        } else if (item.type === 'armour') {
+            if (item.armourType === 'helmet') { helmets.push(stats) }
+            else if (item.armourType === 'chestplate') { chests.push(stats) }
+            else if (item.armourType === 'leggings') { leggings.push(stats) }
+            else if (item.armourType === 'boots') { boots.push(stats) }
+        } else if (item.type === 'accessory') {
+            if (item.accessoryType === 'necklace') { necklaces.push(stats) }
+            else if (item.accessoryType === 'bracelet') { bracelets.push(stats) }
+            else if (item.accessoryType === 'ring') { rings.push(stats) }
+        }
+    }
+
+    return { weapons, helmets, chests, leggings, boots, necklaces, bracelets, rings }
 }
