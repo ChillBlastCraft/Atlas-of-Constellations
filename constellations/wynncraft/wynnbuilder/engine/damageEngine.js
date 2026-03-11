@@ -35,7 +35,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DAMAGE_ELEMENTS = [
-    'damage', 'earthDamage', 'thunderDamage', 'waterDamage', 'fireDamage', 'airDamage',
+    'baseDamage', 'baseEarthDamage', 'baseThunderDamage', 'baseWaterDamage', 'baseFireDamage', 'baseAirDamage',
 ]
 
 /**
@@ -205,7 +205,17 @@ export function computeRotationDPS(stats, rotation, spellDefs, abilityNodes, act
             multiplierPerHit = spell.multiplierPerHit
         }
         
-        const dmgPerHit  = (baseMeanDmg * multiplierPerHit + flatBonus) * pctMultiplier
+        // Clamp extreme values to prevent calculation errors
+        const clampedFlatBonus = Math.max(-10000, Math.min(10000, flatBonus))
+        const clampedPctMultiplier = Math.max(-10, Math.min(50, pctMultiplier))
+        
+        // If percentage would make damage calculation meaningless, treat as zero DPS contribution
+        if (clampedPctMultiplier <= 0) {
+            console.warn(`Skipping spell ${spellKey} due to negative damage multiplier: ${clampedPctMultiplier}`)
+            continue
+        }
+        
+        const dmgPerHit = Math.max(0, (baseMeanDmg * multiplierPerHit + clampedFlatBonus) * clampedPctMultiplier)
         const dmgPerCast = totalHits * dmgPerHit
         const casts      = rotEntry.castWeight
 

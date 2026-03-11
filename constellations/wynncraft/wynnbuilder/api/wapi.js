@@ -74,19 +74,63 @@ function buildItemStats(item) {
         }
         stats.baseMeanDmg = weaponMeanDamage(baseObj)
     }
+
+    const reqs = item.requirements || {}
+    stats.reqStr = reqs.strength    || 0
+    stats.reqDex = reqs.dexterity   || 0
+    stats.reqInt = reqs.intelligence || 0
+    stats.reqDef = reqs.defence     || 0
+    stats.reqAgi = reqs.agility     || 0
+
+    // Validate item stats to filter out broken items
+    if (!isValidItem(stats, item)) {
+        return null
+    }
+
     return stats
 }
 
-export function filterRelevantItems(allItems) {
+function isValidItem(stats, item) {
+    // Filter out items with impossible negative spell damage values
+    // These appear to be data corruption or API bugs
+    if (stats.spellDmg < -10000 || stats.spellDmgPct < -10000) {
+        console.warn(`Filtering out item "${stats.name}" due to extreme negative spell damage: raw=${stats.spellDmg}, %=${stats.spellDmgPct}`)
+        return false
+    }
+    
+    // Filter out items with impossible skillpoint requirements
+    const totalReqs = stats.reqStr + stats.reqDex + stats.reqInt + stats.reqDef + stats.reqAgi
+    if (totalReqs > 1000) {
+        console.warn(`Filtering out item "${stats.name}" due to extreme skillpoint requirements: ${totalReqs}`)
+        return false
+    }
+    
+    // For weapons, ensure base damage makes sense
+    if (item.type === 'weapon' && stats.baseMeanDmg <= 0) {
+        console.warn(`Filtering out weapon "${stats.name}" due to zero or negative base damage: ${stats.baseMeanDmg}`)
+        return false
+    }
+    
+    return true
+}
+
+export function filterRelevantItems(allItems, weaponType) {
     const weapons = [], helmets = [], chests = [], leggings = [], boots = []
     const necklaces = [], bracelets = [], rings = []
+    let filteredCount = 0
 
     for (const item of Object.values(allItems)) {
         if (!item || item.crafted) continue
 
         const stats = buildItemStats(item)
+        
+        // Skip items that failed validation
+        if (!stats) {
+            filteredCount++
+            continue
+        }
 
-        if (item.type === 'weapon') {
+        if (item.type === 'weapon' && item.weaponType === weaponType) {
             weapons.push(stats)
         } else if (item.type === 'armour') {
             if (item.armourType === 'helmet') { helmets.push(stats) }
@@ -98,6 +142,10 @@ export function filterRelevantItems(allItems) {
             else if (item.accessoryType === 'bracelet') { bracelets.push(stats) }
             else if (item.accessoryType === 'ring') { rings.push(stats) }
         }
+    }
+    
+    if (filteredCount > 0) {
+        console.log(`Filtered out ${filteredCount} invalid items.`)
     }
 
     return { weapons, helmets, chests, leggings, boots, necklaces, bracelets, rings }

@@ -24,6 +24,14 @@ export const TRACKED_STATS = {
     intelligence: 'rawIntelligence',
     defence:      'rawDefence',
     agility:      'rawAgility',
+
+    // Skill point requirements — summed across all equipped items.
+    // Used to compute how many manual skillpoints the build needs.
+    reqStr: null,
+    reqDex: null,
+    reqInt: null,
+    reqDef: null,
+    reqAgi: null,
 }
 
 // ─── Minimums (hard constraints) ──────────────────────────────────────────────
@@ -34,8 +42,8 @@ export const TRACKED_STATS = {
 // Example: "I need at least 2000 HP and 3 mana regen"
 //   hp: 2000, manaRegen: 3
 export const MINS = {
-    hp:        0,
-    manaRegen: 0,
+    hp:        12000,   // rawHealth from gear only — base HP is separate; minimum HP for builds
+    manaRegen: 40,      // enough mana sustain to cast spells
 }
 
 // ─── Weights (optimisation targets) ───────────────────────────────────────────
@@ -49,11 +57,10 @@ export const MINS = {
 export const DPS_WEIGHT = 1
 
 export const WEIGHTS = {
-    hp:        0.001,   // e.g. 1000 HP ≈ 1 DPS in score
-    manaRegen: 5,       // each +1 raw mana regen ≈ 5 DPS in score
+    // No weights: only minimums enforced, no secondary optimization
 }
 
 // ─── Beam Width ───────────────────────────────────────────────────────────────
 // How many candidates to keep at each slot during beam search.
 // Higher = more thorough (but slower). 50 is a solid default.
-export const BEAM_WIDTH = 50
+export const BEAM_WIDTH = 100
