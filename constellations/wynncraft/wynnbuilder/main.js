@@ -4,7 +4,11 @@ import { fetchAllItems, filterRelevantItems } from './api/wapi.js'
 async function run() {
     console.log('Fetching items from WAPI...')
     const allItems = await fetchAllItems()
-    console.log('Fetched allItems:', allItems ? Object.keys(allItems).length : allItems)
+    if (allItems) {
+        console.log('Fetched allItems:', Object.keys(allItems).length)
+    } else {
+        console.log('Fetched allItems:', allItems)
+    }
 
     if (!allItems || Object.keys(allItems).length === 0) {
         console.error('No items fetched. Aborting optimizer.')

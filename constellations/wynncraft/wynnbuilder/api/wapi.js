@@ -1,8 +1,8 @@
 import fetch from 'node-fetch'
 
-const DAMAGE_ID = "2"
-const HP_ID = "6"
-const MANAREGEN_ID = "8"
+const DAMAGE_ID = "rawDamage"
+const HP_ID = "rawHealth"
+const MANAREGEN_ID = "manaRegen"
 
 export async function fetchAllItems() {
     try {
@@ -14,7 +14,12 @@ export async function fetchAllItems() {
 
         const data = await response.json()
 
-        const items = data.items || data
+        let items
+        if (typeof data.items !== 'undefined') {
+            items = data.items
+        } else {
+            items = data
+        }
 
         if (!items || Object.keys(items).length === 0) {
             console.warn('Warning: No items found in WAPI response.')
@@ -33,37 +38,61 @@ export function filterRelevantItems(allItems) {
     const helmets = []
     const chests = []
 
-    for (const item of Object.values(allItems)) {  
-        if (!item) { continue }
-        if (item.crafted) { continue }
+    for (const item of Object.values(allItems)) {
+        if (!item) {
+            continue
+        }
+        if (item.crafted) {
+            continue
+        }
 
-        const idents = item.identifications || {}
+        let idents
+        if (item.identifications) {
+            idents = item.identifications
+        } else {
+            idents = {}
+        }
+
+        function getRaw(id) {
+            if (idents[id] && typeof idents[id].raw !== 'undefined') {
+                return Number(idents[id].raw)
+            } else {
+                return 0
+            }
+        }
+
+        let name
+        if (typeof item.internalName !== 'undefined') {
+            name = item.internalName
+        } else {
+            name = item.name
+        }
 
         if (item.type === 'weapon') {
             weapons.push({
-                name: item.name,
-                dps: Number(idents[DAMAGE_ID] || 0),
-                hp: Number(idents[HP_ID] || 0),
-                manaRegen: Number(idents[MANAREGEN_ID] || 0)
+                name: name,
+                dps: getRaw(DAMAGE_ID),
+                hp: getRaw(HP_ID),
+                manaRegen: getRaw(MANAREGEN_ID)
             })
         }
 
         if (item.type === 'armour') {
             if (item.armourType === 'helmet') {
                 helmets.push({
-                    name: item.name,
-                    dps: Number(idents[DAMAGE_ID] || 0),
-                    hp: Number(idents[HP_ID] || 0),
-                    manaRegen: Number(idents[MANAREGEN_ID] || 0)
+                    name: name,
+                    dps: getRaw(DAMAGE_ID),
+                    hp: getRaw(HP_ID),
+                    manaRegen: getRaw(MANAREGEN_ID)
                 })
             }
-            
+
             if (item.armourType === 'chestplate') {
                 chests.push({
-                    name: item.name,
-                    dps: Number(idents[DAMAGE_ID] || 0),
-                    hp: Number(idents[HP_ID] || 0),
-                    manaRegen: Number(idents[MANAREGEN_ID] || 0)
+                    name: name,
+                    dps: getRaw(DAMAGE_ID),
+                    hp: getRaw(HP_ID),
+                    manaRegen: getRaw(MANAREGEN_ID)
                 })
             }
         }

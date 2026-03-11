@@ -62,6 +62,15 @@ export function optimizeBeam(weapons, helmets, chestplates, constraints, weights
         }
         newBeam.sort((a, b) => b.score - a.score)
         beam = newBeam.slice(0, beamWidth)
+
+        if (beam.length === 0) {
+            console.error(`[optimizer] Beam is empty after slot "${slot.name}" — all candidates were pruned by constraints.`)
+            return null
+        }
     }
-    return beam[0]
+    if (typeof beam[0] !== 'undefined') {
+        return beam[0]
+    } else {
+        return null
+    }
 }
