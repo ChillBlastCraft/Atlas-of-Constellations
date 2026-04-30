@@ -1,4 +1,4 @@
-import { runMeleeCommand, runSpellCommand } from "./calculator/dpsEquivalence.js"
+import { runMeleeCommand, runSpellCommand, runCompareCommand } from "./calculator/dpsEquivalence.js"
 
 function printUsage() {
 	console.log("Usage:")
@@ -6,6 +6,7 @@ function printUsage() {
     console.log(" ")
 	console.log("  node main.js spells")
 	console.log("  node main.js melee")
+	console.log("  node main.js compare")
 }
 
 async function main() {
@@ -20,6 +21,7 @@ async function main() {
         console.clear()
         console.log("-spells = Finds relation between % spell damage, and flat spell damage based on your current baseDPS.")
         console.log("-melee = Finds relation between % melee damage, and flat melee damage based on your current baseDPS and attack speed.")
+        console.log("-compare = Compares two builds by effective DPS given baseDPS, % damage, and flat damage each.")
 		return
     }
 
@@ -30,6 +32,11 @@ async function main() {
 
 	if (mode === "melee") {
 		await runMeleeCommand()
+		return
+	}
+
+	if (mode === "compare") {
+		await runCompareCommand()
 		return
 	}
 

@@ -24,6 +24,12 @@ function validateBaseDps(baseDps, label) {
 	}
 }
 
+function validateFiniteNumber(value, label) {
+	if (!Number.isFinite(value)) {
+		throw new Error(`${label} must be a valid number. Received: ${value}`)
+	}
+}
+
 function getFlatEquivalent(baseDps, percent) {
 	return baseDps * (percent / 100)
 }
@@ -51,6 +57,19 @@ async function askForBaseDps(promptText) {
 		const baseDps = Number(answer.trim())
 		validateBaseDps(baseDps, "baseDps")
 		return baseDps
+	} finally {
+		rl.close()
+	}
+}
+
+async function askForNumber(promptText, label) {
+	const rl = createInterface({ input, output })
+
+	try {
+		const answer = await rl.question(promptText)
+		const value = Number(answer.trim())
+		validateFiniteNumber(value, label)
+		return value
 	} finally {
 		rl.close()
 	}
@@ -114,7 +133,7 @@ function printResult(result) {
 */ 
 export async function spellPercentToFlat(baseSpellDps, percent = 1) {
 	validateBaseDps(baseSpellDps, "baseSpellDps")
-	validateBaseDps(percent, "percent")
+	validateFiniteNumber(percent, "percent")
 
 	const flatEquivalent = getFlatEquivalent(baseSpellDps, percent)
 
@@ -137,7 +156,7 @@ export async function meleePercentToFlat(baseMeleeDps, percent = 1) {
 
 export async function meleePercentToFlatByAttackSpeed(baseMeleeDps, attackSpeed, percent = 1) {
 	validateBaseDps(baseMeleeDps, "baseMeleeDps")
-	validateBaseDps(percent, "percent")
+	validateFiniteNumber(percent, "percent")
 
 	const { attackSpeed: selectedAttackSpeed, hitsPerSecond } = getHitsPerSecond(attackSpeed)
 	const percentDpsGain = getFlatEquivalent(baseMeleeDps, percent)
@@ -154,6 +173,150 @@ export async function meleePercentToFlatByAttackSpeed(baseMeleeDps, attackSpeed,
 		flatEquivalent,
 		formula: "flatEquivalent = (baseDps * (percent / 100)) / hitsPerSecond",
 	}
+}
+
+/*
+ * Calculates the effective DPS of a single build.
+ * - Spell: effectiveDps = baseDps * (1 + percent/100) + flat
+ * - Melee: effectiveDps = baseDps * (1 + percent/100) + flat * hitsPerSecond
+ */
+export function calculateEffectiveDps(baseDps, percent, flat, type, attackSpeed = "normal") {
+	validateBaseDps(baseDps, "baseDps")
+	validateFiniteNumber(percent, "percent")
+	validateFiniteNumber(flat, "flat")
+
+	if (type === "spell") {
+		const effectiveDps = baseDps * (1 + percent / 100) + flat
+		return {
+			type,
+			baseDps,
+			percent,
+			flat,
+			effectiveDps,
+			formula: "effectiveDps = baseDps * (1 + percent/100) + flat",
+		}
+	}
+
+	if (type === "melee") {
+		const { attackSpeed: selectedAttackSpeed, hitsPerSecond } = getHitsPerSecond(attackSpeed)
+		const effectiveDps = baseDps * (1 + percent / 100) + flat * hitsPerSecond
+		return {
+			type,
+			baseDps,
+			percent,
+			flat,
+			attackSpeed: selectedAttackSpeed,
+			hitsPerSecond,
+			effectiveDps,
+			formula: "effectiveDps = baseDps * (1 + percent/100) + flat * hitsPerSecond",
+		}
+	}
+
+	throw new Error(`Unknown type: ${type}. Use "spell" or "melee".`)
+}
+
+/*
+ * Compares two builds and returns which has higher effective DPS.
+ * Each build is { baseDps, percent, flat }.
+ */
+export function compareBuildDps(build1, build2, type, attackSpeed1 = "normal", attackSpeed2 = "normal") {
+	const result1 = calculateEffectiveDps(build1.baseDps, build1.percent, build1.flat, type, attackSpeed1)
+	const result2 = calculateEffectiveDps(build2.baseDps, build2.percent, build2.flat, type, attackSpeed2)
+
+	const diff = result1.effectiveDps - result2.effectiveDps
+	const winner = diff > 0 ? 1 : diff < 0 ? 2 : null
+	const winnerResult = winner === 1 ? result1 : winner === 2 ? result2 : null
+	const loserResult = winner === 1 ? result2 : winner === 2 ? result1 : null
+	const percentMore = winnerResult && loserResult && loserResult.effectiveDps > 0
+		? (Math.abs(diff) / loserResult.effectiveDps) * 100
+		: 0
+
+	return {
+		type,
+		build1: result1,
+		build2: result2,
+		winner,
+		diff: Math.abs(diff),
+		percentMore,
+	}
+}
+
+async function askForDamageType() {
+	const rl = createInterface({ input, output })
+
+	try {
+		const answer = await rl.question("Damage type (spell / melee): ")
+		const type = answer.trim().toLowerCase()
+
+		if (type !== "spell" && type !== "melee") {
+			throw new Error(`Unknown damage type: ${type}. Use "spell" or "melee".`)
+		}
+
+		return type
+	} finally {
+		rl.close()
+	}
+}
+
+function printCompareResult(comparison) {
+	const { build1, build2, winner, diff, percentMore } = comparison
+
+	console.log("--- BUILD 1 ---")
+	console.log(`  Base DPS:      ${build1.baseDps}`)
+	console.log(`  Percent:       ${build1.percent}%`)
+	console.log(`  Flat:          ${build1.flat}`)
+	if (build1.type === "melee") {
+		console.log(`  Attack speed:  ${build1.attackSpeed}`)
+	}
+	console.log(`  Effective DPS: ${build1.effectiveDps.toFixed(2)}`)
+	console.log("")
+	console.log("--- BUILD 2 ---")
+	console.log(`  Base DPS:      ${build2.baseDps}`)
+	console.log(`  Percent:       ${build2.percent}%`)
+	console.log(`  Flat:          ${build2.flat}`)
+	if (build2.type === "melee") {
+		console.log(`  Attack speed:  ${build2.attackSpeed}`)
+	}
+	console.log(`  Effective DPS: ${build2.effectiveDps.toFixed(2)}`)
+	console.log("")
+
+	if (winner === null) {
+		console.log("Both builds are equal in effective DPS.")
+	} else {
+		console.log(
+			`Build ${winner} has more damage by ${diff.toFixed(2)} effective DPS (${percentMore.toFixed(2)}% more).`
+		)
+	}
+}
+
+export async function runCompareCommand() {
+	console.clear()
+	const type = await askForDamageType()
+
+	console.log("\n--- BUILD 1 ---")
+	const baseDps1 = await askForBaseDps("Base DPS: ")
+	const percent1 = await askForNumber("Percent damage (%): ", "percent")
+	const flat1 = await askForNumber("Flat damage: ", "flat")
+	const attackSpeed1 = type === "melee" ? await askForAttackSpeed() : "normal"
+
+	console.log("\n--- BUILD 2 ---")
+	const baseDps2 = await askForBaseDps("Base DPS: ")
+	const percent2 = await askForNumber("Percent damage (%): ", "percent")
+	const flat2 = await askForNumber("Flat damage: ", "flat")
+	const attackSpeed2 = type === "melee" ? await askForAttackSpeed() : "normal"
+
+	const comparison = compareBuildDps(
+		{ baseDps: baseDps1, percent: percent1, flat: flat1 },
+		{ baseDps: baseDps2, percent: percent2, flat: flat2 },
+		type,
+		attackSpeed1,
+		attackSpeed2
+	)
+
+	console.log("")
+	printCompareResult(comparison)
+	await waitForEnterToClear()
+	return comparison
 }
 
 export async function runSpellCommand() {
