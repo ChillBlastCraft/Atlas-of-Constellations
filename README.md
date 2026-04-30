@@ -29,9 +29,15 @@ An interactive CLI calculator for [Wynncraft](https://wynncraft.com) damage equi
 ```
 node main.js spells   # interactive spell % → flat equivalence
 node main.js melee    # interactive melee % → flat equivalence (with attack speed selection)
+node main.js compare  # compare two builds by effective DPS
 node main.js help     # show mode descriptions
 ```
 
 **Formulas:**
 - Spell: `flatEquivalent = baseDps * (percent / 100)`
 - Melee: `flatEquivalent = (baseDps * (percent / 100)) / hitsPerSecond`
+- Effective DPS (spell): `effectiveDps = baseDps * (1 + percent/100) + flat`
+- Effective DPS (melee): `effectiveDps = baseDps * (1 + percent/100) + flat * hitsPerSecond`
+
+**Compare mode:**
+Prompts for damage type (spell or melee), then collects base DPS, percent damage, flat damage, and (for melee) attack speed for two builds. Outputs the effective DPS of each and indicates which build deals more damage and by how much.
