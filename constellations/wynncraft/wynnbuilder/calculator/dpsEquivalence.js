@@ -8,13 +8,13 @@ import { stdin as input, stdout as output } from "node:process"
  * Source: https://wynncraft.wiki.gg/wiki/Weapons#Attack_Speed
  */
 const ATTACK_SPEEDS = [
-	{ label: "super fast", value: 4.3 },
-	{ label: "very fast", value: 3.1 },
-	{ label: "fast", value: 2.5 },
-	{ label: "normal", value: 2.05 },
-	{ label: "slow", value: 1.5 },
-	{ label: "very slow", value: 0.83 },
-	{ label: "super slow", value: 0.51 },
+	{ label: "Super Fast", value: 4.3 },
+	{ label: "Very Fast",  value: 3.1 },
+	{ label: "Fast",       value: 2.5 },
+	{ label: "Normal",     value: 2.05 },
+	{ label: "Slow",       value: 1.5 },
+	{ label: "Very Slow",  value: 0.83 },
+	{ label: "Super Slow", value: 0.51 },
 ]
 const ATTACK_SPEED_OPTIONS = ATTACK_SPEEDS.map(({ label }) => label)
 

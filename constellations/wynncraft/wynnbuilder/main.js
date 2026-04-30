@@ -1,4 +1,5 @@
 import { runMeleeCommand, runSpellCommand, runCompareCommand } from "./calculator/dpsEquivalence.js"
+import { runAbilityCommand } from "./calculator/abilityPointDistribution.js"
 
 function printUsage() {
 	console.log("Usage:")
@@ -6,7 +7,8 @@ function printUsage() {
     console.log(" ")
 	console.log("  node main.js spells")
 	console.log("  node main.js melee")
-	console.log("  node main.js compare")
+	console.log("  node main.js compare")	
+    console.log("  node main.js ability")
 }
 
 async function main() {
@@ -22,6 +24,7 @@ async function main() {
         console.log("-spells = Finds relation between % spell damage, and flat spell damage based on your current baseDPS.")
         console.log("-melee = Finds relation between % melee damage, and flat melee damage based on your current baseDPS and attack speed.")
         console.log("-compare = Compares two builds by effective DPS given baseDPS, % damage, and flat damage each.")
+        console.log("-ability = Shows the effect of a skill point investment (before/after) for any of the 5 core skills.")
 		return
     }
 
@@ -37,6 +40,11 @@ async function main() {
 
 	if (mode === "compare") {
 		await runCompareCommand()
+		return
+	}
+
+	if (mode === "ability" || mode === "abilities") {
+		await runAbilityCommand()
 		return
 	}
 

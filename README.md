@@ -24,12 +24,14 @@ An interactive CLI calculator for [Wynncraft](https://wynncraft.com) damage equi
 - Calculates how much flat (raw) damage is equivalent to a given percentage damage bonus, based on your current DPS baseline.
 - Supports both **spell damage** and **melee damage** modes.
 - Melee equivalence accounts for attack speed, since raw main-attack damage is added per hit — making the value of flat melee damage scale with hits per second.
+- Includes an **ability point distribution** mode that shows before/after scaling for Wynncraft skills (Strength, Dexterity, Intelligence, Defence, Agility), including absolute and relative changes.
 
 **Usage:**
 ```
 node main.js spells   # interactive spell % → flat equivalence
 node main.js melee    # interactive melee % → flat equivalence (with attack speed selection)
 node main.js compare  # compare two builds by effective DPS
+node main.js ability  # compare before/after skill-point investment effects
 node main.js help     # show mode descriptions
 ```
 
@@ -41,3 +43,12 @@ node main.js help     # show mode descriptions
 
 **Compare mode:**
 Prompts for damage type (spell or melee), then collects base DPS, percent damage, flat damage, and (for melee) attack speed for two builds. Outputs the effective DPS of each and indicates which build deals more damage and by how much.
+
+**Ability mode:**
+Prompts for a skill and two point values (**before** and **after**), then prints:
+- The resulting effect values at the **after** point total.
+- The change from **before** to **after** as:
+	- Absolute difference (percentage points)
+	- Relative difference (% more/less effective)
+
+This mode uses Wynncraft skill scaling to help evaluate whether a point investment is worth it for your build.
