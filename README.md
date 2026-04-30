@@ -32,6 +32,7 @@ node main.js spells   # interactive spell % → flat equivalence
 node main.js melee    # interactive melee % → flat equivalence (with attack speed selection)
 node main.js compare  # compare two builds by effective DPS
 node main.js ability  # compare before/after skill-point investment effects
+node main.js mana     # mana sustain, regen vs flat vs percent cost reduction
 node main.js help     # show mode descriptions
 ```
 
@@ -52,3 +53,13 @@ Prompts for a skill and two point values (**before** and **after**), then prints
 	- Relative difference (% more/less effective)
 
 This mode uses Wynncraft skill scaling to help evaluate whether a point investment is worth it for your build.
+
+**Mana sustain mode:**
+Prompts for class, spell rotation, duration, flat and percent mana cost reduction, intelligence, and emergency buffer.
+Outputs:
+- Per-cast and total mana cost breakdown (with all reductions and penalties)
+- Net mana balance and regen required
+- **Equivalence table**:
+  - How much 1 mana/s regen, -1 flat cost, and -1% cost reduction each save per rotation
+  - Shows break-even values between regen, flat, and percent cost reduction
+This helps you compare the value of different mana sustain options for your build and rotation.

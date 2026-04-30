@@ -1,5 +1,6 @@
 ﻿import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
+import { baseScale } from "../formula.js"
 
 /*
  * WynnCraft skill point scaling.
@@ -23,22 +24,7 @@ const SKILLS = [
 
 const SKILL_OPTIONS = SKILLS.map(({ label }) => label)
 
-/*
- * Polynomial formula for the base skill point scaling.
- * Source: https://wynncraft.wiki.gg/wiki/Skill_Points#Notes
- * Note: Whoever made up this formula needs to be killed 
- */
-function baseScale(x) {
-	if (x <= 0) { return 0 }
-
-	return (
-		-0.0000000166 * x ** 4 +
-		 0.0000122614 * x ** 3 +
-		-0.0044972984 * x ** 2 +
-		 0.9931907398 * x +
-		 0.0093811967
-	)
-}
+// baseScale now imported from formula.js
 
 /*
  * Returns an array of { label, value } objects describing

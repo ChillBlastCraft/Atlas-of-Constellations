@@ -1,5 +1,6 @@
 import { runMeleeCommand, runSpellCommand, runCompareCommand } from "./calculator/dpsEquivalence.js"
 import { runAbilityCommand } from "./calculator/abilityPointDistribution.js"
+import { runManaCommand } from "./calculator/manaSustain.js"
 
 function printUsage() {
 	console.log("Usage:")
@@ -9,6 +10,7 @@ function printUsage() {
 	console.log("  node main.js melee")
 	console.log("  node main.js compare")	
     console.log("  node main.js ability")
+    console.log("  node main.js mana")
 }
 
 async function main() {
@@ -25,6 +27,7 @@ async function main() {
         console.log("-melee = Finds relation between % melee damage, and flat melee damage based on your current baseDPS and attack speed.")
         console.log("-compare = Compares two builds by effective DPS given baseDPS, % damage, and flat damage each.")
         console.log("-ability = Shows the effect of a skill point investment (before/after) for any of the 5 core skills.")
+    console.log("-mana = Calculates mana sustainability for a spell rotation and shows regen vs cost-reduction equivalence.")
 		return
     }
 
@@ -45,6 +48,11 @@ async function main() {
 
 	if (mode === "ability" || mode === "abilities") {
 		await runAbilityCommand()
+		return
+	}
+
+	if (mode === "mana") {
+		await runManaCommand()
 		return
 	}
 
