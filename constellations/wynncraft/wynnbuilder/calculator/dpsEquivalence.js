@@ -2,11 +2,11 @@ import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
 
 
-/* 
-* given attack speed with its label with hits per second value
-* this is important for calculating melee DPS equivalence
-*     as melee DPS depends on how many hits you can land per second
-*/
+/*
+ * Given an Attack Speed label, returns the corresponding hits per second.
+ * Attack Speeds and their hits per second values are based on Wynncraft's mechanics.
+ * Source: https://wynncraft.wiki.gg/wiki/Weapons#Attack_Speed
+ */
 const ATTACK_SPEEDS = [
 	{ label: "super fast", value: 4.3 },
 	{ label: "very fast", value: 3.1 },
@@ -147,9 +147,9 @@ export async function spellPercentToFlat(baseSpellDps, percent = 1) {
 }
 
 /*
-* Returns how much raw melee damage would equal `percent` melee damage
-* assuming `baseMeleeDps` is your current melee DPS baseline.
-*/
+ * Returns how much raw melee damage would equal `percent` melee damage
+ * assuming `baseMeleeDps` is your current melee DPS baseline.
+ */
 export async function meleePercentToFlat(baseMeleeDps, percent = 1) {
 	return meleePercentToFlatByAttackSpeed(baseMeleeDps, "normal", percent)
 }
