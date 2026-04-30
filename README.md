@@ -12,33 +12,26 @@ Atlas of Constellations is a monorepo for visual experiments, interactive tools,
 - **Multiple subprojects side by side**
 - **Shared foundations for future growth**
 
-## Subprojects
-
-- **wynncalc / wynnbuilder**: A build optimizer for Wynncraft, featuring a beam search algorithm to find optimal gear combinations based on user-defined constraints and weights. See [constellations/wynncraft/wynnbuilder/main.js](constellations/wynncraft/wynnbuilder/main.js) for the entry point.
-
-## WynnBuilder Optimizer
-
-The WynnBuilder optimizer is a tool for finding the best combination of weapon, helmet, and chestplate items in Wynncraft, using a beam search algorithm. It fetches item data from the Wynncraft API, filters relevant items, and scores builds based on customizable weights for damage, effective HP, and mana regeneration.
-
-- **Entry point:** [main.js](constellations/wynncraft/wynnbuilder/main.js)
-- **API fetch & filter:** [wapi.js](constellations/wynncraft/wynnbuilder/api/wapi.js)
-- **Beam search optimizer:** [optimizer.js](constellations/wynncraft/wynnbuilder/engine/optimizer.js)
-- **Stat aggregation:** [statsEngine.js](constellations/wynncraft/wynnbuilder/engine/statsEngine.js)
-- **Constraint checking:** [constraintEngine.js](constellations/wynncraft/wynnbuilder/engine/constraintEngine.js)
-- **Scoring:** [scoringEngine.js](constellations/wynncraft/wynnbuilder/engine/scoringEngine.js)
-
-## Getting Started
-
-1. Clone the repository.
-2. Install dependencies (see relevant subproject folders for package.json).
-3. Run the optimizer from the `constellations/wynncraft/wynnbuilder` directory:
-
-	```bash
-	node main.js
-	```
-
-4. The optimizer will fetch items, filter them, and print the best build found.
-
 ---
 
-This repository is designed to keep everything connected, organized, and easy to grow over time.
+## Subprojects
+
+### Wynnbuilder (`constellations/wynncraft/wynnbuilder`)
+
+An interactive CLI calculator for [Wynncraft](https://wynncraft.com) damage equivalence.
+
+**What it does:**
+- Calculates how much flat (raw) damage is equivalent to a given percentage damage bonus, based on your current DPS baseline.
+- Supports both **spell damage** and **melee damage** modes.
+- Melee equivalence accounts for attack speed, since raw main-attack damage is added per hit — making the value of flat melee damage scale with hits per second.
+
+**Usage:**
+```
+node main.js spells   # interactive spell % → flat equivalence
+node main.js melee    # interactive melee % → flat equivalence (with attack speed selection)
+node main.js help     # show mode descriptions
+```
+
+**Formulas:**
+- Spell: `flatEquivalent = baseDps * (percent / 100)`
+- Melee: `flatEquivalent = (baseDps * (percent / 100)) / hitsPerSecond`
