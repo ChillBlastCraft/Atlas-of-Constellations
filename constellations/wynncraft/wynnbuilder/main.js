@@ -27,7 +27,7 @@ async function main() {
         console.log("-melee = Finds relation between % melee damage, and flat melee damage based on your current baseDPS and attack speed.")
         console.log("-compare = Compares two builds by effective DPS given baseDPS, % damage, and flat damage each.")
         console.log("-ability = Shows the effect of a skill point investment (before/after) for any of the 5 core skills.")
-    console.log("-mana = Calculates mana sustainability for a spell rotation and shows regen vs cost-reduction equivalence.")
+        console.log("-mana = Calculates mana sustainability for a spell rotation and shows regen vs cost-reduction equivalence.")
 		return
     }
 
