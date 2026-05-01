@@ -1,16 +1,8 @@
 import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
-import { baseScale } from "../formula.js"
 
+import { intCostReductionFromPoints, spellSpamPenalty } from "../formula.js"
 
-/*
- * Intelligence spell cost reduction %.
- * At 150 INT the base scale reaches 80.8, equal to 50% cost reduction.
- * Source: https://wynncraft.wiki.gg/wiki/Skill_Points
- */
-function intCostReductionPct(intPoints) {
-	return (baseScale(intPoints) * 50) / 80.8
-}
 
 /*
  * Base spell mana costs per class.
@@ -72,17 +64,6 @@ const CLASS_KEYS    = Object.keys(CLASSES)
 const NATURAL_MANA_REGEN = 1 
 
 /*
- * Spell spam penalty based on consecutive streak for one spell.
- * Casting any different spell resets the streak back to 1.
- * Streak 1–2: no penalty.
- * Streak N (N >= 3): +(N-2)*5 mana added to the cost before INT scaling.
- * Source: confirmed by User / Wynncraft Mechanics.
- */
-function spamPenalty(streakCount) {
-	return Math.max(0, (streakCount - 2) * 5)
-}
-
-/*
  * Analyses a rotation and returns per-cast breakdown and total cost.
  */
 function analyzeRotation(rotation, spellsById, flatReduction, intPct, extraPct) {
@@ -109,7 +90,7 @@ function analyzeRotation(rotation, spellsById, flatReduction, intPct, extraPct) 
 			streakCount    = 1
 		}
 
-		const penalty    = spamPenalty(streakCount)
+		const penalty    = spellSpamPenalty(streakCount)
 		const reducedBase = Math.max(1, spell.baseCost - flatReduction)
 		const withPenalty = reducedBase + penalty
 		const cost        = withPenalty * totalMul
@@ -217,7 +198,7 @@ export async function runManaCommand() {
 		"Emergency buffer"
 	)
 
-	const intPct = intCostReductionPct(intPoints)
+	const intPct = intCostReductionFromPoints(intPoints)
 	const { total: totalSpent, breakdown, totalMul, intMul, extraMul } = analyzeRotation(rotation, byId, flatReduction, intPct, extraPct)
 
 	const naturalTotal  = NATURAL_MANA_REGEN * duration

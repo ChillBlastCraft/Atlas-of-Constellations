@@ -1,6 +1,7 @@
 ﻿import { createInterface } from "node:readline/promises"
 import { stdin as input, stdout as output } from "node:process"
-import { baseScale } from "../formula.js"
+
+import { baseScale, agilityDodgeFromPoints, defenceReductionFromPoints, intCostReductionFromPoints } from "../formula.js"
 
 /*
  * WynnCraft skill point scaling.
@@ -50,7 +51,7 @@ function getSkillEffects(skill, points) {
 	}
 
 	if (skill === "Intelligence") {
-		const costReduction = (scaled * 50) / 80.8
+		const costReduction = intCostReductionFromPoints(points)
 		return [
 			{ label: "Spell cost reduction", value: costReduction },
 			{ label: "Mana / Water damage bonus", value: scaled },
@@ -59,14 +60,14 @@ function getSkillEffects(skill, points) {
 
 	if (skill === "Defence") {
 		return [
-			{ label: "Damage reduction", value: scaled * 0.867 },
+			{ label: "Damage reduction", value: defenceReductionFromPoints(points) },
 			{ label: "Fire damage bonus", value: scaled },
 		]
 	}
 
 	if (skill === "Agility") {
 		return [
-			{ label: "Dodge chance", value: scaled * 0.951 },
+			{ label: "Dodge chance", value: agilityDodgeFromPoints(points) },
 			{ label: "Air damage bonus", value: scaled },
 		]
 	}
