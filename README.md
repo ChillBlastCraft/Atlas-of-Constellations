@@ -60,6 +60,17 @@ Outputs:
 - Per-cast and total mana cost breakdown (with all reductions and penalties)
 - Net mana balance and regen required
 - **Equivalence table**:
-  - How much 1 mana/s regen, -1 flat cost, and -1% cost reduction each save per rotation
-  - Shows break-even values between regen, flat, and percent cost reduction
+	- How much 1 mana/s regen, -1 flat cost, and -1% cost reduction each save per rotation
+	- Shows break-even values between regen, flat, and percent cost reduction
 This helps you compare the value of different mana sustain options for your build and rotation.
+
+**Effective EHP mode:**
+Prompts for class, base HP, and target EHP. Calculates:
+- Minimum skill point investment needed to reach the target EHP using Defence, Agility, or both (balanced or optimal split)
+- Shows the EHP multiplier and how much more effective HP you gain
+- Compares four strategies:
+	1. Most point-efficient (favors Agility)
+	2. Balanced (equal Defence and Agility)
+	3. Defence only
+	4. Agility only
+Helps you plan your skill point allocation for survivability and understand the interaction between Defence and Agility in Wynncraft.
