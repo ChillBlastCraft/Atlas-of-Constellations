@@ -74,4 +74,4 @@ Prompts for class, base HP, and target EHP. Calculates:
 	3. Defence only
 	4. Agility only
 
-Helps you plan your skill point allocation for survivability and understand the interaction between Defence and Agility in Wynncraft.
+This helps you plan your skill point allocation for survivability and understand the interaction between Defence and Agility in Wynncraft.
