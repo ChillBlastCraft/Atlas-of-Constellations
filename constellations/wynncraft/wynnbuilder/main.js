@@ -6,7 +6,6 @@ import { runEhpCommand } from "./calculator/effectiveEHP.js"
 function printUsage() {
 	console.log("Usage:")
     console.log("  node main.js help")
-    console.log(" ")
 	console.log("  node main.js spells")
 	console.log("  node main.js melee")
 	console.log("  node main.js compare")	

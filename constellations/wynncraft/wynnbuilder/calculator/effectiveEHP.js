@@ -38,17 +38,9 @@ const CLASSES = [
 function drAt(pts)  { return defenceReductionFromPoints(pts) / 100 }
 function dcAt(pts)  { return agilityDodgeFromPoints(pts)     / 100 }
 
-function ehpDefOnly(hp, defPts) {
-	return hp / (1 - drAt(defPts))
-}
-
-function ehpAgiOnly(hp, agiPts) {
-	return hp / (1 - dcAt(agiPts))
-}
-
-function ehpBoth(hp, defPts, agiPts) {
-	return hp / ((1 - drAt(defPts)) * (1 - dcAt(agiPts)))
-}
+function ehpDefOnly(hp, defPts) { return hp / (1 - drAt(defPts)) }
+function ehpAgiOnly(hp, agiPts) { return hp / (1 - dcAt(agiPts)) }
+function ehpBoth(hp, defPts, agiPts) { return hp / ((1 - drAt(defPts)) * (1 - dcAt(agiPts))) }
 
 /*
  * Binary search: minimum skill points [0, MAX] so that statFn(hp, pts) >= targetEhp.
@@ -116,9 +108,7 @@ function solveOptimalCombination(hp, targetEhp) {
 		}
 	}
 
-	return bestDef !== null
-		? { defPoints: bestDef, agiPoints: bestAgi, totalPoints: bestTotal }
-		: null
+	return bestDef !== null ? { defPoints: bestDef, agiPoints: bestAgi, totalPoints: bestTotal } : null
 }
 
 async function ask(prompt) {

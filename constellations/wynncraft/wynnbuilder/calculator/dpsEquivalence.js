@@ -43,10 +43,7 @@ function getHitsPerSecond(attackSpeed) {
 		)
 	}
 
-	return {
-		attackSpeed,
-		hitsPerSecond: entry.value,
-	}
+	return { attackSpeed, hitsPerSecond: entry.value}
 }
 
 async function askForBaseDps(promptText) {
@@ -227,9 +224,7 @@ export function compareBuildDps(build1, build2, type, attackSpeed1 = "normal", a
 	const winner = diff > 0 ? 1 : diff < 0 ? 2 : null
 	const winnerResult = winner === 1 ? result1 : winner === 2 ? result2 : null
 	const loserResult = winner === 1 ? result2 : winner === 2 ? result1 : null
-	const percentMore = winnerResult && loserResult && loserResult.effectiveDps > 0
-		? (Math.abs(diff) / loserResult.effectiveDps) * 100
-		: 0
+	const percentMore = winnerResult && loserResult && loserResult.effectiveDps > 0	? (Math.abs(diff) / loserResult.effectiveDps) * 100	: 0
 
 	return {
 		type,

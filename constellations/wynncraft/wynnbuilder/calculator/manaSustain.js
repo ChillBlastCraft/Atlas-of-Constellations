@@ -8,7 +8,6 @@ import { intCostReductionFromPoints, spellSpamPenalty } from "../formula.js"
  * Base spell mana costs per class.
  * Warrior, Mage, Archer, Assassin costs confirmed from WAPI:
  *   https://api.wynncraft.com/v3/ability/tree/{class}
- * Shaman Haul / Uproot sourced from Wynncraft community wiki.
  */
 const CLASSES = {
 	warrior: {
@@ -161,9 +160,6 @@ async function askNonNegInteger(promptText, label, max = Infinity) {
 	return val
 }
 
-/*
- * Formatting assistance & Main Export
- */
 const fmt     = n  => n.toFixed(1)
 const fmtPct  = n  => n.toFixed(1) + "%"
 const fmtRate = n  => n.toFixed(2)

@@ -18,7 +18,7 @@ import { baseScale, agilityDodgeFromPoints, defenceReductionFromPoints, intCostR
 const SKILLS = [
 	{ label: "Strength",      element: "Earth",   effects: ["damage bonus", "earth damage bonus"] },
 	{ label: "Dexterity",     element: "Thunder", effects: ["crit chance", "thunder damage bonus"] },
-	{ label: "Intelligence",  element: "Water",   effects: ["spell cost reduction", "mana / water damage bonus"] },
+	{ label: "Intelligence",  element: "Water",   effects: ["spell cost reduction", "mana", "water damage bonus"] },
 	{ label: "Defence",       element: "Fire",    effects: ["damage reduction", "fire damage bonus"] },
 	{ label: "Agility",       element: "Air",     effects: ["dodge chance", "air damage bonus"] },
 ]
@@ -54,7 +54,8 @@ function getSkillEffects(skill, points) {
 		const costReduction = intCostReductionFromPoints(points)
 		return [
 			{ label: "Spell cost reduction", value: costReduction },
-			{ label: "Mana / Water damage bonus", value: scaled },
+			{ label: "Mana", value: scaled },
+			{ label: "Water damage bonus", value: scaled },
 		]
 	}
 
@@ -152,6 +153,6 @@ export async function runAbilityCommand() {
 		}
 	}
 
-	console.log("")
+	console.log(" ")
 	await waitForEnterToClear()
 }
