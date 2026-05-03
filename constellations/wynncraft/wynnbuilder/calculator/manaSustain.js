@@ -138,7 +138,7 @@ async function askRotation(spells) {
 			throw new Error(`Unknown spell id: ${id}. Valid ids: ${[...valid].join(", ")}`)
 		}
 	}
-	if (ids.length === 0) throw new Error("Rotation cannot be empty.")
+	if (ids.length === 0) { throw new Error("Rotation cannot be empty.") }
 	return ids
 }
 
