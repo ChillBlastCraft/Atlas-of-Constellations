@@ -4,7 +4,7 @@
  * 1. Requests the full list of items from the Wynncraft API
  * 2. Shows a menu:
  *      1 = counts of items by type, subType, and tier
- *      2 = look up items by name or ID and print their JSON
+ *      2 = look up items by name or ID
  *      3 = Major ID tools (submenu)
  *      4 = Tome tools (submenu)
  *      5 = quit
@@ -21,7 +21,7 @@
  *   6. Option 1: Counts       - group items by type / subType / tier
  *   7. Option 2: Item lookup  - search items by name or ID
  *   8. Option 3: Major IDs    - special item effects and their descriptions
- *   9. Option 4: Tome Data    - 
+ *   9. Option 4: Tomes        - tome families, caps and identifications
  *  10. Menu                   - main menu loop
  *  11. Main program
  */
@@ -32,73 +32,88 @@ const readline = require("node:readline/promises")
  * ======================================================================== */
 
 const ITEM_DATABASE_URL = "https://api.wynncraft.com/v3/item/database?fullResult"
-const REQUEST_TIMEOUT_MS = 10_000 // Wynncraft's full item database can take longer than 10s
 
-// Fields that option 1 groups and counts items by
+/* The full item database is large, so a short timeout fails on slow connections. */
+const REQUEST_TIMEOUT_MS = 30_000
+
+/* Fields that option 1 groups and counts items by */
 const COUNT_FIELDS = ["type", "subType", "tier"]
 
-// Fields that option 2 searches first (by name)
+/* Fields that option 2 searches first (by name) */
 const SEARCHABLE_FIELDS = ["internalName", "displayName"]
 
-// Fields that are copied into the short summaries shown for Major ID results
+/* Fields that are copied into the short summaries shown for Major ID results */
 const SUMMARY_FIELDS = ["internalName", "displayName", "type", "subType", "tier"]
 
-// Keys that getPlainText checks first when looking for readable text inside an object
+/* Keys that getPlainText checks first when looking for readable text inside an object */
 const PREFERRED_KEYS = ["name", "displayName", "value", "text", "title", "label", "id"]
 
-// Tome families and their player cap / restriction, from the current API data.
-const TOME_FAMILY_CAPS: Record<string, number> = {
-    armour_tome: 4,
-    weapon_tome: 2,
-    marathon_tome: 2,
-    expertise_tome: 2,
-    mysticism_tome: 2,
-    lootrunning_tome: 1,
-    lootrun_tome: 1,
-    guild_tome: 1,
-}
+/* Keys skipped when collecting ID-like values (they describe format, not identity) */
+const ID_SKIP_KEYS = new Set(["format"])
 
-const TOME_FAMILY_LABELS: Record<string, string> = {
-    armour_tome: "Armour Tome",
-    weapon_tome: "Weapon Tome",
-    marathon_tome: "Marathon Tome",
-    expertise_tome: "Expertise Tome",
-    mysticism_tome: "Mysticism Tome",
-    lootrunning_tome: "Lootrunning Tome",
-    lootrun_tome: "Lootrunning Tome",
-    guild_tome: "Guild Tome",
+/* If a lookup matches more items than this, print short summaries instead of full JSON */
+const MAX_FULL_RESULTS = 5
+
+/*
+ * Tome families and their player cap / restriction.
+ * NOTE: hard-coded; re-check against the API if Wynncraft changes tomes.
+ */
+const TOME_FAMILY_CAPS = new Map<string, number>([
+    ["armour_tome", 4],
+    ["weapon_tome", 2],
+    ["marathon_tome", 2],
+    ["expertise_tome", 2],
+    ["mysticism_tome", 2],
+    ["lootrunning_tome", 1],
+    ["lootrun_tome", 1],
+    ["guild_tome", 1],
+])
+
+const TOME_FAMILY_LABELS = new Map<string, string>([
+    ["armour_tome", "Armour Tome"],
+    ["weapon_tome", "Weapon Tome"],
+    ["marathon_tome", "Marathon Tome"],
+    ["expertise_tome", "Expertise Tome"],
+    ["mysticism_tome", "Mysticism Tome"],
+    ["lootrunning_tome", "Lootrunning Tome"],
+    ["lootrun_tome", "Lootrunning Tome"],
+    ["guild_tome", "Guild Tome"],
+])
+
+const HTML_ENTITIES: Record<string, string> = {
+    nbsp: " ",
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    apos: "'",
 }
 
 /* ========================================================================
  * 2. TYPES
  * ======================================================================== */
 
-/*
- * An object whose contents we haven't verified.
- * We read it with helper functions (getText, getPlainText, ...)
- * that check each value before using it.
- */
+/* An object whose contents we haven't verified. */
 type Item = Record<string, unknown>
 
-/*
- * The small part of a readline interface that we actually use.
- * Keeping it narrow makes the menu functions easy to test or swap out.
- */
+/* The small part of a readline interface that we actually use. */
 type QuestionInterface = {
     question: (prompt: string) => Promise<string> | string
     close: () => void
 }
 
+type TomeIdentification = {
+    name: string
+    min: string | undefined
+    raw: string | undefined
+    max: string | undefined
+}
+
 /* ========================================================================
  * 3. BASIC HELPERS
- * Small, general-purpose functions used by every other section.
  * ======================================================================== */
 
-/*
- * Is this value a plain object? (Not null, not an array.)
- * "value is Item" is a type guard: when this returns true,
- * TypeScript treats the value as an Item from then on.
- */
+/* Is this value a plain object? (Not null, not an array.) */
 function isObject(value: unknown): value is Item {
     return (
         typeof value === "object" &&
@@ -107,11 +122,7 @@ function isObject(value: unknown): value is Item {
     )
 }
 
-/*
- * Reads one field from an item, but only if it is a string or a number
- * (numbers are converted, e.g. 42 -> "42"). Anything else returns undefined.
- * This is safer than assuming "internalName is a string" and hoping the API agrees.
- */
+/* Reads one field from an item if it is a string or number; otherwise undefined. */
 function getText(item: Item, field: string): string | undefined {
     const value = item[field]
 
@@ -125,23 +136,31 @@ function getText(item: Item, field: string): string | undefined {
 }
 
 /*
- * Removes HTML-like tags and entities (e.g. "<b>Hi</b>&nbsp;there") and
- * collapses extra whitespace, leaving plain text ("Hi there").
+ * Removes HTML-like tags, decodes common entities ("&amp;" -> "&"),
+ * and collapses extra whitespace. Unknown entities become a space.
  */
+function decodeEntity(entity: string): string {
+    if (entity.startsWith("#")) {
+        const code = Number(entity.slice(1))
+        // fromCodePoint throws on values above 0x10ffff, so guard it
+        const value = HTML_ENTITIES[entity.toLowerCase()]
+        if (value !== undefined && value !== null) {
+            return value
+        }
+        return " "
+    }
+    return HTML_ENTITIES[entity.toLowerCase()] ?? " "
+}
+
 function stripMarkup(value: string): string {
     return value
         .replace(/<[^>]+>/g, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&[a-zA-Z]+;/g, " ")
+        .replace(/&(#\d+|[a-zA-Z]+);/g, (_match, entity: string) => decodeEntity(entity))
         .replace(/\s+/g, " ")
         .trim()
 }
 
-/*
- * Returns the first non-empty plain text found in a list of values,
- * or undefined if none of them contain any. getPlainText uses this
- * to try several candidates in order.
- */
+/* Returns the first non-empty plain text found in a list of values. */
 function getFirstPlainText(values: unknown[]): string | undefined {
     for (const value of values) {
         const text = getPlainText(value)
@@ -153,10 +172,8 @@ function getFirstPlainText(values: unknown[]): string | undefined {
 }
 
 /*
- * Digs through a value of unknown shape (string, array, or object) and returns
- * the first non-empty piece of text it finds, with markup removed.
- * For objects it tries likely keys first (PREFERRED_KEYS),
- * then falls back to looking at every child.
+ * Digs through a value of unknown shape (string, number, array, or object) and
+ * returns the first non-empty piece of text it finds, with markup removed.
  */
 function getPlainText(value: unknown): string | undefined {
     if (value === null || value === undefined) {
@@ -168,12 +185,16 @@ function getPlainText(value: unknown): string | undefined {
         return text === "" ? undefined : text
     }
 
+    if (typeof value === "number") {
+        return String(value)
+    }
+
     if (Array.isArray(value)) {
         return getFirstPlainText(value)
     }
 
     if (isObject(value)) {
-        const record = value // a const keeps the narrowed type inside the callbacks below
+        const record = value
 
         const preferredValues = PREFERRED_KEYS
             .filter((key) => key in record)
@@ -181,40 +202,40 @@ function getPlainText(value: unknown): string | undefined {
 
         return getFirstPlainText(preferredValues) ?? getFirstPlainText(Object.values(record))
     }
-
     return undefined
 }
 
-/*
- * Prepares a search string for comparison:
- * removes leading/trailing spaces and lowercases it,
- * so "  Dagger " matches "dagger".
- */
+/* Trims and lowercases a search string so "  Dagger " matches "dagger". */
 function normalizeQuery(input: string): string {
     return input.trim().toLowerCase()
 }
 
 /*
- * The one place that decides whether a value matches a search.
- * `wanted` must already be normalized (see normalizeQuery);
- * we normalize `value` here so both sides are compared the same way.
- * "Contains" also covers exact matches, so no separate equality check is needed.
+ * Does `value` contain `wanted`? `wanted` must already be normalized.
+ * An empty `wanted` matches nothing (otherwise "" would match everything).
  */
 function matchesQuery(value: string, wanted: string): boolean {
+    if (wanted === "") {
+        return false
+    }
     return normalizeQuery(value).includes(wanted)
+}
+
+/* Does `value` equal `wanted` exactly (after normalizing `value`)? */
+function equalsQuery(value: string, wanted: string): boolean {
+    return wanted !== "" && normalizeQuery(value) === wanted
+}
+
+/* Sort helper: alphabetical with natural number ordering ("2" before "10"). */
+function compareNatural(a: string, b: string): number {
+    return a.localeCompare(b, undefined, { numeric: true })
 }
 
 /* ========================================================================
  * 4. TERMINAL HELPERS
- * Shared by the menu and by every option that pauses before returning.
  * ======================================================================== */
 
-/*
- * Clears the visible screen, moves the cursor home, and wipes the scrollback.
- * `console.clear()` alone isn't always enough because editors like VS Code
- * keep scrollback history. When output isn't a terminal (e.g. piped to a file),
- * we print blank lines instead of using escape codes.
- */
+/* Clears the screen and scrollback; prints blank lines when not a TTY. */
 function clearScreen(): void {
     if (process.stdout.isTTY) {
         process.stdout.write("\u001b[H\u001b[2J\u001b[3J")
@@ -223,10 +244,7 @@ function clearScreen(): void {
     }
 }
 
-/*
- * Waits for the user to press Enter, then clears the screen.
- * Gives the user time to read the output before the menu redraws.
- */
+/* Waits for the user to press Enter, then clears the screen. */
 async function returnToMenu(rl: QuestionInterface): Promise<void> {
     console.log("\nPress Enter to return to the start menu...")
     await rl.question("")
@@ -235,15 +253,9 @@ async function returnToMenu(rl: QuestionInterface): Promise<void> {
 
 /* ========================================================================
  * 5. DATA LOADING
- * Download the item list and turn it into a clean Item[].
  * ======================================================================== */
 
-/*
- * Requests a URL and returns the parsed JSON.
- * The result is "unknown" because we haven't checked its shape yet.
- * Throws if the request times out or the server returns an error status;
- * main() catches it.
- */
+/* Requests a URL and returns the parsed JSON. Throws on timeout or HTTP error. */
 async function fetchJson(url: string): Promise<unknown> {
     const response = await fetch(url, {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -261,41 +273,41 @@ async function fetchJson(url: string): Promise<unknown> {
 }
 
 /*
- * Turns the API response into a list of items.
- * "Shape" means the structure of the JSON. We accept two shapes:
- *   [ { ...item }, { ...item } ]
- *   { results: [ { ...item }, { ...item } ] }
- * Anything else throws, since we can't use it.
+ * Turns the API response into a list of items. Accepted shapes:
+ *   [ { ...item }, ... ]
+ *   { results: [ { ...item }, ... ] }
+ *   { "Item Name": { ...item }, ... }   (a map keyed by item name; the key is
+ *                                         used as internalName if it is missing)
  */
 function extractItems(payload: unknown): Item[] {
-    // Shape 1: the payload is the array of items
     if (Array.isArray(payload)) {
         return payload.filter(isObject)
     }
 
-    // Anything else must be an object, otherwise we can't use it
     if (!isObject(payload)) {
         throw new Error("Invalid payload: expected a JSON object or an array")
     }
 
-    // Shape 2: the items are inside a "results" array
     if (Array.isArray(payload.results)) {
         return payload.results.filter(isObject)
     }
 
-    throw new Error('No items found: expected an array or a "results" array.')
+    const entries = Object.entries(payload)
+    if (entries.length > 0 && entries.every(([, value]) => isObject(value))) {
+        return entries.map(([key, value]) => {
+            const item = value as Item
+            return item.internalName === undefined ? { internalName: key, ...item } : item
+        })
+    }
+
+    throw new Error('No items found: expected an array, a "results" array, or a map of items.')
 }
 
 /* ========================================================================
  * 6. OPTION 1: COUNTS
- * Shows how many items exist for each type, subType, and tier.
  * ======================================================================== */
 
-/*
- * Converts a field value into a label for counting.
- * Missing values become "missing"; values that aren't a string or number
- * (objects, arrays, booleans) become "unknown".
- */
+/* Converts a field value into a label for counting. */
 function describeValue(value: unknown): string {
     if (value === null || value === undefined) {
         return "missing"
@@ -309,32 +321,23 @@ function describeValue(value: unknown): string {
     return "unknown"
 }
 
-/*
- * Counts how many items have each value of one field.
- * Example result for "type": { weapon: 120, armour: 300, ... }
- */
-function countByField(items: Item[], field: string): Record<string, number> {
-    const counts: Record<string, number> = {}
+/* Counts how many items have each value of one field. */
+function countByField(items: Item[], field: string): Map<string, number> {
+    const counts = new Map<string, number>()
 
     for (const item of items) {
         const label = describeValue(item[field])
-        counts[label] = (counts[label] ?? 0) + 1
+        counts.set(label, (counts.get(label) ?? 0) + 1)
     }
 
     return counts
 }
 
-/*
- * Prints the counts for one field, sorted alphabetically.
- * The `numeric` option makes numbers sort naturally ("2" before "10").
- */
+/* Prints the counts for one field, sorted alphabetically. */
 function printFieldCounts(items: Item[], field: string): void {
     console.log(`\n${field}:`)
 
-    const counts = countByField(items, field)
-    const sorted = Object.entries(counts).sort(([a], [b]) =>
-        a.localeCompare(b, undefined, { numeric: true })
-    )
+    const sorted = [...countByField(items, field).entries()].sort(([a], [b]) => compareNatural(a, b))
 
     for (const [label, total] of sorted) {
         console.log(`  ${label}: ${total}`)
@@ -353,14 +356,14 @@ function printCounts(items: Item[]): void {
 
 /* ========================================================================
  * 7. OPTION 2: ITEM LOOKUP
- * Search items by name first, then fall back to searching by ID.
+ * Search items by name first (partial match), then by ID (exact match).
  * ======================================================================== */
 
 /*
- * Collects every ID-like value of an item as a list of strings.
- * IDs can be nested (e.g. inside `icon`), so we walk through strings, numbers,
- * arrays, and objects recursively and gather every string/number we find.
- * A Set removes duplicates.
+ * Collects the ID-like values of an item: `id` and `icon` (which can be nested).
+ * Names are not included here; they are searched separately.
+ * Keys in ID_SKIP_KEYS (e.g. icon.format) are ignored so that descriptive
+ * values don't count as IDs.
  */
 function getItemIds(item: Item): string[] {
     const ids = new Set<string>()
@@ -383,28 +386,31 @@ function getItemIds(item: Item): string[] {
         }
 
         if (isObject(value)) {
-            for (const child of Object.values(value)) {
-                addValue(child)
+            for (const [key, child] of Object.entries(value)) {
+                if (!ID_SKIP_KEYS.has(key)) {
+                    addValue(child)
+                }
             }
         }
     }
 
-    for (const field of [item.icon, item.id, item.internalName, item.displayName]) {
-        addValue(field)
-    }
+    addValue(item.id)
+    addValue(item.icon)
 
     return [...ids]
 }
 
 /*
  * Finds all items matching the search text.
- * Step 1: match against names (SEARCHABLE_FIELDS). If anything matches, return those.
- * Step 2: otherwise match against the item's IDs.
- * Returns an empty array when nothing matches. "Not found" is a normal
- * outcome here, so we don't throw an error.
+ * Step 1: partial match against names (SEARCHABLE_FIELDS).
+ * Step 2: if no name matched, EXACT match against the item's IDs
+ *         (partial ID matching returns noise: "1" would match half the database).
  */
 function findItems(items: Item[], query: string): Item[] {
     const wanted = normalizeQuery(query)
+    if (wanted === "") {
+        return []
+    }
 
     const nameMatches = items.filter((item) =>
         SEARCHABLE_FIELDS.some((field) => {
@@ -418,7 +424,7 @@ function findItems(items: Item[], query: string): Item[] {
     }
 
     return items.filter((item) =>
-        getItemIds(item).some((id) => matchesQuery(id, wanted))
+        getItemIds(item).some((id) => equalsQuery(id, wanted))
     )
 }
 
@@ -427,10 +433,7 @@ function printItems(items: Item[]): void {
     console.log(JSON.stringify(items, null, 2))
 }
 
-/*
- * Asks the user what item to look for, then prints every match.
- * Prints a message instead if nothing was entered or nothing matched.
- */
+/* Asks the user what item to look for, then prints the matches. */
 async function lookUpItem(rl: QuestionInterface, items: Item[]): Promise<void> {
     const query = (await rl.question("\nEnter an item ID or name: ")).trim()
 
@@ -447,6 +450,14 @@ async function lookUpItem(rl: QuestionInterface, items: Item[]): Promise<void> {
     }
 
     clearScreen()
+
+    if (matches.length > MAX_FULL_RESULTS) {
+        console.log(`${matches.length} items matched "${query}". Showing short summaries;`)
+        console.log("refine your search (or use the exact name) to see one item's full JSON.\n")
+        console.log(JSON.stringify(matches.map(summarizeItem), null, 2))
+        return
+    }
+
     if (matches.length > 1) {
         console.log(`Multiple items matched "${query}":`)
     }
@@ -460,15 +471,23 @@ async function lookUpItem(rl: QuestionInterface, items: Item[]): Promise<void> {
  * treat any key containing "major" as a Major ID container.
  * ======================================================================== */
 
+// Major ID maps are used many times per search, so compute each item's map once.
+const majorIdCache = new WeakMap<Item, Record<string, string>>()
+
 /*
  * Builds a map of { majorId: description } for one item.
  * For each key containing "major":
- *   - if its value is an object, each entry is treated as (id -> tooltip)
- *   - otherwise we extract any plain text and use it as both id and description
- * All text is stripped of markup.
+ *   - object: each entry is (id -> tooltip)
+ *   - array:  each element's text is used as both id and description
+ *   - other:  any plain text is used as both id and description
  */
 function getMajorIdMap(item: Item): Record<string, string> {
-    const majorIds: Record<string, string> = {}
+    const cached = majorIdCache.get(item)
+    if (cached) {
+        return cached
+    }
+
+    const majorIds: Record<string, string> = Object.create(null)
 
     for (const [key, value] of Object.entries(item)) {
         if (!/major/i.test(key)) {
@@ -481,16 +500,18 @@ function getMajorIdMap(item: Item): Record<string, string> {
                 if (cleanedId === "") {
                     continue
                 }
+                majorIds[cleanedId] = getPlainText(tooltip) ?? ""
+            }
+            continue
+        }
 
-                if (typeof tooltip === "string") {
-                    majorIds[cleanedId] = stripMarkup(tooltip)
-                } else if (tooltip === null || tooltip === undefined) {
-                    majorIds[cleanedId] = ""
-                } else {
-                    majorIds[cleanedId] = String(tooltip)
+        if (Array.isArray(value)) {
+            for (const entry of value) {
+                const text = getPlainText(entry)
+                if (text) {
+                    majorIds[text] = text
                 }
             }
-
             continue
         }
 
@@ -500,6 +521,7 @@ function getMajorIdMap(item: Item): Record<string, string> {
         }
     }
 
+    majorIdCache.set(item, majorIds)
     return majorIds
 }
 
@@ -513,12 +535,28 @@ function getItemsWithMajorIds(items: Item[]): Item[] {
     return items.filter((item) => extractMajorIds(item).length > 0)
 }
 
+/* Cleans a Major ID query the same way Major ID names are cleaned. */
+function normalizeMajorIdQuery(query: string): string {
+    return normalizeQuery(stripMarkup(query))
+}
+
 /*
- * Returns every item that has a Major ID matching the search text
- * (case-insensitive, partial matches allowed).
+ * Returns every item with a Major ID matching the search text.
+ * An exact name match wins over partial matches, so "Cavern Cleaver"
+ * doesn't also return items whose Major ID merely contains those words.
  */
 function findItemsByMajorId(items: Item[], query: string): Item[] {
-    const wanted = normalizeQuery(stripMarkup(query))
+    const wanted = normalizeMajorIdQuery(query)
+    if (wanted === "") {
+        return []
+    }
+
+    const exact = items.filter((item) =>
+        extractMajorIds(item).some((majorId) => equalsQuery(majorId, wanted))
+    )
+    if (exact.length > 0) {
+        return exact
+    }
 
     return items.filter((item) =>
         extractMajorIds(item).some((majorId) => matchesQuery(majorId, wanted))
@@ -526,19 +564,30 @@ function findItemsByMajorId(items: Item[], query: string): Item[] {
 }
 
 /*
- * Looks up what a Major ID does, using one item that has it.
- * Returns the first matching description, or undefined if none matches.
+ * Looks up what matching Major IDs do. Returns { majorId -> description },
+ * keeping each Major ID separate so different effects aren't blended together.
+ * An exact name match wins over partial matches.
  */
-function findMajorIdDescription(item: Item, query: string): string | undefined {
-    const wanted = normalizeQuery(stripMarkup(query))
+function findMajorIdDescriptions(items: Item[], query: string): Map<string, string> {
+    const wanted = normalizeMajorIdQuery(query)
+    const found = new Map<string, string>()
+    if (wanted === "") {
+        return found
+    }
 
-    for (const [majorId, description] of Object.entries(getMajorIdMap(item))) {
-        if (matchesQuery(majorId, wanted)) {
-            return description
+    for (const item of items) {
+        for (const [majorId, description] of Object.entries(getMajorIdMap(item))) {
+            if (!matchesQuery(majorId, wanted)) {
+                continue
+            }
+            if (!found.has(majorId) || found.get(majorId) === "") {
+                found.set(majorId, description)
+            }
         }
     }
 
-    return undefined
+    const exact = new Map([...found].filter(([majorId]) => equalsQuery(majorId, wanted)))
+    return exact.size > 0 ? exact : found
 }
 
 /*
@@ -570,10 +619,7 @@ function countMajorIds(items: Item[]): { uniqueMajorIds: number; itemsWithMajorI
     }
 }
 
-/*
- * Builds a short version of an item for list output:
- * just the fields in SUMMARY_FIELDS plus its Major IDs joined into one string.
- */
+/* Short version of an item: SUMMARY_FIELDS plus its Major IDs joined into one string. */
 function summarizeItem(item: Item): Item {
     const summary: Item = {}
 
@@ -592,7 +638,7 @@ function summarizeItem(item: Item): Item {
     return summary
 }
 
-/* Submenu option 1: prints the unique and non-unique Major ID counts. */
+/* Submenu option 1: prints the unique Major ID count and the item count. */
 function printMajorIdSummary(items: Item[]): void {
     const summary = countMajorIds(items)
 
@@ -612,35 +658,23 @@ function printItemsWithMajorIds(items: Item[]): void {
     }
 
     clearScreen()
-    console.log("Items with a Major ID:")
+    console.log(`Items with a Major ID (${itemsWithIds.length}):`)
     console.log(JSON.stringify(itemsWithIds.map(summarizeItem), null, 2))
 }
 
-/*
- * Submenu option 2: prints what a Major ID does.
- * Several items can share a Major ID, so we collect their descriptions
- * and remove duplicates (Set) before printing.
- */
+/* Submenu option 2: prints what each matching Major ID does. */
 function printMajorIdDetails(items: Item[], query: string): void {
-    const matches = findItemsByMajorId(items, query)
+    const descriptions = findMajorIdDescriptions(items, query)
 
-    if (matches.length === 0) {
+    if (descriptions.size === 0) {
         console.log(`No items found for Major ID "${query}".`)
         return
     }
 
-    const descriptions = Array.from(
-        new Set(
-            matches
-                .map((item) => findMajorIdDescription(item, query))
-                .filter((value): value is string => value !== undefined)
-        )
-    )
-
     clearScreen()
-    console.log(`Major ID: "${query}"`)
-    if (descriptions.length > 0) {
-        console.log(`\nWhat it does: ${descriptions.join(" | ")}`)
+    for (const [majorId, description] of [...descriptions].sort(([a], [b]) => compareNatural(a, b))) {
+        console.log(`Major ID: "${majorId}"`)
+        console.log(`  What it does: ${description === "" ? "(no description available)" : description}\n`)
     }
 }
 
@@ -654,18 +688,14 @@ function printItemsByMajorId(items: Item[], query: string): void {
     }
 
     clearScreen()
-    console.log(`Items matching Major ID "${query}":`)
+    console.log(`Items matching Major ID "${query}" (${matches.length}):`)
     console.log(JSON.stringify(matches.map(summarizeItem), null, 2))
 }
 
-/*
- * Runs the Major ID submenu: shows the options, reads a choice, and runs it.
- * Choosing "5" goes straight back to the main menu; every other choice
- * waits for Enter first so the output can be read.
- */
+/* Runs the Major ID submenu. Choosing "5" returns without a pause. */
 async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void> {
     console.log("\nChoose an option:")
-    console.log("1. Count Non-Unique & Unique Major IDs")
+    console.log("1. Count unique Major IDs and items that have one")
     console.log("2. Request what a Major ID does")
     console.log("3. Request a list of all items with a Major ID")
     console.log("4. Request all items with a specific Major ID")
@@ -679,7 +709,7 @@ async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void>
             break
         case "2": {
             const query = (await rl.question("\nEnter a Major ID to inspect: ")).trim()
-            if (query === "") {
+            if (normalizeMajorIdQuery(query) === "") {
                 console.log("No Major ID entered.")
                 break
             }
@@ -691,7 +721,7 @@ async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void>
             break
         case "4": {
             const query = (await rl.question("\nEnter the specific Major ID to filter by: ")).trim()
-            if (query === "") {
+            if (normalizeMajorIdQuery(query) === "") {
                 console.log("No Major ID entered.")
                 break
             }
@@ -715,7 +745,7 @@ async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void>
 
 /* Returns only the tome entries from the database. */
 function getTomes(items: Item[]): Item[] {
-    return items.filter((item) => getText(item, "type") === "tome")
+    return items.filter((item) => normalizeQuery(getText(item, "type") ?? "") === "tome")
 }
 
 /* Returns the tome family (subType) for one item, or "unknown" when absent. */
@@ -725,31 +755,33 @@ function getTomeFamily(item: Item): string {
 
 /* Human-readable label for each tome family. */
 function getTomeFamilyLabel(family: string): string {
-    return TOME_FAMILY_LABELS[family] ?? family
+    return TOME_FAMILY_LABELS.get(family) ?? family
 }
 
 /* The player cap / restriction for a tome family, if known. */
 function getTomeCap(family: string): number | undefined {
-    return TOME_FAMILY_CAPS[family]
+    return TOME_FAMILY_CAPS.get(family)
 }
 
-/* Extracts the identifications object for a tome and presents each entry as
- * { name, min, raw, max } when the nested value looks like a valid stat block.
+/*
+ * Extracts the identifications of a tome. Each entry is either a stat block
+ * ({ min, raw, max }) or a plain number (a fixed value, shown as raw).
+ * Anything else is skipped.
  */
-function getTomeIdentifications(item: Item): Array<{
-    name: string
-    min: string | undefined
-    raw: string | undefined
-    max: string | undefined
-}> {
+function getTomeIdentifications(item: Item): TomeIdentification[] {
     const identifications = item.identifications
     if (!isObject(identifications)) {
         return []
     }
 
-    const results: Array<{ name: string; min: string | undefined; raw: string | undefined; max: string | undefined }> = []
+    const results: TomeIdentification[] = []
 
     for (const [name, value] of Object.entries(identifications)) {
+        if (typeof value === "number") {
+            results.push({ name, min: undefined, raw: String(value), max: undefined })
+            continue
+        }
+
         if (!isObject(value)) {
             continue
         }
@@ -769,37 +801,32 @@ function getTomeIdentifications(item: Item): Array<{
 }
 
 /* Counts all tomes by tome family (subType). */
-function countTomesByFamily(items: Item[]): Record<string, number> {
-    const counts: Record<string, number> = {}
+function countTomesByFamily(tomes: Item[]): Map<string, number> {
+    const counts = new Map<string, number>()
 
-    for (const item of getTomes(items)) {
+    for (const item of tomes) {
         const family = getTomeFamily(item)
-        counts[family] = (counts[family] ?? 0) + 1
+        counts.set(family, (counts.get(family) ?? 0) + 1)
     }
 
     return counts
 }
 
-/* Finds tome items matching a search query by name, then by IDs as a fallback. */
+/* Finds tome items matching a search query (by name, then exact ID). */
 function findTomes(items: Item[], query: string): Item[] {
     return findItems(getTomes(items), query)
 }
 
 /* Prints a readable summary of one tome. */
 function printTomeDetails(item: Item): void {
-    const displayName = getText(item, "displayName") ?? "Unknown tome"
-    const internalName = getText(item, "internalName") ?? "Unknown"
-    const type = getText(item, "type") ?? "unknown"
-    const subType = getText(item, "subType") ?? "unknown"
-    const tier = getText(item, "tier") ?? "unknown"
     const family = getTomeFamily(item)
     const cap = getTomeCap(family)
 
-    console.log(`  displayName: ${displayName}`)
-    console.log(`  internalName: ${internalName}`)
-    console.log(`  type: ${type}`)
-    console.log(`  subType: ${subType}`)
-    console.log(`  tier: ${tier}`)
+    console.log(`  displayName: ${getText(item, "displayName") ?? "Unknown tome"}`)
+    console.log(`  internalName: ${getText(item, "internalName") ?? "Unknown"}`)
+    console.log(`  type: ${getText(item, "type") ?? "unknown"}`)
+    console.log(`  subType: ${getText(item, "subType") ?? "unknown"}`)
+    console.log(`  tier: ${getText(item, "tier") ?? "unknown"}`)
     console.log(`  family: ${getTomeFamilyLabel(family)}`)
     if (cap !== undefined) {
         console.log(`  family cap: ${cap}`)
@@ -820,26 +847,21 @@ function printTomeDetails(item: Item): void {
 /* Submenu option 1: count all tome entries by family. */
 function printTomeSummary(items: Item[]): void {
     const tomes = getTomes(items)
-    const counts = countTomesByFamily(items)
+    const counts = countTomesByFamily(tomes)
 
     clearScreen()
     console.log(`Tomes received: ${tomes.length}`)
 
-    const sorted = Object.entries(counts).sort(([left], [right]) =>
-        left.localeCompare(right, undefined, { numeric: true })
-    )
+    const sorted = [...counts.entries()].sort(([left], [right]) => compareNatural(left, right))
 
     for (const [family, total] of sorted) {
         const cap = getTomeCap(family)
-        const label = getTomeFamilyLabel(family)
         const capText = cap !== undefined ? ` (cap: ${cap})` : ""
-        console.log(`  ${label} (${family})${capText}: ${total}`)
+        console.log(`  ${getTomeFamilyLabel(family)} (${family})${capText}: ${total}`)
     }
 }
 
-/* Submenu option 2: list every individual tome under its family, so the user
- * can scan names before drilling into a specific item in option 3.
- */
+/* Submenu option 2: list every individual tome under its family. */
 function printTomeCatalog(items: Item[]): void {
     const tomes = getTomes(items)
 
@@ -851,29 +873,24 @@ function printTomeCatalog(items: Item[]): void {
         return
     }
 
-    const byFamily: Record<string, Item[]> = {}
+    const byFamily = new Map<string, Item[]>()
     for (const tome of tomes) {
         const family = getTomeFamily(tome)
-        if (!byFamily[family]) {
-            byFamily[family] = []
-        }
-        byFamily[family].push(tome)
+        const list = byFamily.get(family) ?? []
+        list.push(tome)
+        byFamily.set(family, list)
     }
 
-    const families = Object.keys(byFamily).sort((left, right) =>
-        left.localeCompare(right, undefined, { numeric: true })
-    )
+    const sortKey = (tome: Item): string =>
+        (getText(tome, "displayName") ?? getText(tome, "internalName") ?? "").toLowerCase()
 
-    for (const family of families) {
-        const label = getTomeFamilyLabel(family)
+    for (const family of [...byFamily.keys()].sort(compareNatural)) {
         const cap = getTomeCap(family)
-        console.log(`\n  ${label} (${family})${cap !== undefined ? ` [cap ${cap}]` : ""}`)
+        console.log(`\n  ${getTomeFamilyLabel(family)} (${family})${cap !== undefined ? ` [cap ${cap}]` : ""}`)
 
-        const sortedTomes = [...(byFamily[family] ?? [])].sort((left, right) => {
-            const leftName = (getText(left, "displayName") ?? getText(left, "internalName") ?? "").toLowerCase()
-            const rightName = (getText(right, "displayName") ?? getText(right, "internalName") ?? "").toLowerCase()
-            return leftName.localeCompare(rightName)
-        })
+        const sortedTomes = [...(byFamily.get(family) ?? [])].sort((left, right) =>
+            sortKey(left).localeCompare(sortKey(right))
+        )
 
         for (const tome of sortedTomes) {
             const displayName = getText(tome, "displayName") ?? "Unknown tome"
@@ -941,7 +958,6 @@ async function viewTomes(rl: QuestionInterface, items: Item[]): Promise<void> {
 
 /* ========================================================================
  * 10. MENU
- * The main loop that ties all the options together.
  * ======================================================================== */
 
 /* Prints the main menu options. */
@@ -954,11 +970,7 @@ function printMenu(): void {
     console.log("5. Quit")
 }
 
-/*
- * Runs the main menu until the user quits.
- * The readline interface is always closed afterwards (try/finally),
- * even if something throws, so the program can exit cleanly.
- */
+/* Runs the main menu until the user quits; always closes readline afterwards. */
 async function runMenu(items: Item[]): Promise<void> {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 
@@ -989,7 +1001,6 @@ async function runMenu(items: Item[]): Promise<void> {
                     isRunning = false
                     break
                 default:
-                    // Pause so the message isn't wiped by clearScreen() on the next loop
                     console.log("Please enter 1, 2, 3, 4, or 5.")
                     await returnToMenu(rl)
             }
@@ -1003,8 +1014,9 @@ async function runMenu(items: Item[]): Promise<void> {
  * 11. MAIN PROGRAM
  * ======================================================================== */
 
-/* Downloads the items, makes sure there are some, then starts the menu. */
+/* Requesting the items, makes sure there are some, then starts the menu. */
 async function main(): Promise<void> {
+    console.log("Requesting item database (this can take a while)...")
     const payload = await fetchJson(ITEM_DATABASE_URL)
     const items = extractItems(payload)
 
