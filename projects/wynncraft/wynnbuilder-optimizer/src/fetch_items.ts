@@ -6,7 +6,8 @@
  *      1 = counts of items by type, subType, and tier
  *      2 = look up items by name or ID and print their JSON
  *      3 = Major ID tools (submenu)
- *      4 = quit
+ *      4 = Tome tools (submenu)
+ *      5 = quit
  *
  * Run it with:  npx tsx fetch_items.ts
  *
@@ -20,8 +21,9 @@
  *   6. Option 1: Counts       - group items by type / subType / tier
  *   7. Option 2: Item lookup  - search items by name or ID
  *   8. Option 3: Major IDs    - special item effects and their descriptions
- *   9. Menu                   - main menu loop
- *  10. Main program
+ *   9. Option 4: Tome Data    - 
+ *  10. Menu                   - main menu loop
+ *  11. Main program
  */
 const readline = require("node:readline/promises")
 
@@ -30,7 +32,7 @@ const readline = require("node:readline/promises")
  * ======================================================================== */
 
 const ITEM_DATABASE_URL = "https://api.wynncraft.com/v3/item/database?fullResult"
-const REQUEST_TIMEOUT_MS = 10_000 // cancel the request after 10 seconds
+const REQUEST_TIMEOUT_MS = 10_000 // Wynncraft's full item database can take longer than 10s
 
 // Fields that option 1 groups and counts items by
 const COUNT_FIELDS = ["type", "subType", "tier"]
@@ -43,6 +45,29 @@ const SUMMARY_FIELDS = ["internalName", "displayName", "type", "subType", "tier"
 
 // Keys that getPlainText checks first when looking for readable text inside an object
 const PREFERRED_KEYS = ["name", "displayName", "value", "text", "title", "label", "id"]
+
+// Tome families and their player cap / restriction, from the current API data.
+const TOME_FAMILY_CAPS: Record<string, number> = {
+    armour_tome: 4,
+    weapon_tome: 2,
+    marathon_tome: 2,
+    expertise_tome: 2,
+    mysticism_tome: 2,
+    lootrunning_tome: 1,
+    lootrun_tome: 1,
+    guild_tome: 1,
+}
+
+const TOME_FAMILY_LABELS: Record<string, string> = {
+    armour_tome: "Armour Tome",
+    weapon_tome: "Weapon Tome",
+    marathon_tome: "Marathon Tome",
+    expertise_tome: "Expertise Tome",
+    mysticism_tome: "Mysticism Tome",
+    lootrunning_tome: "Lootrunning Tome",
+    lootrun_tome: "Lootrunning Tome",
+    guild_tome: "Guild Tome",
+}
 
 /* ========================================================================
  * 2. TYPES
@@ -683,7 +708,239 @@ async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void>
 }
 
 /* ========================================================================
- * 9. MENU
+ * 9. OPTION 4: TOMES
+ * A tome is a normal item whose `type` is "tome". The useful data is stored
+ * under `identifications`, and each family (`armour_tome`, etc.) has a cap.
+ * ======================================================================== */
+
+/* Returns only the tome entries from the database. */
+function getTomes(items: Item[]): Item[] {
+    return items.filter((item) => getText(item, "type") === "tome")
+}
+
+/* Returns the tome family (subType) for one item, or "unknown" when absent. */
+function getTomeFamily(item: Item): string {
+    return getText(item, "subType") ?? "unknown"
+}
+
+/* Human-readable label for each tome family. */
+function getTomeFamilyLabel(family: string): string {
+    return TOME_FAMILY_LABELS[family] ?? family
+}
+
+/* The player cap / restriction for a tome family, if known. */
+function getTomeCap(family: string): number | undefined {
+    return TOME_FAMILY_CAPS[family]
+}
+
+/* Extracts the identifications object for a tome and presents each entry as
+ * { name, min, raw, max } when the nested value looks like a valid stat block.
+ */
+function getTomeIdentifications(item: Item): Array<{
+    name: string
+    min: string | undefined
+    raw: string | undefined
+    max: string | undefined
+}> {
+    const identifications = item.identifications
+    if (!isObject(identifications)) {
+        return []
+    }
+
+    const results: Array<{ name: string; min: string | undefined; raw: string | undefined; max: string | undefined }> = []
+
+    for (const [name, value] of Object.entries(identifications)) {
+        if (!isObject(value)) {
+            continue
+        }
+
+        const min = getText(value, "min")
+        const raw = getText(value, "raw")
+        const max = getText(value, "max")
+
+        if (min === undefined && raw === undefined && max === undefined) {
+            continue
+        }
+
+        results.push({ name, min, raw, max })
+    }
+
+    return results
+}
+
+/* Counts all tomes by tome family (subType). */
+function countTomesByFamily(items: Item[]): Record<string, number> {
+    const counts: Record<string, number> = {}
+
+    for (const item of getTomes(items)) {
+        const family = getTomeFamily(item)
+        counts[family] = (counts[family] ?? 0) + 1
+    }
+
+    return counts
+}
+
+/* Finds tome items matching a search query by name, then by IDs as a fallback. */
+function findTomes(items: Item[], query: string): Item[] {
+    return findItems(getTomes(items), query)
+}
+
+/* Prints a readable summary of one tome. */
+function printTomeDetails(item: Item): void {
+    const displayName = getText(item, "displayName") ?? "Unknown tome"
+    const internalName = getText(item, "internalName") ?? "Unknown"
+    const type = getText(item, "type") ?? "unknown"
+    const subType = getText(item, "subType") ?? "unknown"
+    const tier = getText(item, "tier") ?? "unknown"
+    const family = getTomeFamily(item)
+    const cap = getTomeCap(family)
+
+    console.log(`  displayName: ${displayName}`)
+    console.log(`  internalName: ${internalName}`)
+    console.log(`  type: ${type}`)
+    console.log(`  subType: ${subType}`)
+    console.log(`  tier: ${tier}`)
+    console.log(`  family: ${getTomeFamilyLabel(family)}`)
+    if (cap !== undefined) {
+        console.log(`  family cap: ${cap}`)
+    }
+
+    const identifications = getTomeIdentifications(item)
+    if (identifications.length === 0) {
+        console.log("  identifications: none")
+        return
+    }
+
+    console.log("  identifications:")
+    for (const { name, min, raw, max } of identifications) {
+        console.log(`    - ${name}: min=${min ?? "?"}, raw=${raw ?? "?"}, max=${max ?? "?"}`)
+    }
+}
+
+/* Submenu option 1: count all tome entries by family. */
+function printTomeSummary(items: Item[]): void {
+    const tomes = getTomes(items)
+    const counts = countTomesByFamily(items)
+
+    clearScreen()
+    console.log(`Tomes received: ${tomes.length}`)
+
+    const sorted = Object.entries(counts).sort(([left], [right]) =>
+        left.localeCompare(right, undefined, { numeric: true })
+    )
+
+    for (const [family, total] of sorted) {
+        const cap = getTomeCap(family)
+        const label = getTomeFamilyLabel(family)
+        const capText = cap !== undefined ? ` (cap: ${cap})` : ""
+        console.log(`  ${label} (${family})${capText}: ${total}`)
+    }
+}
+
+/* Submenu option 2: list every individual tome under its family, so the user
+ * can scan names before drilling into a specific item in option 3.
+ */
+function printTomeCatalog(items: Item[]): void {
+    const tomes = getTomes(items)
+
+    clearScreen()
+    console.log("Tome catalog:")
+
+    if (tomes.length === 0) {
+        console.log("  No tomes found.")
+        return
+    }
+
+    const byFamily: Record<string, Item[]> = {}
+    for (const tome of tomes) {
+        const family = getTomeFamily(tome)
+        if (!byFamily[family]) {
+            byFamily[family] = []
+        }
+        byFamily[family].push(tome)
+    }
+
+    const families = Object.keys(byFamily).sort((left, right) =>
+        left.localeCompare(right, undefined, { numeric: true })
+    )
+
+    for (const family of families) {
+        const label = getTomeFamilyLabel(family)
+        const cap = getTomeCap(family)
+        console.log(`\n  ${label} (${family})${cap !== undefined ? ` [cap ${cap}]` : ""}`)
+
+        const sortedTomes = [...(byFamily[family] ?? [])].sort((left, right) => {
+            const leftName = (getText(left, "displayName") ?? getText(left, "internalName") ?? "").toLowerCase()
+            const rightName = (getText(right, "displayName") ?? getText(right, "internalName") ?? "").toLowerCase()
+            return leftName.localeCompare(rightName)
+        })
+
+        for (const tome of sortedTomes) {
+            const displayName = getText(tome, "displayName") ?? "Unknown tome"
+            const internalName = getText(tome, "internalName") ?? "unknown"
+            const tier = getText(tome, "tier") ?? "unknown"
+            console.log(`    - ${displayName} (${internalName}) [tier ${tier}]`)
+        }
+    }
+}
+
+/* Submenu option 3: search for a tome by `internalName` or `displayName`. */
+function printTomeLookup(items: Item[], query: string): void {
+    const matches = findTomes(items, query)
+
+    if (matches.length === 0) {
+        console.log(`No tome found for "${query}".`)
+        return
+    }
+
+    clearScreen()
+    if (matches.length > 1) {
+        console.log(`Multiple tomes matched "${query}":\n`)
+    }
+
+    for (const tome of matches) {
+        printTomeDetails(tome)
+        console.log()
+    }
+}
+
+/* Runs the Tome submenu: counts, lists families, and looks up one tome. */
+async function viewTomes(rl: QuestionInterface, items: Item[]): Promise<void> {
+    console.log("\nChoose an option:")
+    console.log("1. Count all tome entries and group them by family")
+    console.log("2. List every individual tome by family")
+    console.log("3. View a single tome by internalName or displayName")
+    console.log("4. Return to the main menu")
+
+    const choice = (await rl.question("Select a Tome option: ")).trim()
+
+    switch (choice) {
+        case "1":
+            printTomeSummary(items)
+            break
+        case "2":
+            printTomeCatalog(items)
+            break
+        case "3": {
+            const query = (await rl.question("\nEnter a tome name or internalName: ")).trim()
+            if (query === "") {
+                console.log("No tome entered.")
+                break
+            }
+            printTomeLookup(items, query)
+            break
+        }
+        case "4":
+            return
+        default:
+            console.log("Please enter a valid option from 1 to 4.")
+    }
+
+    await returnToMenu(rl)
+}
+
+/* ========================================================================
+ * 10. MENU
  * The main loop that ties all the options together.
  * ======================================================================== */
 
@@ -693,7 +950,8 @@ function printMenu(): void {
     console.log("1. Show item counts by type, subType, and tier")
     console.log("2. Look up an item by ID or name")
     console.log("3. View Major IDs Data")
-    console.log("4. Quit")
+    console.log("4. View Tome Data")
+    console.log("5. Quit")
 }
 
 /*
@@ -725,11 +983,14 @@ async function runMenu(items: Item[]): Promise<void> {
                     await viewMajorIds(rl, items)
                     break
                 case "4":
+                    await viewTomes(rl, items)
+                    break
+                case "5":
                     isRunning = false
                     break
                 default:
                     // Pause so the message isn't wiped by clearScreen() on the next loop
-                    console.log("Please enter 1, 2, 3, or 4.")
+                    console.log("Please enter 1, 2, 3, 4, or 5.")
                     await returnToMenu(rl)
             }
         }
@@ -739,7 +1000,7 @@ async function runMenu(items: Item[]): Promise<void> {
 }
 
 /* ========================================================================
- * 10. MAIN PROGRAM
+ * 11. MAIN PROGRAM
  * ======================================================================== */
 
 /* Downloads the items, makes sure there are some, then starts the menu. */

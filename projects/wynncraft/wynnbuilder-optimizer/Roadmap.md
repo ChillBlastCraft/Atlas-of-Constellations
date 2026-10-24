@@ -121,20 +121,18 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
   1. Count all tome entries and group them by `subType` / tome family.
   2. List all tome families and their display names.
-  3. View a single tome and show:
+  3. View a single tome and show by searching `internalName` or `displayName`:
      - name / internal name
      - `type` and `subType`
      - tier
      - list of identifications and their `min` / `raw` / `max` values
      - any family restriction or cap that applies
-  4. Search tomes by name, internal name, or identification label.
-  5. Compare multiple tome families side-by-side.
 
   #### What to Display for Each Tome
 
   For each tome entry, the tool should ideally show:
 
-  - Tome name and internal name
+  - Tome `displayName` and `internalName`
   - Tome family (`armour_tome`, `weapon_tome`, etc.)
   - Tier / rarity
   - A readable summary of the identifications it contains
