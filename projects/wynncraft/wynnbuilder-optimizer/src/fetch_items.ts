@@ -1,7 +1,8 @@
 /*
  * Wynncraft Item Explorer
  *
- * 1. Requests the full list of items from the Wynncraft API
+ * 1. Loads the full list of items (from a local cache if it is fresh,
+ *    otherwise from the Wynncraft API)
  * 2. Shows a menu:
  *      1 = counts of items by type, subType, and tier
  *      2 = look up items by name or ID
@@ -9,15 +10,16 @@
  *      4 = Tome tools (submenu)
  *      5 = quit
  *
- * Run it with:  npx tsx fetch_items.ts
+ * Run it with:            npx tsx fetch_items.ts
+ * Force a fresh download: npx tsx fetch_items.ts --refresh
  *
- * File layout (each section only depends on the ones above it,
- * except for the menu, which ties everything together):
+ * File layout (sections are ordered for readability; function declarations
+ * are hoisted, so a section may call a function defined further down):
  *   1. Constants
  *   2. Types
  *   3. Basic helpers          - type checks, text cleaning, matching
  *   4. Terminal helpers       - clearing the screen, "press Enter" prompt
- *   5. Data loading           - fetch + validate the API response
+ *   5. Data loading           - cache + fetch + validate the API response
  *   6. Option 1: Counts       - group items by type / subType / tier
  *   7. Option 2: Item lookup  - search items by name or ID
  *   8. Option 3: Major IDs    - special item effects and their descriptions
@@ -25,7 +27,16 @@
  *  10. Menu                   - main menu loop
  *  11. Main program
  */
-const readline = require("node:readline/promises")
+/*
+ * NOTE: `import x = require(...)` is the import style TypeScript accepts in a
+ * CommonJS project (package.json "type": "commonjs") when verbatimModuleSyntax is on.
+ * If you ever switch the project to ES modules ("type": "module"), change these
+ * four lines to the modern form, e.g.:  import * as fs from "node:fs/promises"
+ */
+import fs = require("node:fs/promises")
+import os = require("node:os")
+import path = require("node:path")
+import readline = require("node:readline/promises")
 
 /* ========================================================================
  * 1. CONSTANTS
@@ -35,6 +46,12 @@ const ITEM_DATABASE_URL = "https://api.wynncraft.com/v3/item/database?fullResult
 
 /* The full item database is large, so a short timeout fails on slow connections. */
 const REQUEST_TIMEOUT_MS = 30_000
+
+/* Downloaded data is saved here so that repeat runs don't re-download it. */
+const CACHE_FILE = path.join(os.tmpdir(), "wynncraft-item-cache.json")
+
+/* How long saved data is trusted. Pass --refresh to ignore this and re-download. */
+const CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000 // 6 hours
 
 /* Fields that option 1 groups and counts items by */
 const COUNT_FIELDS = ["type", "subType", "tier"]
@@ -80,14 +97,15 @@ const TOME_FAMILY_LABELS = new Map<string, string>([
     ["guild_tome", "Guild Tome"],
 ])
 
-const HTML_ENTITIES: Record<string, string> = {
-    nbsp: " ",
-    amp: "&",
-    lt: "<",
-    gt: ">",
-    quot: '"',
-    apos: "'",
-}
+/* Named HTML entities we know how to decode (see decodeEntity). */
+const HTML_ENTITIES = new Map<string, string>([
+    ["nbsp", " "],
+    ["amp", "&"],
+    ["lt", "<"],
+    ["gt", ">"],
+    ["quot", '"'],
+    ["apos", "'"],
+])
 
 /* ========================================================================
  * 2. TYPES
@@ -136,22 +154,22 @@ function getText(item: Item, field: string): string | undefined {
 }
 
 /*
- * Removes HTML-like tags, decodes common entities ("&amp;" -> "&"),
- * and collapses extra whitespace. Unknown entities become a space.
+ * Turns the inside of an HTML entity into its character:
+ * "amp" -> "&", "#39" -> "'". Unknown entities become a space.
  */
 function decodeEntity(entity: string): string {
     if (entity.startsWith("#")) {
         const code = Number(entity.slice(1))
-        // fromCodePoint throws on values above 0x10ffff, so guard it
-        const value = HTML_ENTITIES[entity.toLowerCase()]
-        if (value !== undefined && value !== null) {
-            return value
-        }
-        return " "
+        // String.fromCodePoint throws on values above 0x10ffff, so guard it
+        return code <= 0x10ffff ? String.fromCodePoint(code) : " "
     }
-    return HTML_ENTITIES[entity.toLowerCase()] ?? " "
+    return HTML_ENTITIES.get(entity.toLowerCase()) ?? " "
 }
 
+/*
+ * Removes HTML-like tags, decodes entities ("&amp;" -> "&"),
+ * and collapses extra whitespace.
+ */
 function stripMarkup(value: string): string {
     return value
         .replace(/<[^>]+>/g, " ")
@@ -202,6 +220,7 @@ function getPlainText(value: unknown): string | undefined {
 
         return getFirstPlainText(preferredValues) ?? getFirstPlainText(Object.values(record))
     }
+
     return undefined
 }
 
@@ -253,10 +272,11 @@ async function returnToMenu(rl: QuestionInterface): Promise<void> {
 
 /* ========================================================================
  * 5. DATA LOADING
+ * Get the item list (cache first, API second) and turn it into a clean Item[].
  * ======================================================================== */
 
-/* Requests a URL and returns the parsed JSON. Throws on timeout or HTTP error. */
-async function fetchJson(url: string): Promise<unknown> {
+/* Requests a URL and returns the response body as text. Throws on timeout or HTTP error. */
+async function fetchText(url: string): Promise<string> {
     const response = await fetch(url, {
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
@@ -269,7 +289,73 @@ async function fetchJson(url: string): Promise<unknown> {
         throw new Error(`Request failed: ${response.status} ${response.statusText}`)
     }
 
-    return response.json()
+    return response.text()
+}
+
+/* Parses JSON text. Returns undefined if the text isn't valid JSON (JSON itself can never be undefined). */
+function tryParseJson(text: string): unknown {
+    try {
+        return JSON.parse(text)
+    } catch {
+        return undefined
+    }
+}
+
+/*
+ * Reads the saved copy of the API response, or undefined if there is none.
+ * Unless `ignoreAge` is true, a copy older than CACHE_MAX_AGE_MS counts as missing.
+ */
+async function readCache(ignoreAge: boolean): Promise<unknown> {
+    try {
+        const stats = await fs.stat(CACHE_FILE)
+        if (!ignoreAge && Date.now() - stats.mtimeMs > CACHE_MAX_AGE_MS) {
+            return undefined
+        }
+        return tryParseJson(await fs.readFile(CACHE_FILE, "utf8"))
+    } catch {
+        return undefined // no cache file yet, or it couldn't be read
+    }
+}
+
+/* Saves the raw API response. A failure here is not fatal: the program works without a cache. */
+async function writeCache(text: string): Promise<void> {
+    try {
+        await fs.writeFile(CACHE_FILE, text)
+    } catch (error) {
+        console.log(`(Could not save the cache: ${error instanceof Error ? error.message : String(error)})`)
+    }
+}
+
+/*
+ * Loads the API response:
+ *   1. Use the saved copy if it is fresh (skipped with --refresh).
+ *   2. Otherwise download it and save a copy.
+ *   3. If the download fails but an older copy exists, use that instead.
+ */
+async function loadPayload(forceRefresh: boolean): Promise<unknown> {
+    if (!forceRefresh) {
+        const cached = await readCache(false)
+        if (cached !== undefined) {
+            console.log("Using saved item data (run with --refresh to download it again).")
+            return cached
+        }
+    }
+
+    console.log("Requesting item database (this can take a while)...")
+
+    try {
+        const text = await fetchText(ITEM_DATABASE_URL)
+        const payload: unknown = JSON.parse(text) // validate before saving
+        await writeCache(text)
+        return payload
+    } catch (error) {
+        const older = await readCache(true)
+        if (older === undefined) {
+            throw error
+        }
+        console.log(`Download failed (${error instanceof Error ? error.message : String(error)}); using older saved data.`)
+        return older
+    }
 }
 
 /*
@@ -1014,10 +1100,10 @@ async function runMenu(items: Item[]): Promise<void> {
  * 11. MAIN PROGRAM
  * ======================================================================== */
 
-/* Requesting the items, makes sure there are some, then starts the menu. */
+/* Loads the items, makes sure there are some, then starts the menu. */
 async function main(): Promise<void> {
-    console.log("Requesting item database (this can take a while)...")
-    const payload = await fetchJson(ITEM_DATABASE_URL)
+    const forceRefresh = process.argv.includes("--refresh")
+    const payload = await loadPayload(forceRefresh)
     const items = extractItems(payload)
 
     if (items.length === 0) {
