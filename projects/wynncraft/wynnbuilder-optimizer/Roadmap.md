@@ -8,12 +8,12 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 - [x] Set up Node.js and TypeScript.
 - [x] Create and run `src/index.ts`.
-- [ ] Connect to the Wynncraft API.
-- [ ] Work on **API → Items** first.
+- [x] Connect to the Wynncraft API.
+- [x] Work on **API → Items** first.
 
 # API
 
-## Items — In Progress
+## Items — Complete
 
 ### Item Database
 
@@ -26,12 +26,12 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ### Item Counts
 
-- [ ] Request the item data and check for request errors.
-- [ ] Determine the total number of returned items.
-- [ ] Count items by rarity.
-- [ ] Count items by category.
-- [ ] Count rarities within each category.
-- [ ] Check how items with missing or unfamiliar values should be counted.
+- [x] Request the item data and check for request errors.
+- [x] Determine the total number of returned items.
+- [x] Count items by rarity.
+- [x] Count items by category.
+- [x] Count rarities within each category.
+- [x] Check how items with missing or unfamiliar values should be counted.
 
 **Example report:**
 
@@ -44,7 +44,30 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
   - Unique: 10
   - Rare: 2
 
-### Major IDs — Planned
+---
+
+### Major IDs — In Progress
+
+**Goal:** Request `ITEM_DATABASE_URL` and return data about Major IDs. 
+
+- Endpoint: `GET /v3/item/database?fullResult`
+
+### Major ID Menu
+
+- [ ] Add a new top-level menu item: `3. View Major IDs Data`.
+- [ ] Request the count of all unique Major IDs and the number of items that have a Major ID.
+- [ ] Request data about a Major ID without including its flavour text markup.
+- [ ] Request a list of all items with a Major ID.
+- [ ] Request all items with a specific Major ID.
+
+**Example sub-menu:**
+
+1. Count unique Major IDs and items with a Major ID.
+2. Request data about a Major ID.
+3. Request a list of all items with a Major ID.
+4. Request all items that have a specific Major ID.
+
+---
 
 - Find where Major ID data is available.
 - Explore how Major IDs relate to items.

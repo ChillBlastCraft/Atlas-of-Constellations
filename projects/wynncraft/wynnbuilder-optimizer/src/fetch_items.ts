@@ -8,7 +8,7 @@
  *      2 = look up one item and print its JSON
  *      3 = quit
  * 
- *  Run it with:  npx tsx wynncraft-item-explorer.ts
+ *  Run it with:  npx tsx fetch_items.ts
  */
 const readline = require("node:readline/promises")
 const process = require("node:process")
@@ -217,11 +217,288 @@ function printFieldCounts(items: Item[], field: string): void {
 }
 
 function printCounts(items: Item[]): void {
+    console.clear()
     console.log(`Items received: ${items.length}`)
 
     for (const field of COUNT_FIELDS) {
         printFieldCounts(items, field)
     }
+}
+
+function stripMarkup(value: string): string {
+    return value
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&[a-zA-Z]+;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+}
+
+function sanitizeMarkup(value: unknown): unknown {
+    if (typeof value === "string") {
+        return stripMarkup(value)
+    }
+
+    if (Array.isArray(value)) {
+        return value.map((entry) => sanitizeMarkup(entry))
+    }
+
+    if (isObject(value)) {
+        const cleaned: Item = {}
+
+        for (const [key, child] of Object.entries(value)) {
+            cleaned[key] = sanitizeMarkup(child)
+        }
+
+        return cleaned
+    }
+
+    return value
+}
+
+function getMajorIdMap(item: Item): Record<string, string> {
+    const majorIds: Record<string, string> = {}
+
+    for (const [key, value] of Object.entries(item)) {
+        if (!/major/i.test(key)) {
+            continue
+        }
+
+        if (isObject(value)) {
+            for (const [majorId, tooltip] of Object.entries(value)) {
+                const cleanedId = stripMarkup(majorId).trim()
+                if (cleanedId === "") {
+                    continue
+                }
+
+                majorIds[cleanedId] = typeof tooltip === "string"
+                    ? stripMarkup(tooltip)
+                    : String(tooltip ?? "")
+            }
+            continue
+        }
+
+        const plainText = getPlainText(value)
+        if (plainText) {
+            majorIds[plainText] = plainText
+        }
+    }
+
+    return majorIds
+}
+
+function extractMajorIds(item: Item): string[] {
+    return Object.keys(getMajorIdMap(item)).sort()
+}
+
+function getPlainText(value: unknown): string | undefined {
+    if (value === null || value === undefined) {
+        return undefined
+    }
+
+    if (typeof value === "string") {
+        const text = stripMarkup(value)
+        return text === "" ? undefined : text
+    }
+
+    if (Array.isArray(value)) {
+        for (const child of value) {
+            const text = getPlainText(child)
+            if (text) {
+                return text
+            }
+        }
+        return undefined
+    }
+
+    if (isObject(value)) {
+        for (const key of ["name", "displayName", "value", "text", "title", "label", "id"]) {
+            if (key in value) {
+                const text = getPlainText(value[key])
+                if (text) {
+                    return text
+                }
+            }
+        }
+
+        for (const child of Object.values(value)) {
+            const text = getPlainText(child)
+            if (text) {
+                return text
+            }
+        }
+    }
+
+    return undefined
+}
+
+function countMajorIds(items: Item[]): { uniqueMajorIds: number; itemsWithMajorIds: number } {
+    const uniqueMajorIds = new Set<string>()
+    let itemsWithMajorIds = 0
+
+    for (const item of items) {
+        const majorIds = extractMajorIds(item)
+
+        if (majorIds.length === 0) {
+            continue
+        }
+
+        itemsWithMajorIds++
+
+        for (const majorId of majorIds) {
+            uniqueMajorIds.add(majorId)
+        }
+    }
+
+    return {
+        uniqueMajorIds: uniqueMajorIds.size,
+        itemsWithMajorIds,
+    }
+}
+
+function getItemsWithMajorIds(items: Item[]): Item[] {
+    return items.filter((item) => extractMajorIds(item).length > 0)
+}
+
+function findItemsByMajorId(items: Item[], query: string): Item[] {
+    const wanted = normalizeQuery(stripMarkup(query))
+
+    return items.filter((item) =>
+        Object.keys(getMajorIdMap(item)).some((majorId) => {
+            const normalized = normalizeQuery(stripMarkup(majorId))
+            return normalized === wanted || normalized.includes(wanted)
+        })
+    )
+}
+
+function summarizeItem(item: Item): Item {
+    const summary: Item = {}
+
+    for (const field of ["internalName", "displayName", "type", "subType", "tier"]) {
+        const value = getText(item, field)
+        if (value !== undefined) {
+            summary[field] = value
+        }
+    }
+
+    const majorIds = extractMajorIds(item)
+    if (majorIds.length > 0) {
+        summary.majorId = majorIds.join(", ")
+    }
+
+    return summary
+}
+
+function findMajorIdDescription(item: Item, query: string): string | undefined {
+    const wanted = normalizeQuery(stripMarkup(query))
+    const majorIdMap = getMajorIdMap(item)
+
+    for (const [majorId, description] of Object.entries(majorIdMap)) {
+        const normalizedMajorId = normalizeQuery(stripMarkup(majorId))
+        if (normalizedMajorId === wanted || normalizedMajorId.includes(wanted)) {
+            return stripMarkup(description)
+        }
+    }
+
+    return undefined
+}
+
+function printMajorIdSummary(items: Item[]): void {
+    const summary = countMajorIds(items)
+
+    console.clear()
+    console.log("Major ID summary:")
+    console.log(`  Unique Major IDs: ${summary.uniqueMajorIds}`)
+    console.log(`  Items with a Major ID: ${summary.itemsWithMajorIds}`)
+}
+
+function printItemsWithMajorIds(items: Item[]): void {
+    const itemsWithIds = getItemsWithMajorIds(items)
+
+    if (itemsWithIds.length === 0) {
+        console.log("No items have a Major ID.")
+        return
+    }
+
+    console.clear()
+    console.log("Items with a Major ID:")
+    console.log(JSON.stringify(itemsWithIds.map((item) => summarizeItem(item)), null, 2))
+}
+
+function printMajorIdDetails(items: Item[], query: string): void {
+    const matches = findItemsByMajorId(items, query)
+
+    if (matches.length === 0) {
+        console.log(`No items found for Major ID "${query}".`)
+        return
+    }
+
+    console.clear()
+    const descriptions = Array.from(
+        new Set(
+            matches
+                .map((item) => findMajorIdDescription(item, query))
+                .filter((value): value is string => value !== undefined)
+        )
+    )
+
+    console.log(`Major ID: "${query}"`)
+    if (descriptions.length > 0) {
+        console.log(`\nWhat it does: ${descriptions.join(" | ")}`)
+    }
+}
+
+async function viewMajorIds(rl: QuestionInterface, items: Item[]): Promise<void> {
+    console.log("\nChoose an option:")
+    console.log("1. Count Non-Unique & Unique Major IDs")
+    console.log("2. Request what a Major ID does")
+    console.log("3. Request a list of all items with a Major ID")
+    console.log("4. Request all items with a specific Major ID")
+    console.log("5. Return to the main menu")
+
+    const choice = (await rl.question("Select a Major ID option: ")).trim()
+
+    switch (choice) {
+        case "1":
+            printMajorIdSummary(items)
+            break
+        case "2": {
+            const query = (await rl.question("\nEnter a Major ID to inspect: ")).trim()
+            if (query === "") {
+                console.log("No Major ID entered.")
+                break
+            }
+            printMajorIdDetails(items, query)
+            break
+        }
+        case "3":
+            printItemsWithMajorIds(items)
+            break
+        case "4": {
+            const query = (await rl.question("\nEnter the specific Major ID to filter by: ")).trim()
+            if (query === "") {
+                console.log("No Major ID entered.")
+                break
+            }
+            const matches = findItemsByMajorId(items, query)
+
+            if (matches.length === 0) {
+                console.log(`\nNo items found for Major ID "${query}".`)
+                break
+            }
+
+            console.clear()
+            console.log(`\nItems matching Major ID "${query}":`)
+            console.log(JSON.stringify(matches.map((item) => summarizeItem(item)), null, 2))
+            break
+        }
+        case "5":
+            return
+        default:
+            console.log("Please enter a valid option from 1 to 5.")
+    }
+
+    await returnToMenu(rl)
 }
 
 /* 
@@ -271,7 +548,7 @@ function printItems(items: Item[]): void {
  * If no item was found, throw error
  */
 async function lookUpItem(rl: QuestionInterface, items: Item[]): Promise<void> {
-    const query = (await rl.question("Enter an item ID or name: ")).trim()
+    const query = (await rl.question("\nEnter an item ID or name: ")).trim()
 
     if (query === "") {
         console.log("Nothing entered.")
@@ -286,6 +563,7 @@ async function lookUpItem(rl: QuestionInterface, items: Item[]): Promise<void> {
     }
 
     if (matches.length === 1) {
+        console.clear()
         printItems(matches)
         return
     }
@@ -312,10 +590,11 @@ function clearScreen(): void {
 }
 
 function printMenu(): void {
-    console.log("\nChoose an option:")
+    console.log("Choose an option:")
     console.log("1. Show item counts by type, subType, and tier")
     console.log("2. Look up an item by ID or name")
-    console.log("3. Quit")
+    console.log("3. View Major IDs Data")
+    console.log("4. Quit")
 }
 
 async function returnToMenu(rl: QuestionInterface): Promise<void> {
@@ -346,10 +625,13 @@ async function runMenu(items: Item[]): Promise<void> {
                     await returnToMenu(rl)
                     break
                 case "3":
+                    await viewMajorIds(rl, items)
+                    break
+                case "4":
                     isRunning = false
                     break
                 default:
-                    console.log("Please enter 1, 2, or 3.")
+                    console.log("Please enter 1, 2, 3, or 4.")
             }
         }
     } finally {
