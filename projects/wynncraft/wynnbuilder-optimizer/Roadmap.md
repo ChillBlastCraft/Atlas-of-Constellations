@@ -54,11 +54,11 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ### Major ID Menu
 
-- [ ] Add a new top-level menu item: `3. View Major IDs Data`.
-- [ ] Request the count of all unique Major IDs and the number of items that have a Major ID.
-- [ ] Request data about a Major ID without including its flavour text markup.
-- [ ] Request a list of all items with a Major ID.
-- [ ] Request all items with a specific Major ID.
+- [x] Add a new top-level menu item: `3. View Major IDs Data`.
+- [x] Request the count of all unique Major IDs and the number of items that have a Major ID.
+- [x] Request data about a Major ID without including its flavour text markup.
+- [x] Request a list of all items with a Major ID.
+- [x] Request all items with a specific Major ID.
 
 **Example sub-menu:**
 
@@ -68,10 +68,6 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 4. Request all items that have a specific Major ID.
 
 ---
-
-- Find where Major ID data is available.
-- Explore how Major IDs relate to items.
-- Plan a way to list or summarize Major IDs.
 
 ### Tomes — Planned
 
