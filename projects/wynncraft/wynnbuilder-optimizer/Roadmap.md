@@ -21,9 +21,6 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 **Goal:** Request the item database and inspect the returned data before deciding how to count and categorize it.
 
 - Endpoint: `GET /v3/item/database?fullResult`
-- First inspect the response and one example item.
-- Confirm which fields represent the item ID, name, rarity, and category.
-- Use the API’s actual field names and values; don’t assume them in advance.
 
 ### Item Counts
 
@@ -144,11 +141,36 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ## Classes — Incomplete
 
-**Goal:** Request the class database and inspect the returned data before deciding how to categorize and articualate it.
+**Goal:** Request the class database and inspect the returned data before deciding how to categorize and articulate it. This should not be mixed into the item API flow: the class data is a separate concept from item data, and the ability tree is a class-specific system rather than an item.
 
-- Endpoint: 
+- Endpoint: `GET /v3/classes`
 
-### Classes — Planned
+### Class Database
+
+- [ ] Request the class list and inspect the response to confirm which fields represent the class identity and display name.
+- [ ] Verify that the API returns all five playable classes (`archer`, `warrior`, `assassin`, `mage`, `shaman`) and note any class-specific metadata that is available.
+- [ ] Decide how to model a class in code without conflating it with items, item data caches, or the item fetch workflow.
+- [ ] Create a dedicated TypeScript entry for class work (for example `src/classes.ts` or a similar class-focused file) so the class pipeline remains isolated from the item pipeline.
+
+**Example report:**
+
+- Archer: "Archer (Hunter)", Archetype List, Class & Archetype Description
+- Warrior: "Warrior (Knight)", Archetype List, Class & Archetype Description
+- Assassin: "Assassin (Ninja)", Archetype List, Class & Archetype Description
+- Mage: "Mage (Dark Wizard)", Archetype List, Class & Archetype Description
+- Shaman: "Shaman (Skyseer)", Archetype List, Class & Archetype Description
+
+### Class Characteristics — Planned
+
+- [ ] Distinguish the five classes from each other using the class data itself rather than by assuming the same structure as items.
+- [ ] Confirm which class-level traits are stable enough to model as shared metadata:
+  - most classes do not share the same base resistances
+  - classes use different weapons or weapon styles
+  - classes have distinct class identities that are not defined only by their ability tree
+- [ ] Decide which of these traits should become normalized class fields in the project (for example: display name, class key, weapon type, base resistances, difficulty, and notes).
+- [ ] Ignore ability-tree detail for the first pass; we do not need to model it right now because it is a separate system from the general class summary.
+
+---
 
 ## AT — Planned
 
