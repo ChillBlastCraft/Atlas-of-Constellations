@@ -9,7 +9,8 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 - [x] Set up Node.js and TypeScript.
 - [x] Create and run `src/index.ts`.
 - [x] Connect to the Wynncraft API.
-- [x] Work on **API → Items** first.
+- [x] Work on **API → Items**.
+- [ ] Work on **API → Classes**.
 
 # API
 
@@ -17,7 +18,7 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ### Item Database
 
-**Goal:** Request the item database and inspect the returned data before deciding how to count it.
+**Goal:** Request the item database and inspect the returned data before deciding how to count and categorize it.
 
 - Endpoint: `GET /v3/item/database?fullResult`
 - First inspect the response and one example item.
@@ -141,12 +142,14 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ---
 
-## AT — Planned
+## Classes — Incomplete
 
-*Keep this label from the project sketch for now; define its exact scope later.*
+**Goal:** Request the class database and inspect the returned data before deciding how to categorize and articualate it.
 
-### Aspects — Planned
-
-### Mappings — Planned
+- Endpoint: 
 
 ### Classes — Planned
+
+## AT — Planned
+
+### Aspects — Planned
