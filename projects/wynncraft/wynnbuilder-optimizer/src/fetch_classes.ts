@@ -178,20 +178,6 @@ function normalizeQuery(input: string): string {
     return input.trim().toLowerCase()
 }
 
-function stripNodeMarkup(value: string): string {
-    return value
-        .replace(/<[^>]+>/g, " ")
-        .replace(/<\/?br\s*\/?>/gi, " ")
-        .replace(/&nbsp;/gi, " ")
-        .replace(/&amp;/gi, "&")
-        .replace(/&lt;/gi, "<")
-        .replace(/&gt;/gi, ">")
-        .replace(/&quot;/gi, '"')
-        .replace(/&#39;/gi, "'")
-        .replace(/\s+/g, " ")
-        .trim()
-}
-
 /* Does `value` contain `wanted`? `wanted` must already be normalized. */
 function matchesQuery(value: string, wanted: string): boolean {
     if (wanted === "") {
@@ -273,10 +259,13 @@ async function readCache(ignoreAge: boolean): Promise<unknown> {
 
 /* Saves the raw API response. A failure here is not fatal: the program works without a cache. */
 async function writeCache(text: string): Promise<void> {
+    const temporaryFile = `${CACHE_FILE}.${process.pid}.tmp`
     try {
-        await fs.writeFile(CACHE_FILE, text)
+        await fs.writeFile(temporaryFile, text)
+        await fs.rename(temporaryFile, CACHE_FILE)
     } catch (error) {
         console.log(`(Could not save the class cache: ${error instanceof Error ? error.message : String(error)})`)
+        await fs.rm(temporaryFile, { force: true }).catch(() => undefined)
     }
 }
 
@@ -349,7 +338,10 @@ async function loadArchetypes(classKey: string): Promise<ArchetypeEntry[]> {
                 }
             })
             .filter((entry): entry is ArchetypeEntry => entry !== undefined)
-    } catch {
+    } catch (error) {
+        console.warn(
+            `Could not load archetypes for "${classKey}": ${error instanceof Error ? error.message : String(error)}`
+        )
         return []
     }
 }
@@ -406,22 +398,13 @@ function findClasses(classes: ClassSummary[], query: string): ClassSummary[] {
 
 /* Adds the archetype list and metadata to each class summary. */
 async function enrichClasses(classes: ClassSummary[]): Promise<ClassSummary[]> {
-    const enriched = [...classes]
-
-    for (const entry of enriched) {
+    return Promise.all(classes.map(async (entry) => {
         const archetypes = await loadArchetypes(entry.key)
-
-        entry.archetypes = archetypes.map((archetype) => archetype.key)
-
-        const metadata = CLASS_METADATA[entry.key]
-        if (metadata) {
-            entry.weaponType = metadata.weaponType
-            entry.baseResistance = metadata.baseResistance
-            entry.notes = metadata.notes
+        return {
+            ...entry,
+            archetypes: archetypes.map((archetype) => archetype.key),
         }
-    }
-
-    return enriched
+    }))
 }
 
 function extractExplicitArchetype(requirements: Record<string, unknown> | undefined): string | undefined {
@@ -571,6 +554,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
 
     const nodes: AbilityNode[] = []
     const byId = new Map<string, AbilityNode>()
+    const rawNodesById = new Map<string, JsonObject>()
 
     for (const [pageIndex, rawPage] of Object.entries(pages)) {
         if (!isObject(rawPage)) {
@@ -585,7 +569,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
             const rawName = typeof rawNode.name === "string" ? rawNode.name : nodeId
             const provisionalNode: AbilityNode = {
                 id: nodeId,
-                name: stripNodeMarkup(rawName),
+                name: stripMarkup(rawName),
                 description: "",
                 page: Number(pageIndex),
                 slot: typeof rawNode.slot === "number" ? rawNode.slot : 0,
@@ -605,16 +589,14 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
                 abilityCost: 0,
             }
             byId.set(nodeId, provisionalNode)
+            rawNodesById.set(nodeId, rawNode)
             nodes.push(provisionalNode)
         }
     }
 
     for (const node of nodes) {
-        const rawNode = Object.entries(pages)
-            .flatMap(([, rawPage]) => isObject(rawPage) ? Object.entries(rawPage) : [])
-            .find(([entryId]) => entryId === node.id)?.[1]
-
-        if (!isObject(rawNode)) {
+        const rawNode = rawNodesById.get(node.id)
+        if (!rawNode) {
             continue
         }
 
@@ -628,15 +610,17 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
         }
 
         const classification = classifyNode(node.id, rawNode, byId)
-        const abilityCost = Number(
-            (isObject(rawNode.requirements) && typeof rawNode.requirements.ABILITY_POINTS === "number")
-                ? rawNode.requirements.ABILITY_POINTS
-                : (isObject(rawNode.requirements) && typeof rawNode.requirements.ABILITY_POINTS === "string")
-                    ? Number(rawNode.requirements.ABILITY_POINTS)
-                    : 0
-        )
+        const rawAbilityCost = isObject(rawNode.requirements)
+            ? rawNode.requirements.ABILITY_POINTS
+            : undefined
+        const parsedAbilityCost = typeof rawAbilityCost === "number"
+            ? rawAbilityCost
+            : typeof rawAbilityCost === "string" && rawAbilityCost.trim() !== ""
+                ? Number(rawAbilityCost)
+                : 0
+        const abilityCost = Number.isFinite(parsedAbilityCost) ? parsedAbilityCost : 0
 
-        node.description = stripNodeMarkup(descriptionText)
+        node.description = stripMarkup(descriptionText)
         node.requirements = requirements
         node.links = Array.isArray(rawNode.links)
             ? rawNode.links.filter((value): value is string => typeof value === "string")
@@ -649,20 +633,6 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
         node.abilityCost = abilityCost
     }
 
-    for (const node of nodes) {
-        const resolved = classifyNode(node.id, {
-            name: node.name,
-            requirements: node.requirements,
-            links: node.links,
-            locks: node.locks,
-            page: node.page,
-            slot: node.slot,
-            coordinates: node.coordinates,
-        }, byId)
-        node.archetype = resolved.archetype
-        node.nodeColor = resolved.nodeColor
-    }
-
     return {
         classKey,
         nodes,
@@ -673,27 +643,49 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
 async function loadAbilityTree(classKey: string, forceRefresh: boolean): Promise<AbilityTreeSummary> {
     const url = `${ABILITY_TREE_URL}/${classKey}`
     const cacheFile = path.join(os.tmpdir(), `wynncraft-ability-tree-${classKey}.json`)
+    let stalePayload: unknown
 
-    if (!forceRefresh) {
-        try {
-            const cached = await fs.readFile(cacheFile, "utf8")
-            const parsed = tryParseJson(cached)
-            if (parsed !== undefined) {
+    try {
+        const stats = await fs.stat(cacheFile)
+        const cached = await fs.readFile(cacheFile, "utf8")
+        const parsed = tryParseJson(cached)
+
+        if (parsed !== undefined) {
+            stalePayload = parsed
+            const isFresh = Date.now() - stats.mtimeMs <= CACHE_MAX_AGE_MS
+            if (!forceRefresh && isFresh) {
                 return buildAbilityTreeSummary(classKey, parsed)
             }
-        } catch {
-            // Ignore missing or invalid cache and fetch live data instead.
         }
+    } catch {
+        // Ignore missing/unreadable cache and fetch live data instead.
     }
 
-    const text = await fetchText(url)
-    const payload = tryParseJson(text)
-    if (payload === undefined) {
-        throw new Error(`No valid JSON was returned for class tree "${classKey}".`)
-    }
+    try {
+        const text = await fetchText(url)
+        const payload = tryParseJson(text)
+        if (payload === undefined) {
+            throw new Error(`No valid JSON was returned for class tree "${classKey}".`)
+        }
 
-    await fs.writeFile(cacheFile, text).catch(() => undefined)
-    return buildAbilityTreeSummary(classKey, payload)
+        // Write atomically so an interrupted write cannot leave a truncated cache.
+        try {
+            const temporaryFile = `${cacheFile}.${process.pid}.tmp`
+            await fs.writeFile(temporaryFile, text)
+            await fs.rename(temporaryFile, cacheFile)
+        } catch {
+            // Caching is optional; the fetched data can still be used.
+        }
+        return buildAbilityTreeSummary(classKey, payload)
+    } catch (error) {
+        if (stalePayload !== undefined) {
+            console.warn(
+                `Could not refresh ability tree for "${classKey}" (${error instanceof Error ? error.message : String(error)}); using cached data.`
+            )
+            return buildAbilityTreeSummary(classKey, stalePayload)
+        }
+        throw error
+    }
 }
 
 function findAbilityTreeNodes(tree: AbilityTreeSummary, query: string): AbilityNode[] {
@@ -741,8 +733,8 @@ function getRequirementChain(tree: AbilityTreeSummary, target: AbilityNode): Abi
     const queue: string[] = [...target.links]
     const chain: AbilityNode[] = []
 
-    while (queue.length > 0) {
-        const id = queue.shift()
+    for (let index = 0; index < queue.length; index++) {
+        const id = queue[index]
         if (!id || visited.has(id)) {
             continue
         }
@@ -779,7 +771,10 @@ function printAbilityTreeNodeDetails(tree: AbilityTreeSummary, node: AbilityNode
     if (Object.keys(node.requirements).length > 0) {
         console.log("Requirements:")
         for (const [key, value] of Object.entries(node.requirements)) {
-            console.log(`  - ${key}: ${value}`)
+            const renderedValue = value !== null && typeof value === "object"
+                ? JSON.stringify(value)
+                : String(value)
+            console.log(`  - ${key}: ${renderedValue}`)
         }
     } else {
         console.log("Requirements: none")
@@ -940,9 +935,17 @@ function printClassList(classes: ClassSummary[]): void {
     console.clear()
     console.log("Classes:")
 
+    const orderedKeys = new Set<string>()
     for (const key of EXPECTED_CLASS_KEYS) {
         const entry = getClassByKey(classes, key)
         if (entry) {
+            console.log(`  - ${entry.name} (${entry.key})`)
+            orderedKeys.add(entry.key)
+        }
+    }
+
+    for (const entry of classes) {
+        if (!orderedKeys.has(entry.key)) {
             console.log(`  - ${entry.name} (${entry.key})`)
         }
     }
