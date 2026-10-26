@@ -10,7 +10,7 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 - [x] Create and run `src/index.ts`.
 - [x] Connect to the Wynncraft API.
 - [x] Work on **API → Items**.
-- [ ] Work on **API → Classes**.
+- [x] Work on **API → Classes**.
 
 # API
 
@@ -139,7 +139,7 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ---
 
-## Classes — Incomplete
+## Classes — Complete (first pass)
 
 **Goal:** Request the class database and inspect the returned data before deciding how to categorize and articulate it. This should not be mixed into the item API flow: the class data is a separate concept from item data, and the ability tree is a class-specific system rather than an item.
 
@@ -147,28 +147,36 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ### Class Database
 
-- [ ] Request the class list and inspect the response to confirm which fields represent the class identity and display name.
-- [ ] Verify that the API returns all five playable classes (`archer`, `warrior`, `assassin`, `mage`, `shaman`) and note any class-specific metadata that is available.
-- [ ] Decide how to model a class in code without conflating it with items, item data caches, or the item fetch workflow.
-- [ ] Create a dedicated TypeScript entry for class work (for example `src/classes.ts` or a similar class-focused file) so the class pipeline remains isolated from the item pipeline.
+- [x] Request the class list and inspect the response to confirm which fields represent the class identity and display name.
+- [x] Verify that the API returns all five playable classes (`archer`, `warrior`, `assassin`, `mage`, `shaman`) and note any class-specific metadata that is available.
+- [x] Decide how to model a class in code without conflating it with items, item data caches, or the item fetch workflow.
+- [x] Create a dedicated TypeScript entry for class work (for example `src/classes.ts` or a similar class-focused file) so the class pipeline remains isolated from the item pipeline.
 
-**Example report:**
+**Observed report:**
 
-- Archer: "Archer (Hunter)", Archetype List, Class & Archetype Description
-- Warrior: "Warrior (Knight)", Archetype List, Class & Archetype Description
-- Assassin: "Assassin (Ninja)", Archetype List, Class & Archetype Description
-- Mage: "Mage (Dark Wizard)", Archetype List, Class & Archetype Description
-- Shaman: "Shaman (Skyseer)", Archetype List, Class & Archetype Description
+- Archer: "Archer (Hunter)" | overallDifficulty: 1
+- Warrior: "Warrior (Knight)" | overallDifficulty: 2
+- Assassin: "Assassin (Ninja)" | overallDifficulty: 2
+- Mage: "Mage (Dark Wizard)" | overallDifficulty: 1
+- Shaman: "Shaman (Skyseer)" | overallDifficulty: 3
 
-### Class Characteristics — Planned
+### Class Characteristics — Confirmed for first pass
 
-- [ ] Distinguish the five classes from each other using the class data itself rather than by assuming the same structure as items.
-- [ ] Confirm which class-level traits are stable enough to model as shared metadata:
+- [x] Distinguish the five classes from each other using the class data itself rather than by assuming the same structure as items.
+- [x] Confirm which class-level traits are stable enough to model as shared metadata:
   - most classes do not share the same base resistances
   - classes use different weapons or weapon styles
   - classes have distinct class identities that are not defined only by their ability tree
-- [ ] Decide which of these traits should become normalized class fields in the project (for example: display name, class key, weapon type, base resistances, difficulty, and notes).
-- [ ] Ignore ability-tree detail for the first pass; we do not need to model it right now because it is a separate system from the general class summary.
+- [x] Decide which of these traits should become normalized class fields in the project (for example: display name, class key, weapon type, base resistances, difficulty, and notes).
+- [x] Ignore ability-tree detail for the first pass; we do not need to model it right now because it is a separate system from the general class summary.
+
+**First-pass model:**
+
+```ts
+{ key: string, name: string, overallDifficulty: number }
+```
+
+This is all the public class API currently exposes; future work can add richer class metadata when those fields are available from the API or a separate data source.
 
 ---
 

@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx src/index.ts"
+    "test": "tsc --noEmit",
+    "dev": "tsx src/fetch_classes.ts",
+    "classes": "tsx src/fetch_classes.ts"
   },
   "keywords": [],
   "author": "",
