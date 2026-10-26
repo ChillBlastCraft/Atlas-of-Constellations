@@ -96,6 +96,34 @@ type ArchetypeEntry = {
     description: string
 }
 
+type AbilityNode = {
+    id: string
+    name: string
+    description: string
+    page: number
+    slot: number
+    coordinates: { x: number; y: number }
+    requirements: Record<string, unknown>
+    links: string[]
+    locks: string[]
+    archetype: string
+    nodeColor: "green" | "white" | "yellow" | "purple" | "blue" | "red" | "ultimate" | "other"
+    abilityCost: number
+}
+
+type RelevanceNodes = {
+    directDependencies: AbilityNode[]
+    dependentNodes: AbilityNode[]
+    sameCategory: AbilityNode[]
+    sameArchetype: AbilityNode[]
+}
+
+type AbilityTreeSummary = {
+    classKey: string
+    nodes: AbilityNode[]
+    byId: Map<string, AbilityNode>
+}
+
 type JsonObject = Record<string, unknown>
 
 type QuestionInterface = {
@@ -148,6 +176,20 @@ function extractClassEntries(payload: unknown): [string, JsonObject][] {
 /* Trims and lowercases a search string so "  Warrior " matches "warrior". */
 function normalizeQuery(input: string): string {
     return input.trim().toLowerCase()
+}
+
+function stripNodeMarkup(value: string): string {
+    return value
+        .replace(/<[^>]+>/g, " ")
+        .replace(/<\/?br\s*\/?>/gi, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/\s+/g, " ")
+        .trim()
 }
 
 /* Does `value` contain `wanted`? `wanted` must already be normalized. */
@@ -293,12 +335,16 @@ async function loadArchetypes(classKey: string): Promise<ArchetypeEntry[]> {
                     return undefined
                 }
 
-                const rawName = typeof value.name === "string" ? value.name : key
-                const description = typeof value.description === "string" ? value.description : ""
+                let description
+                if (typeof value.description === "string") {
+                    description = value.description
+                } else {
+                    description = ""
+                }
 
                 return {
                     key,
-                    name: stripMarkup(rawName),
+                    name: key,
                     description: stripMarkup(description),
                 }
             })
@@ -365,7 +411,7 @@ async function enrichClasses(classes: ClassSummary[]): Promise<ClassSummary[]> {
     for (const entry of enriched) {
         const archetypes = await loadArchetypes(entry.key)
 
-        entry.archetypes = archetypes.map((archetype) => archetype.name)
+        entry.archetypes = archetypes.map((archetype) => archetype.key)
 
         const metadata = CLASS_METADATA[entry.key]
         if (metadata) {
@@ -376,6 +422,517 @@ async function enrichClasses(classes: ClassSummary[]): Promise<ClassSummary[]> {
     }
 
     return enriched
+}
+
+function extractExplicitArchetype(requirements: Record<string, unknown> | undefined): string | undefined {
+    if (!requirements || !Object.prototype.hasOwnProperty.call(requirements, "ARCHETYPE")) {
+        return undefined
+    }
+
+    const rawValue = requirements.ARCHETYPE
+    if (!isObject(rawValue)) {
+        return undefined
+    }
+
+    const internalKey = typeof rawValue.key === "string" ? rawValue.key.trim() : ""
+    if (internalKey !== "") {
+        return internalKey
+    }
+
+    const name = typeof rawValue.name === "string" ? rawValue.name.trim() : ""
+    return name !== "" ? name : undefined
+}
+
+function resolveArchetypeFromNodeChain(
+    nodeId: string,
+    nodeMap: Map<string, AbilityNode>,
+    visited = new Set<string>()
+): string | undefined {
+    if (visited.has(nodeId)) {
+        return undefined
+    }
+    visited.add(nodeId)
+
+    const node = nodeMap.get(nodeId)
+    if (!node) {
+        return undefined
+    }
+
+    const explicit = extractExplicitArchetype(node.requirements)
+    if (explicit) {
+        return explicit
+    }
+
+    const parentIds = Array.isArray(node.requirements.NODE)
+        ? node.requirements.NODE.filter((value): value is string => typeof value === "string")
+        : []
+
+    for (const parentId of parentIds) {
+        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap, visited)
+        if (resolved) {
+            return resolved
+        }
+    }
+
+    return undefined
+}
+
+function inferArchetypeNodeGroup(nodeId: string, rawNode: JsonObject, nodeMap: Map<string, AbilityNode>): string {
+    const requirements = isObject(rawNode.requirements) ? rawNode.requirements : {}
+    const explicit = extractExplicitArchetype(requirements)
+    if (explicit) {
+        return explicit
+    }
+
+    const parentIds = isObject(rawNode.requirements)
+        ? (Array.isArray(rawNode.requirements.NODE)
+            ? rawNode.requirements.NODE.filter((value): value is string => typeof value === "string")
+            : [])
+        : []
+
+    for (const parentId of parentIds) {
+        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap)
+        if (resolved) {
+            return resolved
+        }
+    }
+
+    return "archetypeless"
+}
+
+function extractNodeColor(rawName: string): AbilityNode["nodeColor"] {
+    const colorMatch = rawName.match(/color:\s*(#[0-9A-Fa-f]{3,8})/i)
+    if (!colorMatch) {
+        return "other"
+    }
+
+    const color = colorMatch[1]
+    if (color === undefined) {
+        return "other"
+    }
+
+    const hex = color.toLowerCase()
+    const green = ["#87dd47", "#7ae77a", "#4caf50"]
+    const white = ["#ffffff", "#aaaaaa", "#d9d9d9", "#f0f0f0"]
+    const yellow = ["#ffe14d", "#f0c435", "#ffaa00", "#ffd452", "#f3c75a"]
+    const purple = ["#f747c2", "#ac22ac", "#c54bff", "#b34cff"]
+    const blue = ["#99e9ff", "#5eb3ff", "#2a9dff", "#70d6ff"]
+    const red = ["#ff4545", "#ff5555", "#ff6b6b", "#ff7a59"]
+    const ultimate = ["#a66fff", "#8a6cff", "#b07cff"]
+
+    if (green.includes(hex)) return "green"
+    if (white.includes(hex)) return "white"
+    if (yellow.includes(hex)) return "yellow"
+    if (purple.includes(hex)) return "purple"
+    if (blue.includes(hex)) return "blue"
+    if (red.includes(hex)) return "red"
+    if (ultimate.includes(hex)) return "ultimate"
+
+    const rgb = hex.replace("#", "")
+    const normalized = rgb.length === 3
+        ? rgb.split("").map((char) => char + char).join("")
+        : rgb
+
+    const r = Number.parseInt(normalized.slice(0, 2), 16)
+    const g = Number.parseInt(normalized.slice(2, 4), 16)
+    const b = Number.parseInt(normalized.slice(4, 6), 16)
+    const brightness = (r + g + b) / 3
+    const max = Math.max(r, g, b)
+    const min = Math.min(r, g, b)
+    const saturation = max > 0 ? (max - min) / max : 0
+
+    if (brightness > 180 && saturation < 0.2) return "white"
+    if (g >= r && g >= b && saturation > 0.12) return "yellow"
+    if (r >= g && r >= b && saturation > 0.2) return "red"
+    if (b >= r && b >= g && saturation > 0.18) return "blue"
+    if (g > r && r > b && saturation > 0.2) return "green"
+    if (max > 180 && brightness > 140 && saturation > 0.25) return "purple"
+
+    return "other"
+}
+
+function classifyNode(nodeId: string, rawNode: JsonObject, nodeMap: Map<string, AbilityNode>): { archetype: string; nodeColor: AbilityNode["nodeColor"] } {
+    const rawName = typeof rawNode.name === "string" ? rawNode.name : nodeId
+    return {
+        archetype: inferArchetypeNodeGroup(nodeId, rawNode, nodeMap),
+        nodeColor: extractNodeColor(rawName),
+    }
+}
+
+function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTreeSummary {
+    if (!isObject(payload)) {
+        throw new Error(`Invalid ability-tree payload for class "${classKey}".`)
+    }
+
+    const pages = payload.pages
+    if (!isObject(pages)) {
+        throw new Error(`Ability tree for "${classKey}" does not contain a "pages" object.`)
+    }
+
+    const nodes: AbilityNode[] = []
+    const byId = new Map<string, AbilityNode>()
+
+    for (const [pageIndex, rawPage] of Object.entries(pages)) {
+        if (!isObject(rawPage)) {
+            continue
+        }
+
+        for (const [nodeId, rawNode] of Object.entries(rawPage)) {
+            if (!isObject(rawNode)) {
+                continue
+            }
+
+            const rawName = typeof rawNode.name === "string" ? rawNode.name : nodeId
+            const provisionalNode: AbilityNode = {
+                id: nodeId,
+                name: stripNodeMarkup(rawName),
+                description: "",
+                page: Number(pageIndex),
+                slot: typeof rawNode.slot === "number" ? rawNode.slot : 0,
+                coordinates: {
+                    x: isObject(rawNode.coordinates) && typeof rawNode.coordinates.x === "number" ? rawNode.coordinates.x : 0,
+                    y: isObject(rawNode.coordinates) && typeof rawNode.coordinates.y === "number" ? rawNode.coordinates.y : 0,
+                },
+                requirements: isObject(rawNode.requirements) ? { ...rawNode.requirements } : {},
+                links: Array.isArray(rawNode.links)
+                    ? rawNode.links.filter((value): value is string => typeof value === "string")
+                    : [],
+                locks: Array.isArray(rawNode.locks)
+                    ? rawNode.locks.filter((value): value is string => typeof value === "string")
+                    : [],
+                archetype: "archetypeless",
+                nodeColor: "other",
+                abilityCost: 0,
+            }
+            byId.set(nodeId, provisionalNode)
+            nodes.push(provisionalNode)
+        }
+    }
+
+    for (const node of nodes) {
+        const rawNode = Object.entries(pages)
+            .flatMap(([, rawPage]) => isObject(rawPage) ? Object.entries(rawPage) : [])
+            .find(([entryId]) => entryId === node.id)?.[1]
+
+        if (!isObject(rawNode)) {
+            continue
+        }
+
+        const requirements: Record<string, unknown> = isObject(rawNode.requirements) ? { ...rawNode.requirements } : {}
+
+        let descriptionText = ""
+        if (Array.isArray(rawNode.description)) {
+            descriptionText = rawNode.description.join(" ")
+        } else if (typeof rawNode.description === "string") {
+            descriptionText = rawNode.description
+        }
+
+        const classification = classifyNode(node.id, rawNode, byId)
+        const abilityCost = Number(
+            (isObject(rawNode.requirements) && typeof rawNode.requirements.ABILITY_POINTS === "number")
+                ? rawNode.requirements.ABILITY_POINTS
+                : (isObject(rawNode.requirements) && typeof rawNode.requirements.ABILITY_POINTS === "string")
+                    ? Number(rawNode.requirements.ABILITY_POINTS)
+                    : 0
+        )
+
+        node.description = stripNodeMarkup(descriptionText)
+        node.requirements = requirements
+        node.links = Array.isArray(rawNode.links)
+            ? rawNode.links.filter((value): value is string => typeof value === "string")
+            : []
+        node.locks = Array.isArray(rawNode.locks)
+            ? rawNode.locks.filter((value): value is string => typeof value === "string")
+            : []
+        node.archetype = classification.archetype
+        node.nodeColor = classification.nodeColor
+        node.abilityCost = abilityCost
+    }
+
+    for (const node of nodes) {
+        const resolved = classifyNode(node.id, {
+            name: node.name,
+            requirements: node.requirements,
+            links: node.links,
+            locks: node.locks,
+            page: node.page,
+            slot: node.slot,
+            coordinates: node.coordinates,
+        }, byId)
+        node.archetype = resolved.archetype
+        node.nodeColor = resolved.nodeColor
+    }
+
+    return {
+        classKey,
+        nodes,
+        byId,
+    }
+}
+
+async function loadAbilityTree(classKey: string, forceRefresh: boolean): Promise<AbilityTreeSummary> {
+    const url = `${ABILITY_TREE_URL}/${classKey}`
+    const cacheFile = path.join(os.tmpdir(), `wynncraft-ability-tree-${classKey}.json`)
+
+    if (!forceRefresh) {
+        try {
+            const cached = await fs.readFile(cacheFile, "utf8")
+            const parsed = tryParseJson(cached)
+            if (parsed !== undefined) {
+                return buildAbilityTreeSummary(classKey, parsed)
+            }
+        } catch {
+            // Ignore missing or invalid cache and fetch live data instead.
+        }
+    }
+
+    const text = await fetchText(url)
+    const payload = tryParseJson(text)
+    if (payload === undefined) {
+        throw new Error(`No valid JSON was returned for class tree "${classKey}".`)
+    }
+
+    await fs.writeFile(cacheFile, text).catch(() => undefined)
+    return buildAbilityTreeSummary(classKey, payload)
+}
+
+function findAbilityTreeNodes(tree: AbilityTreeSummary, query: string): AbilityNode[] {
+    const wanted = normalizeQuery(query)
+    if (wanted === "") {
+        return []
+    }
+
+    const exact = tree.nodes.filter((entry) =>
+        normalizeQuery(entry.id) === wanted || normalizeQuery(entry.name) === wanted
+    )
+    if (exact.length > 0) {
+        return exact
+    }
+
+    return tree.nodes.filter((entry) =>
+        normalizeQuery(entry.id).includes(wanted) || normalizeQuery(entry.name).includes(wanted)
+    )
+}
+
+function getRelevanceNodes(tree: AbilityTreeSummary, target: AbilityNode): RelevanceNodes {
+    const sameCategory = tree.nodes.filter((entry) =>
+        entry.id !== target.id && entry.nodeColor === target.nodeColor && entry.nodeColor !== "other"
+    )
+    const sameArchetype = tree.nodes.filter((entry) =>
+        entry.id !== target.id && entry.archetype === target.archetype && entry.archetype !== "archetypeless"
+    )
+    const directDependencies = target.links
+        .map((linkedId) => tree.byId.get(linkedId))
+        .filter((entry): entry is AbilityNode => entry !== undefined)
+    const dependentNodes = tree.nodes.filter((entry) =>
+        entry.id !== target.id && entry.links.includes(target.id)
+    )
+
+    return {
+        directDependencies,
+        dependentNodes,
+        sameCategory,
+        sameArchetype,
+    }
+}
+
+function getRequirementChain(tree: AbilityTreeSummary, target: AbilityNode): AbilityNode[] {
+    const visited = new Set<string>()
+    const queue: string[] = [...target.links]
+    const chain: AbilityNode[] = []
+
+    while (queue.length > 0) {
+        const id = queue.shift()
+        if (!id || visited.has(id)) {
+            continue
+        }
+        visited.add(id)
+        const nextNode = tree.byId.get(id)
+        if (!nextNode) {
+            continue
+        }
+        chain.push(nextNode)
+        for (const linked of nextNode.links) {
+            if (!visited.has(linked)) {
+                queue.push(linked)
+            }
+        }
+    }
+
+    return chain
+}
+
+function printAbilityTreeNodeDetails(tree: AbilityTreeSummary, node: AbilityNode): void {
+    const relevance = getRelevanceNodes(tree, node)
+    const requirementChain = getRequirementChain(tree, node)
+    console.log(`Ability tree for ${tree.classKey}:`)
+    console.log(`Node ID: ${node.id}`)
+    console.log(`Name: ${node.name}`)
+    console.log(`Node color: ${node.nodeColor}`)
+    console.log(`Ability cost: ${node.abilityCost} AP`)
+    console.log(`Archetype: ${node.archetype === "archetypeless" ? "archetypeless" : node.archetype}`)
+    console.log(`Page: ${node.page}`)
+    console.log(`Slot: ${node.slot}`)
+    console.log(`Coordinates: x=${node.coordinates.x}, y=${node.coordinates.y}`)
+    console.log(`Description: ${node.description || "No description provided."}`)
+
+    if (Object.keys(node.requirements).length > 0) {
+        console.log("Requirements:")
+        for (const [key, value] of Object.entries(node.requirements)) {
+            console.log(`  - ${key}: ${value}`)
+        }
+    } else {
+        console.log("Requirements: none")
+    }
+
+    if (node.links.length > 0) {
+        console.log(`Connected nodes: ${node.links.join(", ")}`)
+    } else {
+        console.log("Connected nodes: none")
+    }
+
+    if (node.locks.length > 0) {
+        console.log(`Locks: ${node.locks.join(", ")}`)
+    }
+
+    if (requirementChain.length === 0) {
+        console.log("Requirement chain: none")
+    } else {
+        console.log("Requirement chain:")
+        for (const entry of requirementChain) {
+            console.log(`  - ${entry.name} (${entry.id})`)
+        }
+    }
+
+    console.log("\nRelevance nodes:")
+    if (relevance.directDependencies.length === 0) {
+        console.log("  - Direct dependencies: none")
+    } else {
+        console.log("  - Direct dependencies:")
+        for (const entry of relevance.directDependencies) {
+            console.log(`      • ${entry.name} (${entry.id})`)
+        }
+    }
+
+    if (relevance.dependentNodes.length === 0) {
+        console.log("  - Dependents: none")
+    } else {
+        console.log("  - Dependents:")
+        for (const entry of relevance.dependentNodes) {
+            console.log(`      • ${entry.name} (${entry.id})`)
+        }
+    }
+
+    if (relevance.sameCategory.length === 0) {
+        console.log("  - Same node color: none")
+    } else {
+        console.log("  - Same node color:")
+        for (const entry of relevance.sameCategory.slice(0, 5)) {
+            console.log(`      • ${entry.name} (${entry.id})`)
+        }
+    }
+
+    if (relevance.sameArchetype.length === 0) {
+        console.log("  - Same archetype: none")
+    } else {
+        console.log("  - Same archetype:")
+        for (const entry of relevance.sameArchetype.slice(0, 5)) {
+            console.log(`      • ${entry.name} (${entry.id})`)
+        }
+    }
+}
+
+function printAbilityTreeCategories(tree: AbilityTreeSummary): void {
+    const byColor = new Map<AbilityNode["nodeColor"], Map<string, AbilityNode[]>>()
+
+    for (const node of tree.nodes) {
+        const colorMap: Map<string, AbilityNode[]> = byColor.get(node.nodeColor) ?? new Map<string, AbilityNode[]>()
+        const archetypeKey = node.archetype === "archetypeless" ? "archetypeless" : node.archetype
+        const grouped: AbilityNode[] = colorMap.get(archetypeKey) ?? []
+        grouped.push(node)
+        colorMap.set(archetypeKey, grouped)
+        byColor.set(node.nodeColor, colorMap)
+    }
+
+    const sortedColors = Array.from(byColor.keys()).sort((a, b) => a.localeCompare(b))
+
+    console.log("\nTree categories:")
+    for (const color of sortedColors) {
+        const colorMap = byColor.get(color) ?? new Map<string, AbilityNode[]>()
+        console.log(`  - ${color}:`)
+        for (const [archetypeKey, nodes] of Array.from(colorMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+            const names = nodes.map((entry: AbilityNode) => entry.name).slice(0, 10)
+            const suffix = nodes.length > names.length ? " ..." : ""
+            console.log(`      • ${archetypeKey}: ${names.join(", ")}${suffix}`)
+        }
+    }
+}
+
+async function inspectClassAbilityTree(rl: QuestionInterface, classes: ClassSummary[], forceRefresh: boolean): Promise<void> {
+    const query = (await rl.question("\nEnter a class name or key to inspect its ability tree: ")).trim()
+    if (query === "") {
+        console.log("No class entered.")
+        return
+    }
+
+    const matches = findClasses(classes, query)
+    if (matches.length === 0) {
+        console.log(`No class found for "${query}".`)
+        return
+    }
+
+    const match = matches[0]
+    if (!match) {
+        console.log(`No class found for "${query}".`)
+        return
+    }
+
+    const tree = await loadAbilityTree(match.key, forceRefresh)
+
+    while (true) {
+        console.clear()
+        console.log(`Ability tree for ${match.name} (${match.key})`)
+        console.log(`Total nodes: ${tree.nodes.length}`)
+        printAbilityTreeCategories(tree)
+        console.log("\nOptions:")
+        console.log("  1. Inspect a specific node")
+        console.log("  2. Quit to main menu")
+
+        const choice = (await rl.question("Choose an option: ")).trim()
+        if (choice === "2") {
+            return
+        }
+        if (choice !== "1") {
+            console.log("Please choose 1 or 2.")
+            await returnToMenu(rl)
+            continue
+        }
+
+        const nodeQuery = (await rl.question("Search for a node ID or name: ")).trim()
+        if (nodeQuery === "") {
+            console.log("No node entered.")
+            await returnToMenu(rl)
+            continue
+        }
+
+        const nodeMatches = findAbilityTreeNodes(tree, nodeQuery)
+        if (nodeMatches.length === 0) {
+            console.log(`No node found for "${nodeQuery}" in the ${match.key} tree.`)
+            await returnToMenu(rl)
+            continue
+        }
+
+        const selected = nodeMatches[0]
+        if (!selected) {
+            console.log(`No node found for "${nodeQuery}" in the ${match.key} tree.`)
+            await returnToMenu(rl)
+            continue
+        }
+
+        console.clear()
+        printAbilityTreeNodeDetails(tree, selected)
+        await returnToMenu(rl)
+    }
 }
 
 /* Prints the list of all classes. */
@@ -425,12 +982,13 @@ function printMenu(): void {
     console.log("Choose an option:")
     console.log("1. List of Classes")
     console.log("2. Detailed Information About a Specific Class")
-    console.log("3. View Raw JSON")
-    console.log("4. Quit")
+    console.log("3. Inspect a Class Ability Tree")
+    console.log("4. View Raw JSON")
+    console.log("5. Quit")
 }
 
 /* Runs the class menu. */
-async function runMenu(rl: QuestionInterface, classes: ClassSummary[]): Promise<void> {
+async function runMenu(rl: QuestionInterface, classes: ClassSummary[], forceRefresh: boolean): Promise<void> {
     let isRunning = true
 
     while (isRunning) {
@@ -470,14 +1028,18 @@ async function runMenu(rl: QuestionInterface, classes: ClassSummary[]): Promise<
                 break
             }
             case "3":
-                printClassJson(classes)
+                await inspectClassAbilityTree(rl, classes, forceRefresh)
                 await returnToMenu(rl)
                 break
             case "4":
+                printClassJson(classes)
+                await returnToMenu(rl)
+                break
+            case "5":
                 isRunning = false
                 break
             default:
-                console.log("Please enter a valid option from 1 to 4.")
+                console.log("Please enter a valid option from 1 to 5.")
                 await returnToMenu(rl)
         }
     }
@@ -508,7 +1070,7 @@ async function main(): Promise<void> {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 
     try {
-        await runMenu(rl, classes)
+        await runMenu(rl, classes, forceRefresh)
     } finally {
         rl.close()
     }

@@ -206,25 +206,26 @@ This is the current model used by the project: API fields for identity/archetype
 
 ## AT — In Progress
 
-### Aspects — In Progress
+### Tree — In Progress
 
-**Goal:** Request each class's ability tree JSON, normalize the nodes, and expose the most useful relationships inside the project.
+**Goal:** Request each class's ability tree, normalize the nodes, and expose the most useful relationships inside the project.
 
 - [ ] Request `GET /v3/ability/tree/[class]` for all playable classes and confirm the response shape.
 - [ ] Flatten each tree into a node list keyed by node ID so we can search, categorize, and inspect individual nodes.
 - [ ] Categorize nodes using either the node's implicit type or the archetype requirement/association, or both.
-- [ ] Add search and detail views for a specific node, including its description, AP cost, requirement chain, and related nodes.
+- [ ] Add search and detail views for a specific node, including its description, AP cost and requirement chain.
 - [ ] Show relevance for a node by listing other nodes that share its concept, archetype, or dependency path.
-- [ ] Implement an optimal-path search that minimizes required AP to reach a target node and prints the route and total AP spent.
-- [ ] Let a user choose a class (for example: Shaman) and then inspect a node such as Totem, Invigorating Wave, or other high-value synergy picks.
+- [ ] Implement an optimal-path search that minimizes required AP to reach a target node and prints the route and total AP spent. This will require study for certain sorting algorithms.
 
 #### Example expected workflow
 
 1. Select a class tree, for example Shaman.
 2. Choose a node such as Totem.
-3. View a summary that includes the node's description and its relevance, including related Sylvan/Ritualist/Bloodmagic concepts that branch off the same ideas.
+3. View a summary that includes the node's description and its relevance, through node requirement.
 4. Search for a target node such as Invigorating Wave.
 5. Compute the cheapest path to that node in AP terms, then display the route and total AP cost.
 6. Optionally continue exploring each path node and record what it improves or unlocks in the build.
 
 This is the foundation for future build optimization work because small "traveling" nodes can reduce mana cost and improve sustain, which increases the value of raw stats such as damage.
+
+### Aspects — Not Planned
