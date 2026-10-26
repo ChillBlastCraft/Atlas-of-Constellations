@@ -139,44 +139,68 @@ Build a TypeScript project that retrieves Wynncraft game data from its API and o
 
 ---
 
-## Classes — Complete (first pass)
+## Classes — Complete (api identity + archetype metadata)
 
 **Goal:** Request the class database and inspect the returned data before deciding how to categorize and articulate it. This should not be mixed into the item API flow: the class data is a separate concept from item data, and the ability tree is a class-specific system rather than an item.
 
-- Endpoint: `GET /v3/classes`
+### Endpoints and findings
+
+- Primary class identity endpoint: `GET /v3/classes`
+- Archetype endpoint: `GET /v3/ability/tree/[class]`
 
 ### Class Database
 
 - [x] Request the class list and inspect the response to confirm which fields represent the class identity and display name.
 - [x] Verify that the API returns all five playable classes (`archer`, `warrior`, `assassin`, `mage`, `shaman`) and note any class-specific metadata that is available.
 - [x] Decide how to model a class in code without conflating it with items, item data caches, or the item fetch workflow.
-- [x] Create a dedicated TypeScript entry for class work (for example `src/classes.ts` or a similar class-focused file) so the class pipeline remains isolated from the item pipeline.
+- [x] Create a dedicated TypeScript entry for class work so the class pipeline remains isolated from the item pipeline.
+- [x] Confirm the public class API is minimal: it exposes only the class key, display name, and `overallDifficulty`.
+- [x] Confirm the archetype list is available separately from `/v3/ability/tree/[class]`, including names and descriptions.
 
 **Observed report:**
 
-- Archer: "Archer (Hunter)" | overallDifficulty: 1
-- Warrior: "Warrior (Knight)" | overallDifficulty: 2
-- Assassin: "Assassin (Ninja)" | overallDifficulty: 2
-- Mage: "Mage (Dark Wizard)" | overallDifficulty: 1
-- Shaman: "Shaman (Skyseer)" | overallDifficulty: 3
+  - Archer (Hunter) (archer)
+  - Warrior (Knight) (warrior)
+  - Assassin (Ninja) (assassin)
+  - Mage (Dark Wizard) (mage)
+  - Shaman (Skyseer) (shaman)
 
-### Class Characteristics — Confirmed for first pass
+
+### Class Characteristics — Project metadata model
 
 - [x] Distinguish the five classes from each other using the class data itself rather than by assuming the same structure as items.
-- [x] Confirm which class-level traits are stable enough to model as shared metadata:
-  - most classes do not share the same base resistances
-  - classes use different weapons or weapon styles
-  - classes have distinct class identities that are not defined only by their ability tree
-- [x] Decide which of these traits should become normalized class fields in the project (for example: display name, class key, weapon type, base resistances, difficulty, and notes).
-- [x] Ignore ability-tree detail for the first pass; we do not need to model it right now because it is a separate system from the general class summary.
+- [x] Confirm that archetypes are not part of `/v3/classes`; they are available via `/v3/ability/tree/[class]`.
+- [x] Confirm that weapon type and class base resistance are not exposed by the public class API and must be kept as project-defined metadata.
+- [x] Decide which traits should become normalized class fields in the project:
+  - display name
+  - class key
+  - weapon type
+  - class base resistance percentage
+  - archetypes
+  - notes
 
-**First-pass model:**
+**Project-defined class metadata**
 
 ```ts
-{ key: string, name: string, overallDifficulty: number }
+{
+  key: string,
+  name: string,
+  weaponType: "bow" | "spear" | "dagger" | "wand" | "relic",
+  baseResistance: 70 | 100 | 80 | 60,
+  archetypes: string[],
+  notes: string
+}
 ```
 
-This is all the public class API currently exposes; future work can add richer class metadata when those fields are available from the API or a separate data source.
+**Current class defaults (project metadata):**
+
+- Archer: weaponType = `bow`, baseResistance = `70%`
+- Warrior: weaponType = `spear`, baseResistance = `100%`
+- Assassin: weaponType = `dagger`, baseResistance = `100%`
+- Mage: weaponType = `wand`, baseResistance = `80%`
+- Shaman: weaponType = `relic`, baseResistance = `60%`
+
+This is the current model used by the project: API fields for identity/archetypes, and manual metadata for class gameplay data that the official API does not expose.
 
 ---
 
