@@ -96,10 +96,24 @@ type ArchetypeEntry = {
     description: string
 }
 
+type AbilityNodeColor = "green" | "white" | "yellow" | "purple" | "blue" | "red" | "ultimate" | "other"
+
+const NODE_COLOR_DESCRIPTIONS: Record<AbilityNodeColor, string> = {
+    green: "Cost 1 AP to unlock; these unlock casting a class-specific spell.",
+    white: "Cost 1 AP to unlock; these are basic upgrades, including cost reductions or bonuses to other abilities.",
+    yellow: "Cost 1 AP to unlock; these grant abilities or provide other abilities with new unique functions.",
+    purple: "Cost 2 AP to unlock; these are similar to yellow nodes but provide more significant abilities or bonuses.",
+    blue: "Cost 2 AP to unlock; these are core abilities in an archetype's progression and are usually defined on a case-by-case basis.",
+    red: "Cost 2 AP to unlock; these are the primary abilities that define an archetype's identity.",
+    ultimate: "Cost 2 AP to unlock; these are the final nodes in an archetype's branch and unlock casting the ultimate spell.",
+    other: "This node does not fit the standard archetype color categories.",
+}
+
 type AbilityNode = {
     id: string
     name: string
     description: string
+    noteDescription: string
     page: number
     slot: number
     coordinates: { x: number; y: number }
@@ -107,7 +121,7 @@ type AbilityNode = {
     links: string[]
     locks: string[]
     archetype: string
-    nodeColor: "green" | "white" | "yellow" | "purple" | "blue" | "red" | "ultimate" | "other"
+    nodeColor: AbilityNodeColor
     abilityCost: number
 }
 
@@ -122,6 +136,7 @@ type AbilityTreeSummary = {
     classKey: string
     nodes: AbilityNode[]
     byId: Map<string, AbilityNode>
+    archetypeNames: Map<string, string>
 }
 
 type JsonObject = Record<string, unknown>
@@ -171,6 +186,32 @@ function extractClassEntries(payload: unknown): [string, JsonObject][] {
         }
         return [key, value]
     })
+}
+
+/* Displays lowercase node color names with title casing for output. */
+function formatColorLabel(value: string): string {
+    return value
+        .trim()
+        .split(/[_\s-]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(" ")
+}
+
+/* Converts a raw archetype slug or name to a readable display label. */
+function formatArchetypeLabel(value: string): string {
+    const text = stripMarkup(value).trim()
+    if (text === "") {
+        return "Archetypeless"
+    }
+
+    return text
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/[_\-]+/g, " ")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(" ")
 }
 
 /* Trims and lowercases a search string so "  Warrior " matches "warrior". */
@@ -331,9 +372,10 @@ async function loadArchetypes(classKey: string): Promise<ArchetypeEntry[]> {
                     description = ""
                 }
 
+                const rawName = typeof value.name === "string" ? value.name : key
                 return {
                     key,
-                    name: key,
+                    name: formatArchetypeLabel(rawName),
                     description: stripMarkup(description),
                 }
             })
@@ -402,9 +444,17 @@ async function enrichClasses(classes: ClassSummary[]): Promise<ClassSummary[]> {
         const archetypes = await loadArchetypes(entry.key)
         return {
             ...entry,
-            archetypes: archetypes.map((archetype) => archetype.key),
+            archetypes: archetypes.map((archetype) => archetype.name),
         }
     }))
+}
+
+function getArchetypeDisplayName(key: string, names: Map<string, string>): string {
+    const rawValue = names.get(key)
+    if (rawValue && rawValue.trim() !== "") {
+        return formatArchetypeLabel(rawValue)
+    }
+    return formatArchetypeLabel(key)
 }
 
 function extractExplicitArchetype(requirements: Record<string, unknown> | undefined): string | undefined {
@@ -429,6 +479,7 @@ function extractExplicitArchetype(requirements: Record<string, unknown> | undefi
 function resolveArchetypeFromNodeChain(
     nodeId: string,
     nodeMap: Map<string, AbilityNode>,
+    archetypeNames: Map<string, string>,
     visited = new Set<string>()
 ): string | undefined {
     if (visited.has(nodeId)) {
@@ -443,7 +494,7 @@ function resolveArchetypeFromNodeChain(
 
     const explicit = extractExplicitArchetype(node.requirements)
     if (explicit) {
-        return explicit
+        return getArchetypeDisplayName(explicit, archetypeNames)
     }
 
     const parentIds = Array.isArray(node.requirements.NODE)
@@ -451,7 +502,7 @@ function resolveArchetypeFromNodeChain(
         : []
 
     for (const parentId of parentIds) {
-        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap, visited)
+        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap, archetypeNames, visited)
         if (resolved) {
             return resolved
         }
@@ -460,11 +511,16 @@ function resolveArchetypeFromNodeChain(
     return undefined
 }
 
-function inferArchetypeNodeGroup(nodeId: string, rawNode: JsonObject, nodeMap: Map<string, AbilityNode>): string {
+function inferArchetypeNodeGroup(
+    nodeId: string,
+    rawNode: JsonObject,
+    nodeMap: Map<string, AbilityNode>,
+    archetypeNames: Map<string, string>
+): string {
     const requirements = isObject(rawNode.requirements) ? rawNode.requirements : {}
     const explicit = extractExplicitArchetype(requirements)
     if (explicit) {
-        return explicit
+        return getArchetypeDisplayName(explicit, archetypeNames)
     }
 
     const parentIds = isObject(rawNode.requirements)
@@ -474,13 +530,13 @@ function inferArchetypeNodeGroup(nodeId: string, rawNode: JsonObject, nodeMap: M
         : []
 
     for (const parentId of parentIds) {
-        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap)
+        const resolved = resolveArchetypeFromNodeChain(parentId, nodeMap, archetypeNames)
         if (resolved) {
             return resolved
         }
     }
 
-    return "archetypeless"
+    return "Archetypeless"
 }
 
 function extractNodeColor(rawName: string): AbilityNode["nodeColor"] {
@@ -534,10 +590,15 @@ function extractNodeColor(rawName: string): AbilityNode["nodeColor"] {
     return "other"
 }
 
-function classifyNode(nodeId: string, rawNode: JsonObject, nodeMap: Map<string, AbilityNode>): { archetype: string; nodeColor: AbilityNode["nodeColor"] } {
+function classifyNode(
+    nodeId: string,
+    rawNode: JsonObject,
+    nodeMap: Map<string, AbilityNode>,
+    archetypeNames: Map<string, string>
+): { archetype: string; nodeColor: AbilityNode["nodeColor"] } {
     const rawName = typeof rawNode.name === "string" ? rawNode.name : nodeId
     return {
-        archetype: inferArchetypeNodeGroup(nodeId, rawNode, nodeMap),
+        archetype: inferArchetypeNodeGroup(nodeId, rawNode, nodeMap, archetypeNames),
         nodeColor: extractNodeColor(rawName),
     }
 }
@@ -555,6 +616,17 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
     const nodes: AbilityNode[] = []
     const byId = new Map<string, AbilityNode>()
     const rawNodesById = new Map<string, JsonObject>()
+    const archetypeNames = new Map<string, string>()
+
+    if (isObject(payload.archetypes)) {
+        for (const [key, rawArchetype] of Object.entries(payload.archetypes)) {
+            if (!isObject(rawArchetype)) {
+                continue
+            }
+            const rawName = typeof rawArchetype.name === "string" ? rawArchetype.name : key
+            archetypeNames.set(key, rawName)
+        }
+    }
 
     for (const [pageIndex, rawPage] of Object.entries(pages)) {
         if (!isObject(rawPage)) {
@@ -571,6 +643,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
                 id: nodeId,
                 name: stripMarkup(rawName),
                 description: "",
+                noteDescription: "",
                 page: Number(pageIndex),
                 slot: typeof rawNode.slot === "number" ? rawNode.slot : 0,
                 coordinates: {
@@ -609,7 +682,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
             descriptionText = rawNode.description
         }
 
-        const classification = classifyNode(node.id, rawNode, byId)
+        const classification = classifyNode(node.id, rawNode, byId, archetypeNames)
         const rawAbilityCost = isObject(rawNode.requirements)
             ? rawNode.requirements.ABILITY_POINTS
             : undefined
@@ -621,6 +694,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
         const abilityCost = Number.isFinite(parsedAbilityCost) ? parsedAbilityCost : 0
 
         node.description = stripMarkup(descriptionText)
+        node.noteDescription = NODE_COLOR_DESCRIPTIONS[classification.nodeColor] ?? NODE_COLOR_DESCRIPTIONS.other
         node.requirements = requirements
         node.links = Array.isArray(rawNode.links)
             ? rawNode.links.filter((value): value is string => typeof value === "string")
@@ -637,6 +711,7 @@ function buildAbilityTreeSummary(classKey: string, payload: unknown): AbilityTre
         classKey,
         nodes,
         byId,
+        archetypeNames,
     }
 }
 
@@ -710,9 +785,11 @@ function getRelevanceNodes(tree: AbilityTreeSummary, target: AbilityNode): Relev
     const sameCategory = tree.nodes.filter((entry) =>
         entry.id !== target.id && entry.nodeColor === target.nodeColor && entry.nodeColor !== "other"
     )
-    const sameArchetype = tree.nodes.filter((entry) =>
-        entry.id !== target.id && entry.archetype === target.archetype && entry.archetype !== "archetypeless"
-    )
+    const sameArchetype = tree.nodes.filter((entry) => {
+        const entryKey = entry.archetype.toLowerCase()
+        const targetKey = target.archetype.toLowerCase()
+        return entry.id !== target.id && entryKey === targetKey && entryKey !== "archetypeless"
+    })
     const directDependencies = target.links
         .map((linkedId) => tree.byId.get(linkedId))
         .filter((entry): entry is AbilityNode => entry !== undefined)
@@ -760,9 +837,10 @@ function printAbilityTreeNodeDetails(tree: AbilityTreeSummary, node: AbilityNode
     console.log(`Ability tree for ${tree.classKey}:`)
     console.log(`Node ID: ${node.id}`)
     console.log(`Name: ${node.name}`)
-    console.log(`Node color: ${node.nodeColor}`)
+    console.log(`Node color: ${formatColorLabel(node.nodeColor)}`)
     console.log(`Ability cost: ${node.abilityCost} AP`)
-    console.log(`Archetype: ${node.archetype === "archetypeless" ? "archetypeless" : node.archetype}`)
+    console.log(`Archetype: ${node.archetype === "Archetypeless" ? "Archetypeless" : node.archetype}`)
+    console.log(`Note: ${node.noteDescription}`)
     console.log(`Page: ${node.page}`)
     console.log(`Slot: ${node.slot}`)
     console.log(`Coordinates: x=${node.coordinates.x}, y=${node.coordinates.y}`)
@@ -842,7 +920,7 @@ function printAbilityTreeCategories(tree: AbilityTreeSummary): void {
 
     for (const node of tree.nodes) {
         const colorMap: Map<string, AbilityNode[]> = byColor.get(node.nodeColor) ?? new Map<string, AbilityNode[]>()
-        const archetypeKey = node.archetype === "archetypeless" ? "archetypeless" : node.archetype
+        const archetypeKey = node.archetype === "Archetypeless" ? "Archetypeless" : node.archetype
         const grouped: AbilityNode[] = colorMap.get(archetypeKey) ?? []
         grouped.push(node)
         colorMap.set(archetypeKey, grouped)
@@ -854,7 +932,8 @@ function printAbilityTreeCategories(tree: AbilityTreeSummary): void {
     console.log("\nTree categories:")
     for (const color of sortedColors) {
         const colorMap = byColor.get(color) ?? new Map<string, AbilityNode[]>()
-        console.log(`  - ${color}:`)
+        const colorLabel = formatColorLabel(color)
+        console.log(`  - ${colorLabel}: ${NODE_COLOR_DESCRIPTIONS[color] ?? NODE_COLOR_DESCRIPTIONS.other}`)
         for (const [archetypeKey, nodes] of Array.from(colorMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
             const names = nodes.map((entry: AbilityNode) => entry.name).slice(0, 10)
             const suffix = nodes.length > names.length ? " ..." : ""
